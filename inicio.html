@@ -7,10 +7,14 @@
     <title>N&G EXPRESS - Entregas Rápidas</title>
     <link rel="icon" href="img/logoAba.png" type="image/x-icon">
     <link rel="shortcut icon" href="img/logoAba.png" type="image/x-icon">
-    <link rel="icon" type="image/png" sizes="32x32" href="img/logo-favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="img/logo-favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="img/logo-favicon-180x180.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+    <script>
+        (function() {
+            emailjs.init("V1ajzmRGCGc5djp22")
+        })();
+    </script>
     <style>
         /* Variáveis CSS */
         :root {
@@ -601,6 +605,35 @@
             cursor: pointer;
         }
 
+        .whatsapp-btn {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background-color: #25D366;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 999;
+            transition: all 0.3s;
+        }
+
+        .whatsapp-btn:hover {
+            background-color: #128C7E;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .whatsapp-btn i {
+            font-size: 1.8rem;
+            margin-left: 10px;
+            margin-top: 3px;
+        }
+
         /* Responsividade */
         @media (max-width: 992px) {
             .section-title {
@@ -623,6 +656,13 @@
         @media (max-width: 768px) {
             .mobile-menu-btn {
                 display: block;
+            }
+
+            .whatsapp-btn {
+                bottom: 90px;
+                right: 20px;
+                width: 45px;
+                height: 45px;
             }
 
             .nav-links {
@@ -980,6 +1020,12 @@
         </div>
     </footer>
 
+    <!-- Botão WhatsApp -->
+    <div class="whatsapp-btn">
+        <a href="https://wa.me/5547999123260" target="_blank" rel="noopener no referrer">
+            <i class="fab fa-whatsapp"></i>
+        </a>
+    </div>
     <!-- Back to Top -->
     <div class="back-to-top">
         <i class="fas fa-arrow-up"></i>
@@ -1042,6 +1088,9 @@
     <script>
         // Espera o DOM carregar completamente
         document.addEventListener('DOMContentLoaded', function () {
+
+            emailjs.init("V1ajzmRGCGc5djp22");
+
             // Menu Mobile - Com verificação de existência
             const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
             const navLinks = document.querySelector('.nav-links');
@@ -1154,6 +1203,18 @@
             if (formContato) {
                 formContato.addEventListener('submit', function (e) {
                     e.preventDefault();
+
+                    const formData = {
+                        nome: this.name.value,
+                        email: this.email.value,
+                        telefone: this.telefone.value,
+                        mensagem: this.mensagem.value
+                    };
+
+                    enviarEmail(formData, 'Nova mensagem do site');
+
+                    enviarWhatsApp(formData, 'Nova mensagem');
+
                     alert('Mensagem enviada com sucesso! Entraremos em contato em breve.');
                     this.reset();
                 });
@@ -1162,12 +1223,63 @@
             if (quoteForm) {
                 quoteForm.addEventListener('submit', function (e) {
                     e.preventDefault();
+
+                    const formData = {
+                        nome: this['quote-nome'].value,
+                        email: this['quote-email'].value,
+                        telefone: this['quote-telefone'].value,
+                        servico: this['quote-servico'].value,
+                        descricao: this['quote-descricao'].value
+                    };
+
+                    enviarEmail(formData, 'Nova solicitação de orçamento');
+
+                    enviarWhatsApp(formData, 'Orçamento');
+
                     alert('Solicitação de orçamento enviada! Retornaremos em breve com os detalhes.');
                     this.reset();
                     closeModalFunc();
                 });
 
             }
+
+            function enviarEmail(formData, assunto) {
+                emailjs.send('service_6l8xfpq', 'template_ue48s83', {
+                    to_email: 'comercial.ngexpress@gmail.com',
+                    from_name: formData.nome,
+                    from_email: formData.email,
+                    subject: assunto,
+                    message: `
+                        Nome: ${formData.nome}
+                        Email: ${formData.email}
+                        Telefone: ${formData.telefone}
+                        ${formData.servico ? `Serviço: ${formData.servico}`: ''}
+                        Mensagem: ${formData.mensagem || formData.descricao}
+                        `
+                }).then(
+                    function(response) {
+                        console.log("E-mail enviado com sucesso!", response);
+                    },
+                    function(error) {
+                        console.log("Falha ao enviar e-mail.", error);
+                    }
+                );
+            }
+
+            function enviarWhatsApp(formData, tipo) {
+                const numeroWhatsApp = "5547999123260";
+                const mensagem = `Nova solicitação de ${tipo}:\n\n` +
+                                 `Nome: ${formData.nome}\n` +
+                                 `Telefone: ${formData.teleone}\n` +
+                                 `Email: ${formData.email}\n` +
+                                 `${formData.servico ? `Serviço: ${formData.servico}\n` : ''}` +
+                                 `Mensagem: ${formData.mensagem || formData.descricao}`;
+
+                                 const mensagemCodificada = encodeURIComponent(mensagem);
+
+                                 window.open(`https://wa.me/${numeroWhatsApp}?text=${mensagemCodificada}`, '_blank');
+            }
+
 
             const telefoneInput = document.getElementById('quote-telefone');
             if (telefoneInput) {
