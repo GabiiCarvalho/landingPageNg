@@ -35,7 +35,17 @@ app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/messages', require('./routes/messageRoutes'));
 
 // Servir arquivos estáticos do frontend
-app.use(express.static(path.join(__dirname, '../frontend')));
+app.use(express.static(path.join(__dirname, 'frontend')));
+
+// Rota para o admin
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/admin.html'));
+});
+
+// Rota principal
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/index.html'));
+});
 
 // Rotas backend
 app.get('/api/test', (req, res) => {

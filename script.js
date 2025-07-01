@@ -716,3 +716,11 @@ document.addEventListener('DOMContentLoaded', function () {
         })
     };
 });
+document.getElementById('chatButton').addEventListener('click', function () {
+    const modal = document.getElementById('chatModal');
+    if (modal.style.display === 'none') {
+        modal.style.display = 'block';
+    } else {
+        modal.style.display = 'none';
+    }
+});
