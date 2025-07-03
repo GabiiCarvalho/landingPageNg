@@ -1,3 +1,5 @@
+// server.js - Atualizado
+
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
@@ -6,8 +8,7 @@ const cors = require('cors');
 const http = require('http');
 const socketIo = require('socket.io');
 const bodyParser = require('body-parser');
-const chatRoutes = require('./routes/chatRoutes');
-const messageRoutes = require('./routes/messageRoutes');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const server = http.createServer(app);
@@ -31,36 +32,60 @@ mongoose.connect(process.env.MONGODB_URI, {
 // Middlewares
 app.use(cors());
 app.use(bodyParser.json());
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Erro interno no servidor' });
+});
+
+const transporter = nodemailer.createTransport({
+    service: 'Gmail',
+    auth: {
+        user: 'comercial.ngexpress@gmail.com',
+        pass: 'ng2016express'
+    }
+});
+
+app.post('/api/send-email', async (req, res) => {
+    try {
+        const { formData, assunto } = req.body;
+        
+        const mailOptions = {
+            from: formData.email,
+            to: 'comercial.ngexpress@gmail.com',
+            subject: assunto,
+            text: `
+                Nome: ${formData.nome}
+                Email: ${formData.email}
+                Telefone: ${formData.telefone}
+                ${formData.servico ? `Serviço: ${formData.servico}` : ''}
+                Mensagem: ${formData.mensagem || formData.descricao}
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+        res.status(200).json({ message: 'Email sent successfully' });
+    } catch (error) {
+        console.error('Error sending email:', error);
+        res.status(500).json({ error: 'Failed to send email' });
+    }
+})
+
+// Rotas API
 app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/messages', require('./routes/messageRoutes'));
 
-// Servir arquivos estáticos do frontend
-app.use(express.static(path.join(__dirname, 'frontend')));
+// Configuração de arquivos estáticos
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Rota para o admin
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/admin.html'));
-});
-
-// Rota principal
+// Rotas principais
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Rotas backend
-app.get('/api/test', (req, res) => {
-    res.json({ message: "Backend funcionando!" });
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// Rota para o painel admin
-app.get('/admin*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/admin.html'));
-});
-
-// Rota para a landing page
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/index.html'));
-});
 
 // Socket.io para chat em tempo real
 io.on('connection', (socket) => {
@@ -73,7 +98,6 @@ io.on('connection', (socket) => {
     socket.on('send_message', async (data) => {
         try {
             const Message = require('./models/Message');
-            // Salvar mensagem no BD
             const message = new Message({
                 chat: data.chatId,
                 sender: data.sender,
@@ -82,10 +106,8 @@ io.on('connection', (socket) => {
             });
             await message.save();
 
-            // Enviar para todos no chat
             io.to(data.chatId).emit('new_message', message);
 
-            // Se for do cliente, notificar admin por email
             if (!data.isAdmin) {
                 const Chat = require('./models/Chat');
                 const chat = await Chat.findById(data.chatId);
