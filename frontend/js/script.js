@@ -1,3 +1,5 @@
+import API_BASE_URL from './apiConfig.js';
+
 document.addEventListener('DOMContentLoaded', function () {
 
     // Menu Mobile - Com verificação de existência
@@ -169,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 try {
-                    const response = await fetch('/api/chat', {
+                    const response = await fetch(`${API_BASE_URL}/api/chat`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -594,27 +596,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
         }
 
-        function enviarEmail(formData, assunto) {
-            emailjs.send('service_6l8xfpq', 'template_ue48s83', {
-                to_email: 'comercial.ngexpress@gmail.com',
-                from_name: formData.nome,
-                from_email: formData.email,
-                subject: assunto,
-                message: `
-                        Nome: ${formData.nome}
-                        Email: ${formData.email}
-                        Telefone: ${formData.telefone}
-                        ${formData.servico ? `Serviço: ${formData.servico}` : ''}
-                        Mensagem: ${formData.mensagem || formData.descricao}
-                        `
-            }).then(
-                function (response) {
-                    console.log("E-mail enviado com sucesso!", response);
-                },
-                function (error) {
-                    console.log("Falha ao enviar e-mail.", error);
+        async function enviarEmail(formData, assunto) {
+            try {
+                const response = await fetch('/api/send-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ formData, assunto })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to send email');
                 }
-            );
+                console.log("E-mail enviado com sucesso!");
+
+                await enviarWhatsAppNotification(formData, assunto);
+
+            } catch (error) {
+                console.log("Falha ao enviar e-mail.", error);
+            }
+        }
+
+        async function enviarWhatsAppNotification(formData, assunto) {
+            console.log('Sending WhatsApp notification...');
         }
 
         window.enviarWhatsApp = function (formData, tipo) {
@@ -714,11 +719,12 @@ document.addEventListener('DOMContentLoaded', function () {
         })
     };
 });
-document.getElementById('chatButton').addEventListener('click', function () {
-    const modal = document.getElementById('chatModal');
-    if (modal.style.display === 'none') {
-        modal.style.display = 'block';
-    } else {
-        modal.style.display = 'none';
-    }
-});
+const chatButton = document.getElementById('chatButton');
+if (chatButton) {
+    chatButton.addEventListener('click', function() {
+        const modal = document.getElementById('chatModal');
+        if (modal) {
+            modal.style.display = modal.style.display === 'none' ? 'block' : 'none';
+        }
+    });
+}

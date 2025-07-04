@@ -1,5 +1,3 @@
-// server.js - Atualizado
-
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
@@ -12,11 +10,14 @@ const nodemailer = require('nodemailer');
 
 const app = express();
 const server = http.createServer(app);
+
 const io = socketIo(server, {
     cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
+        origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:5000'],
+        methods: ['GET', 'POST'],
+        credentials: true
+    },
+    path: '/socket.io/'
 });
 
 // Config do MongoDB
@@ -30,12 +31,19 @@ mongoose.connect(process.env.MONGODB_URI, {
 });
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:5000'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(bodyParser.json());
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ error: 'Erro interno no servidor' });
 });
+
+app.use(express.urlencoded({ extended: true }));
 
 const transporter = nodemailer.createTransport({
     service: 'Gmail',
@@ -48,7 +56,7 @@ const transporter = nodemailer.createTransport({
 app.post('/api/send-email', async (req, res) => {
     try {
         const { formData, assunto } = req.body;
-        
+
         const mailOptions = {
             from: formData.email,
             to: 'comercial.ngexpress@gmail.com',
@@ -70,22 +78,36 @@ app.post('/api/send-email', async (req, res) => {
     }
 })
 
+app.use((req, res, next) => {
+    console.log(`Recebida requisição para: ${req.path}`);
+    next();
+})
+
 // Rotas API
 app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/messages', require('./routes/messageRoutes'));
 
 // Configuração de arquivos estáticos
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'frontend'), {
+    setHeaders: (res, path) => {
+        if (filePath.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript')
+        }
+    }
+}));
 
 // Rotas principais
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
 });
 
 app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+    res.sendFile(path.join(__dirname, 'frontend', 'admin.html'));
 });
 
+app.get('/status', (req, res) => {
+    res.json({ status: 'online', socket: true });
+});
 
 // Socket.io para chat em tempo real
 io.on('connection', (socket) => {
@@ -93,9 +115,12 @@ io.on('connection', (socket) => {
 
     socket.on('join_chat', (chatId) => {
         socket.join(chatId);
+        console.log(`Cliente ${socket.io} entrou no chat ${chatId}`);
     });
 
     socket.on('send_message', async (data) => {
+        socket.join(data.chatId);
+        console.log(`Cliente ${socket.id} entrou no chat ${chatId}`);
         try {
             const Message = require('./models/Message');
             const message = new Message({
@@ -106,13 +131,12 @@ io.on('connection', (socket) => {
             });
             await message.save();
 
-            io.to(data.chatId).emit('new_message', message);
 
             if (!data.isAdmin) {
                 const Chat = require('./models/Chat');
                 const chat = await Chat.findById(data.chatId);
                 const transporter = require('./controllers/messageController').transporter;
-                
+
                 const emailContent = `Nova mensagem no chat ${data.chatId}:\n\n` +
                     `Cliente: ${chat.clientName}\n` +
                     `Email: ${chat.clientEmail}\n` +

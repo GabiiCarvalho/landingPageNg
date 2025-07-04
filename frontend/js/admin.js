@@ -1,11 +1,18 @@
+import API_BASE_URL from './apiConfig.js';
+
 document.addEventListener('DOMContentLoaded', function() {
+    if (typeof io === 'undefined') {
+        console.error('Socket.io não carregado')
+        return;
+    }
     const socket = io();
+    path: '/socket.io/';
     let currentChatId = null;
     
     // Carregar chats
     async function loadChats() {
         try {
-            const response = await fetch('/api/chat');
+            const response = await fetch(`${API_BASE_URL}/api/chat`);
             const chats = await response.json();
             
             const chatList = document.getElementById('chat-list');

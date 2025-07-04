@@ -70,7 +70,7 @@
         </div>
 
         <div id="chatModal">
-            <iframe src="/admin" style="width: 100%; height: 100%; border: none;"></iframe>
+            <iframe src="http://localhost:5000/admin" style="width: 100%; height: 100%; border: none;"></iframe>
         </div>
     </header>
 
@@ -474,7 +474,36 @@
             </form>
         </div>
     </div>
-
 </body>
+
+    <script type="module" src="js/script.js"></script>
+    <script src="http://localhost:5000/socket.io/socket.io.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const socket = io('http://localhost:5000', {
+                path: '/socket.io/',
+                reconnection: true,
+                reconnectionAttempts: 5,
+                reconnectionDelay: 1000
+            });
+            socket.on('connect', () => {
+                console.log('Conectado ao servidor Socket.io');
+            });
+            socket.on('connect_error', (err) => {
+                console.error('Erro de conexão:', err);
+                setTimeout(() => socket.connect(), 1000);
+            });
+
+            const chatButton = document.getElementById('chatButton');
+            if (chatButton) {
+                chatButton.addEventListener('click', function() {
+                    const modal = document.getElementById('chatModal');
+                    if (modal) {
+                        modal.style.display = modal.style.display === 'none' ? 'block' : 'none';
+                    }
+                });
+            }
+        });
+    </script>
 
 </html>
