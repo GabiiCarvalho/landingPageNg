@@ -1,4 +1,4 @@
-import API_BASE_URL from './apiConfig.js';
+import API_BASE_URL from "./apiConfig";
 
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -515,25 +515,27 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         document.querySelectorAll('.saiba-mais-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', function (e) {
                 e.preventDefault();
-                const serviceType = btn.getAttribute('data-service');
+                const serviceType = this.getAttribute('data-service');
                 const detailsDiv = document.getElementById(`${serviceType}-details`);
-                const isCurrentlyOpen = detailsDiv.style.display === 'block';
 
-                // Fecha todos os detalhes e reseta todos os botões
-                document.querySelectorAll('.service-details').forEach(detail => {
-                    detail.style.display = 'none';
-                });
-                document.querySelectorAll('.saiba-mais-btn').forEach(button => {
-                    button.textContent = 'Saiba Mais';
-                });
+                // Alternar visibilidade
+                if (detailsDiv.style.display === 'block') {
+                    detailsDiv.style.display = 'none';
+                    this.textContent = 'Saiba Mais';
+                } else {
+                    // Fechar outros detalhes abertos
+                    document.querySelectorAll('.service-details').forEach(detail => {
+                        detail.style.display = 'none';
+                    });
+                    document.querySelectorAll('.saiba-mais-btn').forEach(button => {
+                        button.textContent = 'Saiba Mais';
+                    });
 
-                // Se o item clicado não estava aberto, abre ele
-                if (!isCurrentlyOpen) {
+                    // Mostrar este detalhe
                     detailsDiv.style.display = 'block';
-                    btn.textContent = 'Mostrar Menos';
-                    detailsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    this.textContent = 'Mostrar Menos';
                 }
             });
         });
@@ -721,7 +723,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 const chatButton = document.getElementById('chatButton');
 if (chatButton) {
-    chatButton.addEventListener('click', function() {
+    chatButton.addEventListener('click', function () {
         const modal = document.getElementById('chatModal');
         if (modal) {
             modal.style.display = modal.style.display === 'none' ? 'block' : 'none';

@@ -13,7 +13,7 @@ const server = http.createServer(app);
 
 const io = socketIo(server, {
     cors: {
-        origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:5000'],
+        origin: ['http://localhost:5000', ],
         methods: ['GET', 'POST'],
         credentials: true
     },
@@ -21,14 +21,14 @@ const io = socketIo(server, {
 });
 
 // Config do MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => {
-    console.log('Conectado ao MongoDB');
-}).catch(err => {
-    console.error('Erro ao conectar ao MongoDB:', err);
-});
+// mongoose.connect(process.env.MONGODB_URI, {
+//     useNewUrlParser: true,
+//     useUnifiedTopology: true
+// }).then(() => {
+//     console.log('Conectado ao MongoDB');
+// }).catch(err => {
+//     console.error('Erro ao conectar ao MongoDB:', err);
+// });
 
 // Middlewares
 app.use(cors({
@@ -102,7 +102,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'frontend', 'admin.html'));
+  res.sendFile(path.join(__dirname, '../frontend/admin.html'));
 });
 
 app.get('/status', (req, res) => {

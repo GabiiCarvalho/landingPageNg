@@ -1,4 +1,4 @@
-import API_BASE_URL from './apiConfig.js';
+import API_BASE_URL from './apiConfig';
 
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof io === 'undefined') {
