@@ -5,13 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>N&G EXPRESS - Entregas Rápidas</title>
-    <link rel="icon" href="../frontend/img/logoAba.png" type="image/x-icon">
-    <link rel="shortcut icon" href="../frontend/img/logoAba.png" type="image/x-icon">
+    <link rel="icon" href="img/logoAba.png" type="image/x-icon">
+    <link rel="shortcut icon" href="img/logoAba.png" type="image/x-icon">
     <link rel="apple-touch-icon" sizes="180x180" href="img/logo-favicon-180x180.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <link rel="stylesheet" href="../frontend/css/styles.css">
-
+    <link rel="stylesheet" href="./css/styles.css">
+    <script src="./js/script.js" defer></script>
 
 </head>
 
@@ -34,13 +34,6 @@
                 </ul>
             </nav>
         </div>
-        <div class="chat-button">
-            <i class="fas fa-comments"></i>
-        </div>
-
-        <div id="chatModal">
-            <iframe src="http://localhost:5000/admin" style="width: 100%; height: 100%; border: none;"></iframe>
-        </div>
     </header>
 
     <!-- Hero Section -->
@@ -62,7 +55,7 @@
             <div class="services-grid">
                 <div class="service-card fade-in" id="servico-motoboy">
                     <div class="service-img">
-                        <img src="../frontend/img/entregaDemoto.jpeg" alt="Serviço de motoboy">
+                        <img src="img/entregaDemoto.jpeg" alt="Serviço de motoboy">
                     </div>
                     <div class="service-content">
                         <h3>Entregas de Motoboy</h3>
@@ -72,7 +65,7 @@
 
                         <!-- Div de detalhes (inicialmente oculta) -->
                         <div class="service-details" id="motoboy-details" style="display: none; margin-top: 20px;">
-                            <img src="../frontend/img/motoboy.png" alt="Serviço de motoboy"
+                            <img src="img/motoboy.png" alt="Serviço de motoboy"
                                 style="width: 100%; max-width: 300px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;">
                             <div>
 
@@ -108,7 +101,7 @@
 
                 <div class="service-card fade-in delay-1" id="servico-carro">
                     <div class="service-img">
-                        <img src="../frontend/img/entregaDeCarro.jpeg" alt="Serviço de Carro">
+                        <img src="img/entregaDeCarro.jpeg" alt="Serviço de Carro">
                     </div>
                     <div class="service-content">
                         <h3>Entregas de Carro</h3>
@@ -118,7 +111,7 @@
 
                         <!-- Div de detalhes (inicialmente oculta) -->
                         <div class="service-details" id="carro-details" style="display: none; margin-top: 20px;">
-                            <img src="../frontend/img/carro.png" alt="Serviço de Carro"
+                            <img src="img/carro.png" alt="Serviço de Carro"
                                 style="width: 100%; max-width: 300px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;">
                             <div>
 
@@ -154,7 +147,7 @@
 
                 <div class="service-card fade-in delay-2" id="servico-express">
                     <div class="service-img">
-                        <img src="../frontend/img/entregaExpressa.jpeg" alt="Entrega Express">
+                        <img src="img/entregaExpressa.jpeg" alt="Entrega Express">
                     </div>
                     <div class="service-content">
                         <h3>Entrega Express</h3>
@@ -164,7 +157,7 @@
 
                         <!-- Div de detalhes (inicialmente oculta) -->
                         <div class="service-details" id="express-details" style="display: none; margin-top: 20px;">
-                            <img src="../frontend/img/expressa.png" alt="Entrega Express"
+                            <img src="img/expressa.png" alt="Entrega Express"
                                 style="width: 100%; max-width: 300px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;">
                             <div>
 
@@ -206,7 +199,7 @@
             <h2 class="section-title">Sobre Nós</h2>
             <div class="about-content">
                 <div class="about-img fade-in">
-                    <img src="../frontend/img/logo.jpeg" alt="Equipe N&G EXPRESS">
+                    <img src="img/logo.jpeg" alt="Equipe N&G EXPRESS">
                 </div>
                 <div class="about-text fade-in delay-1">
                     <h2>N&G EXPRESS - Sua entrega em boas mãos</h2>
@@ -315,7 +308,7 @@
                         </div>
                         <div class="form-group">
                             <label class="telefone">Telefone</label>
-                            <input type="text" id="client-phone" placeholder="(47) 99999-9999" required>
+                            <input type="tel" id="telefone" name="telefone" required>
                         </div>
                         <div class="form-group">
                             <label for="mensagem">Mensagem</label>
@@ -431,48 +424,13 @@
                     <i class="fas fa-edit"></i>
                 </div>
 
-                <div id="chatModal"
-                    style="display: none; position: fixed; bottom: 100px; right: 30px; width: 350px; height: 500px; background: white; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.2); z-index: 1000;">
-                    <iframe src="./admin.html"
-                        style="width: 100%; height: 100%; border: none; border-radius: 10px;"></iframe>
-                </div>
-
                 <button type="submit" class="btn submit-btn">
                     <i class="fas fa-paper-plane"></i> Enviar Solicitação
                 </button>
             </form>
         </div>
     </div>
+
 </body>
-
-    <script type="module" src="../frontend/js/script.js"></script>
-    <script src="http://localhost:5000/socket.io/socket.io.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const socket = io('http://localhost:5000', {
-                path: '/socket.io/',
-                reconnection: true,
-                reconnectionAttempts: 5,
-                reconnectionDelay: 1000
-            });
-            socket.on('connect', () => {
-                console.log('Conectado ao servidor Socket.io');
-            });
-            socket.on('connect_error', (err) => {
-                console.error('Erro de conexão:', err);
-                setTimeout(() => socket.connect(), 1000);
-            });
-
-            const chatButton = document.getElementById('chatButton');
-            if (chatButton) {
-                chatButton.addEventListener('click', function() {
-                    const modal = document.getElementById('chatModal');
-                    if (modal) {
-                        modal.style.display = modal.style.display === 'none' ? 'block' : 'none';
-                    }
-                });
-            }
-        });
-    </script>
 
 </html>
