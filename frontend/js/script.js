@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', function () {
 
     // Menu Mobile - Com verificação de existência
@@ -263,7 +264,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function enviarParaBackend(formData, endpoint) {
         try {
-            const response = await fetch(`/api/${endpoint}`, {
+
+            const backendUrl = 'http://localhost:5500/api'
+
+            const response = await fetch(`http://localhost:5500/api/${endpoint}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
