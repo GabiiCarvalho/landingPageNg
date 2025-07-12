@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', function () {
 
     // Menu Mobile - Com verificação de existência
@@ -258,25 +257,131 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    function validarFormularioContato(formData) {
+        const erros = [];
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const phoneDigits = formData.phone.replace(/\D/g, '');
+
+        // Validação de campos obrigatórios
+        if (!formData.name?.trim()) erros.push('Nome é obrigatório');
+        if (!formData.email?.trim()) erros.push('E-mail é obrigatório');
+        if (!formData.phone?.trim()) erros.push('Telefone é obrigatório');
+        if (!formData.message?.trim()) erros.push('Mensagem é obrigatória');
+
+        // Validação de formato de e-mail
+        if (formData.email && !emailRegex.test(formData.email)) {
+            erros.push('Formato de e-mail inválido');
+        }
+
+        // Validação de telefone (mínimo 10 dígitos)
+        if (phoneDigits.length < 10) {
+            erros.push('Telefone deve ter pelo menos 10 dígitos');
+        }
+
+        return erros;
+    }
+
+    function validarFormularioOrcamento(formData) {
+        const erros = [];
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const phoneDigits = formData.phone.replace(/\D/g, '');
+
+        // Validação de campos obrigatórios
+        if (!formData.name?.trim()) erros.push('Nome é obrigatório');
+        if (!formData.email?.trim()) erros.push('E-mail é obrigatório');
+        if (!formData.phone?.trim()) erros.push('Telefone é obrigatório');
+        if (!formData.service?.trim()) erros.push('Serviço é obrigatório');
+        if (!formData.description?.trim()) erros.push('Descrição é obrigatória');
+
+        // Validação de formato de e-mail
+        if (formData.email && !emailRegex.test(formData.email)) {
+            erros.push('Formato de e-mail inválido');
+        }
+
+        // Validação de telefone (mínimo 10 dígitos)
+        if (phoneDigits.length < 10) {
+            erros.push('Telefone deve ter pelo menos 10 dígitos');
+        }
+
+        return erros;
+    }
+
     // Formulários - Com verificações
+    // Formulário de Contato
     const formContato = document.getElementById('form-contato');
+
+    if (formContato) {
+        formContato.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            // Coletar dados do formulário
+            const formData = {
+                name: this.name.value.trim(),
+                email: this.email.value.trim(),
+                phone: this.telefone.value,
+                message: this.mensagem.value.trim()
+            };
+
+            // Validar antes de enviar
+            const erros = validarFormularioContato(formData);
+
+            if (erros.length > 0) {
+                showToast(erros.join('<br>'), 'error');
+                return;
+            }
+
+            // Mostrar loading no botão
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const btnOriginalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+
+            const errosContato = validarFormularioContato(formData);
+            if (errosContato.length > 0) {
+                showToast(errosContato.join('<br>'), 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = btnOriginalText;
+                return;
+            }
+
+            try {
+                // Enviar para o backend
+                const response = await enviarParaBackend(formData, 'contact');
+
+                // Feedback de sucesso
+                showToast(response.message || 'Mensagem enviada com sucesso!');
+
+                // Resetar formulário
+                this.reset();
+            } catch (error) {
+                // Feedback de erro
+                showToast(error.message || 'Erro ao enviar mensagem. Tente novamente.', 'error');
+            } finally {
+                // Restaurar botão
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = btnOriginalText;
+            }
+        });
+    }
+
     const quoteForm = document.getElementById('quote-form');
 
     async function enviarParaBackend(formData, endpoint) {
         try {
-
-            const backendUrl = 'http://localhost:5500/api'
-
             const response = await fetch(`http://localhost:5500/api/${endpoint}`, {
                 method: 'POST',
+                mode: 'cors',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify(formData),
             });
 
             if (!response.ok) {
-                throw new Error('Erro ao enviar dados');
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Erro ao enviar dados');
             }
 
             return await response.json();
@@ -286,23 +391,33 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    if (formContato) {
-        formContato.addEventListener('submit', async function (e) {
+    if (quoteForm) {
+        quoteForm.addEventListener('submit', async function (e) {
             e.preventDefault();
 
             const formData = {
-                name: this.name.value,
-                email: this.email.value,
-                phone: this.telefone.value,
-                message: this.mensagem.value
+                name: this['quote-nome'].value,
+                email: this['quote-email'].value,
+                phone: this['quote-telefone'].value,
+                service: this['quote-servico'].value,
+                description: this['quote-descricao'].value
             };
 
+            const errosOrcamento = validarFormularioOrcamento(formData);
+            if (errosOrcamento.length > 0) {
+                showToast(errosOrcamento.join('<br>'), 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = btnOriginalText;
+                return;
+            }
+
             try {
-                await enviarParaBackend(formData, 'contact');
-                showToast('Mensagem enviada com sucesso! Entraremos em contato em breve.');
+                const response = await enviarParaBackend(formData, 'quote');
+                showToast(response.message || 'Solicitação de orçamento enviada! Retornaremos em breve com os detalhes.');
                 this.reset();
+                closeModalFunc();
             } catch (error) {
-                showToast('Erro ao enviar mensagem. Tente novamente.', 'error');
+                showToast(error.message || 'Erro ao enviar solicitação. Tente novamente.', 'error');
             }
         });
     }
@@ -330,31 +445,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function enviarEmail(formData, assunto) {
-        emailjs.send('service_6l8xfpq', 'template_ue48s83', {
-            to_email: 'comercial.ngexpress@gmail.com',
-            from_name: formData.nome,
-            from_email: formData.email,
-            subject: assunto,
-            message: `
-                        Nome: ${formData.nome}
-                        Email: ${formData.email}
-                        Telefone: ${formData.telefone}
-                        ${formData.servico ? `Serviço: ${formData.servico}` : ''}
-                        Mensagem: ${formData.mensagem || formData.descricao}
-                        `
-        }).then(
-            function (response) {
-                console.log("E-mail enviado com sucesso!", response);
-            },
-            function (error) {
-                console.log("Falha ao enviar e-mail.", error);
-            }
-        );
-    }
-
     function enviarWhatsApp(formData, tipo) {
-        const numeroWhatsApp = "5547999123260";
+        const numeroWhatsApp = "5547996412384";
         const mensagem = `Nova solicitação de ${tipo}:\n\n` +
             `Nome: ${formData.nome}\n` +
             `Telefone: ${formData.teleone}\n` +
@@ -403,50 +495,25 @@ function showToast(message, type = 'success') {
 
     const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
     toast.innerHTML = `
-                <i class="fas ${icon}"></i>
-                <span>${message}</span>
-                <span class="toast-close">&times;</span>
-            `;
+        <i class="fas ${icon}"></i>
+        <span>${message}</span>
+        <span class="toast-close">&times;</span>
+    `;
 
     container.appendChild(toast);
-
     setTimeout(() => toast.classList.add('show'), 10);
 
-    const getConnectionSpeed = () => {
-        if (!navigator.connection) return 'unknown';
-
-        const connection = navigator.connection;
-        if (connection.effectiveType) {
-            return connection.effectiveType;
-        }
-        return connection.downlink > 5 ? 'fast' : 'slow';
-    };
-
-    const getAutoCloseTime = () => {
-        const speed = getConnectionSpeed();
-        switch (speed) {
-            case 'slow-2g':
-            case '2g':
-                return 8000;
-            case '3g':
-                return 6000;
-            case '4g':
-            case 'fast':
-                return 4000;
-            default:
-                return 5000;
-        }
-    };
-
-    const autoCloseTime = getAutoCloseTime();
+    // Fechar automaticamente após 5 segundos (ou mais para mensagens longas)
+    const delay = message.length > 100 ? 8000 : 5000;
     const autoClose = setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 300);
-    }, autoCloseTime);
+    }, delay);
 
+    // Fechar ao clicar no X
     toast.querySelector('.toast-close').addEventListener('click', () => {
         clearTimeout(autoClose);
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 300);
-    })
+    });
 }
