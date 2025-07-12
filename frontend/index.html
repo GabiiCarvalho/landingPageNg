@@ -9,6 +9,7 @@
     <link rel="shortcut icon" href="img/logoAba.png" type="image/x-icon">
     <link rel="apple-touch-icon" sizes="180x180" href="img/logo-favicon-180x180.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/swiper@8/swiper-bundle.min.css">
 
     <link rel="stylesheet" href="./css/styles.css">
     <script src="./js/script.js" defer></script>
@@ -38,13 +39,63 @@
 
     <!-- Hero Section -->
     <section class="hero" id="home">
-        <div class="container">
-            <h1 class="fade-in">Entregas Rápidas e Seguras</h1>
-            <p class="fade-in delay-1">Nossa equipe de motoboys e motoristas profissionais está pronta para levar seu
-                pedido com agilidade e segurança para qualquer lugar da cidade.</p>
-            <div class="hero-btns fade-in delay-2">
-                <a href="#services" class="btn btn-secondary" id="contact-btn">Fale Conosco</a>
+        <!-- Swiper Container -->
+        <div class="swiper hero-swiper">
+            <div class="swiper-wrapper">
+                <!-- Slide 1 -->
+                <div class="swiper-slide">
+                    <img src="img/slide1.jpeg" alt="Motoboy fazendo entrega" class="hero-bg-image">
+                    <div class="container slide-content">
+                        <h1 class="fade-in">Entregas Rápidas e Seguras</h1>
+                        <p class="fade-in delay-1">Nossa equipe de motoboys e motoristas profissionais está pronta para
+                            levar seu pedido com agilidade e segurança para qualquer lugar da cidade.</p>
+                        <div class="hero-btns fade-in delay-2">
+                            <a href="#services" class="btn btn-secondary" id="contact-btn">Fale Conosco</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="swiper-slide">
+                    <img src="img/slide2.jpeg" alt="Carro de entrega" class="hero-bg-image">
+                    <div class="container slide-content">
+                        <h1>Entregas Express</h1>
+                        <p>Serviço prioritário para quando você não pode esperar. Sua encomenda com máxima urgência!</p>
+                        <div class="hero-btns">
+                            <a href="#quote-modal" class="btn btn-secondary">Solicitar Orçamento</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="swiper-slide">
+                    <img src="img/slide3.jpeg" alt="Equipe de entregadores" class="hero-bg-image">
+                    <div class="container slide-content">
+                        <h1>Profissionais Qualificados</h1>
+                        <p>Nossa equipe passa por treinamento constante para garantir a melhor qualidade no serviço</p>
+                        <div class="hero-btns">
+                            <a href="#about" class="btn btn-secondary">Conheça Nossa Equipe</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4 -->
+                <div class="swiper-slide">
+                    <img src="img/slide4.jpeg" alt="Equipe de entregadores" class="hero-bg-image">
+                    <div class="container slide-content">
+                        <h1 class="fade-in">Profissionais Certificados</h1>
+                        <p class="fade-in delay-1">Nossa equipe passa por treinamento constante para garantir qualidade
+                            e segurança.</p>
+                        <div class="hero-btns fade-in delay-2">
+                            <a href="#about" class="btn btn-secondary">Conheça Nossa Equipe</a>
+                        </div>
+                    </div>
+                </div>
+
             </div>
+
+            <!-- Paginação -->
+            <div class="swiper-pagination"></div>
         </div>
     </section>
 
@@ -55,7 +106,7 @@
             <div class="services-grid">
                 <div class="service-card fade-in" id="servico-motoboy">
                     <div class="service-img">
-                        <img src="img/entregaDemoto.jpeg" alt="Serviço de motoboy">
+                        <img src="img/slide3.jpeg" alt="Serviço de motoboy">
                     </div>
                     <div class="service-content">
                         <h3>Entregas de Motoboy</h3>
@@ -137,8 +188,7 @@
                                     • 10-20km: R$ 60,00<br>
                                     • 20-30km: R$ 80,00<br>
                                     • Acima de 30km: R$ 80,00 + R$ 3,50/km adicional</p>
-                                <p style="font-size: 0.9em; color: #666;">* Taxa de espera: R$ 20,00/hora após 15
-                                    minutos gratuitos</p>
+                                <p style="font-size: 0.9em; color: #666;">* Maiores informações chame-nos no WhatsApp ou mande mensagem.</p>
                             </div>
                             <a href="#" class="btn" style="display: block; text-align: center;">Solicitar Orçamento</a>
                         </div>
@@ -147,7 +197,7 @@
 
                 <div class="service-card fade-in delay-2" id="servico-express">
                     <div class="service-img">
-                        <img src="img/entregaExpressa.jpeg" alt="Entrega Express">
+                        <img src="img/tresMotos.jpeg" alt="Entrega Express">
                     </div>
                     <div class="service-content">
                         <h3>Entrega Express</h3>
@@ -203,8 +253,10 @@
                 </div>
                 <div class="about-text fade-in delay-1">
                     <h2>N&G EXPRESS - Sua entrega em boas mãos</h2>
-                    <p>Fundada em 2016, a N&G EXPRESS se tornou referência em serviços de entregas rápidas na região.
-                        Nossa missão é proporcionar soluções logísticas ágeis e confiáveis para pessoas e empresas.</p>
+                    <p>Fundada em 2016, a N&G EXPRESS se tornou referência em serviços de entregas rápidas em Balneário
+                        Camboriú
+                        e região. Nossa missão é proporcionar soluções logísticas ágeis e confiáveis para pessoas e
+                        empresas.</p>
                     <p>Com uma frota moderna de motos e carros, e uma equipe de profissionais treinados, garantimos que
                         suas encomendas cheguem ao destino com segurança e no prazo combinado.</p>
 
@@ -332,7 +384,7 @@
                         <a href="https://www.facebook.com/share/1CF3xneNSW/"><i class="fab fa-facebook-f"></i></a>
                         <a href="https://www.instagram.com/ng.express_?igsh=MTB6NnJ0N3AxZXc4Zw=="><i
                                 class="fab fa-instagram"></i></a>
-                        <a href="https://wa.me/5547999123260"><i class="fab fa-whatsapp"></i></a>
+                        <a href="https://wa.me/5547996412384"><i class="fab fa-whatsapp"></i></a>
                         <a href="https://g.co/kgs/e4ECZJo"><i class="fab fa-google"></i></a>
                     </div>
                 </div>
@@ -430,6 +482,8 @@
             </form>
         </div>
     </div>
+
+    <script src="https://unpkg.com/swiper@8/swiper-bundle.min.js"></script>
 
 </body>
 

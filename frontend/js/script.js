@@ -1,5 +1,47 @@
 document.addEventListener('DOMContentLoaded', function () {
 
+    // Inicialização do Swiper com 4 slides
+    const heroSwiper = new Swiper('.hero-swiper', {
+        // Configurações
+        loop: true,
+        autoplay: {
+            delay: 2000, 
+            disableOnInteraction: false,
+            pauseOnMouseEnter: true
+        },
+        effect: 'fade',
+        fadeEffect: {
+            crossFade: true
+        },
+        speed: 1000, 
+        pagination: {
+            el: '.swiper-pagination',
+            clickable: true,
+            dynamicBullets: true
+        },
+        navigation: {
+            nextEl: '.swiper-button-next',
+            prevEl: '.swiper-button-prev',
+        },
+        // Disparar animações quando o slide muda
+        on: {
+            init: function () {
+                this.slides[this.activeIndex].querySelectorAll('.fade-in').forEach(el => {
+                    el.style.opacity = 1;
+                });
+            },
+            slideChangeTransitionStart: function () {
+                const nextSlide = this.slides[this.activeIndex];
+                nextSlide.querySelectorAll('.fade-in').forEach(el => {
+                    el.style.opacity = 0;
+                    el.style.animation = 'none';
+                    void el.offsetWidth; // Trigger reflow
+                    el.style.animation = null;
+                });
+            }
+        }
+    });
+
     // Menu Mobile - Com verificação de existência
     const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
     const navLinks = document.querySelector('.nav-links');
