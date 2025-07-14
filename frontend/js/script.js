@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 nextSlide.querySelectorAll('.fade-in').forEach(el => {
                     el.style.opacity = 0;
                     el.style.animation = 'none';
-                    void el.offsetWidth; // Trigger reflow
+                    void el.offsetWidth;
                     el.style.animation = null;
                 });
             }
@@ -408,10 +408,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const quoteForm = document.getElementById('quote-form');
 
-    async function enviarParaBackend(formData, endpoint) {
+    async function enviarParaBackend(formData, endpoint, method = 'POST') {
         try {
-            const response = await fetch(`http://localhost:5500/api/${endpoint}`, {
-                method: 'POST',
+            const response = await fetch(`https://backend-l8vtzwkyw-gabiicarvalhos-projects.vercel.app/api/${endpoint}`, {
+                method: method,
                 mode: 'cors',
                 credentials: 'same-origin',
                 headers: {
