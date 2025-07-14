@@ -1,7 +1,7 @@
-async function enviarParaBackend(formData, endpoint, method = 'POST') {
+async function enviarParaBackend(formData, endpoint) {
     try {
-        const response = await fetch(`https://backend-l8vtzwkyw-gabiicarvalhos-projects.vercel.app/api/${endpoint}`, {
-            method: method,
+        const response = await fetch("https://backend-l8vtzwkyw-gabiicarvalhos-projects.vercel.app/api/contacts", {
+            method: "POST",
             headers: {
                 'Content-Type': 'application/json',
             },
