@@ -408,10 +408,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const quoteForm = document.getElementById('quote-form');
 
-    async function enviarParaBackend(formData, endpoint, method = 'POST') {
+    async function enviarParaBackend(formData, endpoint) {
         try {
-            const response = await fetch(`https://backend-l8vtzwkyw-gabiicarvalhos-projects.vercel.app/api/${endpoint}`, {
-                method: method,
+            const response = await fetch("https://backend-l8vtzwkyw-gabiicarvalhos-projects.vercel.app/api/quote", {
+                method: 'POST',
                 mode: 'cors',
                 credentials: 'same-origin',
                 headers: {
