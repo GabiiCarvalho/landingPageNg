@@ -1,7 +1,7 @@
 async function enviarParaBackend(formData, endpoint) {
     try {
         const response = await fetch(`http://localhost:5500/api/${endpoint}`, {
-            method: method,
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
