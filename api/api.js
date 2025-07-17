@@ -1,6 +1,6 @@
 async function enviarParaBackend(formData, endpoint) {
     try {
-        const response = await fetch(`http://localhost:5500/api/${endpoint}`, {
+        const response = await fetch(`https://backendlp-4ds4.onrender.com/api/${endpoint}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

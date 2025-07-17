@@ -408,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function enviarParaBackend(formData, endpoint) {
         try {
-            const response = await fetch(`http://localhost:5500/api/${endpoint}`, {
+            const response = await fetch(`https://backendlp-4ds4.onrender.com/api/${endpoint}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -455,6 +455,29 @@ document.addEventListener('DOMContentLoaded', function () {
                 closeModalFunc();
             } catch (error) {
                 showToast(error.message || 'Erro ao enviar solicitação. Tente novamente.', 'error');
+            }
+        });
+    }
+
+    if (quoteForm) {
+        quoteForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const formData = {
+                name: this['quote-nome'].value,
+                email: this['quote-email'].value,
+                phone: this['quote-telefone'].value,
+                service: this['quote-servico'].value,
+                description: this['quote-descricao'].value
+            };
+
+            try {
+                await enviarParaBackend(formData, 'quote');
+                showToast('Solicitação de orçamento enviada! Retornaremos em breve com os detalhes.');
+                this.reset();
+                closeModalFunc();
+            } catch (error) {
+                showToast('Erro ao enviar solicitação. Tente novamente.', 'error');
             }
         });
     }
