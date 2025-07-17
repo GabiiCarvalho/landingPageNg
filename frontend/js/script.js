@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Configurações
         loop: true,
         autoplay: {
-            delay: 2000, 
+            delay: 2000,
             disableOnInteraction: false,
             pauseOnMouseEnter: true
         },
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
         fadeEffect: {
             crossFade: true
         },
-        speed: 1000, 
+        speed: 1000,
         pagination: {
             el: '.swiper-pagination',
             clickable: true,
@@ -348,8 +348,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return erros;
     }
 
-    // Formulários - Com verificações
-    // Formulário de Contato
     const formContato = document.getElementById('form-contato');
 
     if (formContato) {
@@ -408,15 +406,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const quoteForm = document.getElementById('quote-form');
 
-    async function enviarParaBackend(formData, endpoint, method = 'POST') {
+    async function enviarParaBackend(formData, endpoint) {
         try {
-            const response = await fetch(`https://backend-l8vtzwkyw-gabiicarvalhos-projects.vercel.app/api/${endpoint}`, {
-                method: method,
+            const response = await fetch(`http://localhost:5500/api/${endpoint}`, {
+                method: 'POST',
                 mode: 'cors',
-                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
                 },
                 body: JSON.stringify(formData),
             });
