@@ -459,29 +459,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    if (quoteForm) {
-        quoteForm.addEventListener('submit', async function (e) {
-            e.preventDefault();
-
-            const formData = {
-                name: this['quote-nome'].value,
-                email: this['quote-email'].value,
-                phone: this['quote-telefone'].value,
-                service: this['quote-servico'].value,
-                description: this['quote-descricao'].value
-            };
-
-            try {
-                await enviarParaBackend(formData, 'quote');
-                showToast('Solicitação de orçamento enviada! Retornaremos em breve com os detalhes.');
-                this.reset();
-                closeModalFunc();
-            } catch (error) {
-                showToast('Erro ao enviar solicitação. Tente novamente.', 'error');
-            }
-        });
-    }
-
 
     function enviarWhatsApp(formData, tipo) {
         const numeroWhatsApp = "5547996412384";
