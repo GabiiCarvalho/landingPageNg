@@ -23,6 +23,11 @@ document.addEventListener('DOMContentLoaded', function () {
             nextEl: '.swiper-button-next',
             prevEl: '.swiper-button-prev',
         },
+
+        observer: true,
+        observeParents: true,
+        observeSlideChildren: true,
+
         // Disparar animações quando o slide muda
         on: {
             init: function () {
