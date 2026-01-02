@@ -1,5 +1,9 @@
 document.addEventListener('DOMContentLoaded', function () {
-
+    if (typeof Swiper === 'undefined') {
+        console.error('Swiper não carregado. Verifique o caminho do arquivo');
+        return;
+    }
+    
     // Inicialização do Swiper com 4 slides
     const heroSwiper = new Swiper('.hero-swiper', {
         // Configurações
