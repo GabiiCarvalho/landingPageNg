@@ -11,204 +11,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="css/swiper-bundle.min.css">
     <link rel="stylesheet" href="./css/styles.css">
+    <link rel="stylesheet" href="./css/orcamento.css">
     <script src="./js/script.js" defer></script>
-    
-    <style>
-        /* Estilos adicionais para o sistema de orçamento */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            overflow-y: auto;
-        }
-
-        .modal-content {
-            background-color: #fff;
-            margin: 5% auto;
-            padding: 30px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 700px;
-            position: relative;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        .close-modal, .close-comprovante {
-            position: absolute;
-            right: 20px;
-            top: 15px;
-            font-size: 28px;
-            cursor: pointer;
-            color: #666;
-        }
-
-        .close-modal:hover, .close-comprovante:hover {
-            color: #000;
-        }
-
-        .form-section {
-            margin-bottom: 25px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border-left: 4px solid var(--primary-color, #007bff);
-        }
-
-        .form-section h3 {
-            color: #333;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .dimensions-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        @media (max-width: 600px) {
-            .dimensions-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .orcamento-resultado {
-            background: #e8f5e9;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            display: none;
-        }
-
-        .resultado-content {
-            background: white;
-            padding: 15px;
-            border-radius: 6px;
-        }
-
-        .resultado-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .resultado-item.total {
-            background: #f5f5f5;
-            padding: 12px;
-            border-radius: 6px;
-            margin-top: 10px;
-            font-weight: bold;
-            font-size: 1.2em;
-        }
-
-        .form-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        /* Comprovante */
-        .comprovante-content {
-            max-width: 600px;
-        }
-
-        .comprovante-header {
-            text-align: center;
-            padding-bottom: 15px;
-            border-bottom: 2px solid var(--primary-color, #007bff);
-            margin-bottom: 20px;
-        }
-
-        .comprovante-numero {
-            background: var(--primary-color, #007bff);
-            color: white;
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: bold;
-            margin: 10px 0;
-        }
-
-        .info-section {
-            padding: 15px;
-            margin-bottom: 15px;
-            background: #f9f9f9;
-            border-radius: 6px;
-            border-left: 3px solid #ddd;
-        }
-
-        .info-section.destaque {
-            background: #e3f2fd;
-            border-left-color: var(--primary-color, #007bff);
-        }
-
-        .info-section.instrucoes {
-            background: #fff3e0;
-            border-left-color: #ff9800;
-        }
-
-        .info-section.rodape {
-            background: #f5f5f5;
-            text-align: center;
-            font-size: 0.9em;
-        }
-
-        .valor-total {
-            font-size: 1.4em;
-            text-align: center;
-            margin: 15px 0;
-            color: var(--primary-color, #007bff);
-        }
-
-        .comprovante-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-
-        @media (max-width: 600px) {
-            .form-buttons,
-            .comprovante-buttons {
-                flex-direction: column;
-            }
-        }
-
-        /* Toast */
-        .toast {
-            background: #333;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            animation: slideIn 0.3s ease;
-        }
-
-        .toast-success {
-            background: #4caf50;
-        }
-
-        .toast-error {
-            background: #f44336;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-    </style>
+    <script src="./js/orcamento.js" defer></script>
 </head>
 
 <body>
@@ -485,9 +290,7 @@
     </footer>
 
     <!-- Notificação Toast -->
-    <div id="toast-container"
-        style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;">
-    </div>
+    <div id="toast-container"></div>
 
     <!-- Botão WhatsApp -->
     <div class="whatsapp-btn">
@@ -495,6 +298,7 @@
             <i class="bi bi-whatsapp"></i>
         </a>
     </div>
+
     <!-- Back to Top -->
     <div class="back-to-top">
         <i class="bi bi-arrow-up"></i>
@@ -505,30 +309,33 @@
         <div class="modal-content">
             <span class="close-modal">&times;</span>
             <h2><i class="bi bi-calculator"></i> Solicitar Orçamento</h2>
-            
+
             <form id="form-orcamento">
                 <!-- Dados do Cliente -->
                 <div class="form-section">
                     <h3><i class="bi bi-person"></i> Dados do Cliente</h3>
                     <div class="form-group">
                         <label for="cliente-nome">Nome Completo*</label>
-                        <input type="text" id="cliente-nome" name="cliente-nome" placeholder="Digite seu nome completo" required>
+                        <input type="text" id="cliente-nome" name="cliente-nome" placeholder="Digite seu nome completo"
+                            required>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="cliente-telefone">Telefone/WhatsApp*</label>
-                        <input type="tel" id="cliente-telefone" name="cliente-telefone" placeholder="(47) 99999-9999" required>
+                        <input type="tel" id="cliente-telefone" name="cliente-telefone" placeholder="(47) 99999-9999"
+                            required>
                     </div>
                 </div>
-                
+
                 <!-- Endereços -->
                 <div class="form-section">
                     <h3><i class="bi bi-geo-alt"></i> Endereços</h3>
                     <div class="form-group">
                         <label for="coleta-endereco">Endereço de Coleta (Itajaí)*</label>
-                        <input type="text" id="coleta-endereco" name="coleta-endereco" placeholder="Rua, número, bairro - Itajaí/SC" required value="Itajaí/SC">
+                        <input type="text" id="coleta-endereco" name="coleta-endereco"
+                            placeholder="Rua, número, bairro - Itajaí/SC" required value="Itajaí/SC">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="cidade-destino">Cidade de Destino*</label>
                         <select id="cidade-destino" name="cidade-destino" required>
@@ -554,45 +361,50 @@
                             <option value="joinville">Joinville</option>
                         </select>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="entrega-endereco">Endereço de Entrega*</label>
-                        <input type="text" id="entrega-endereco" name="entrega-endereco" placeholder="Rua, número, bairro, complemento" required>
+                        <input type="text" id="entrega-endereco" name="entrega-endereco"
+                            placeholder="Rua, número, bairro, complemento" required>
                     </div>
                 </div>
-                
+
                 <!-- Dimensões da Encomenda -->
                 <div class="form-section">
                     <h3><i class="bi bi-box"></i> Dimensões da Encomenda</h3>
-                    
+
                     <div class="dimensions-grid">
                         <div class="form-group">
                             <label for="comprimento">Comprimento (cm)*</label>
-                            <input type="number" id="comprimento" name="comprimento" min="1" max="200" placeholder="cm" required>
+                            <input type="number" id="comprimento" name="comprimento" min="1" max="200" placeholder="cm"
+                                required>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="largura">Largura (cm)*</label>
-                            <input type="number" id="largura" name="largura" min="1" max="200" placeholder="cm" required>
+                            <input type="number" id="largura" name="largura" min="1" max="200" placeholder="cm"
+                                required>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="altura">Altura (cm)*</label>
                             <input type="number" id="altura" name="altura" min="1" max="200" placeholder="cm" required>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="peso">Peso (kg)*</label>
-                            <input type="number" id="peso" name="peso" min="0.1" max="50" step="0.1" placeholder="kg" required>
+                            <input type="number" id="peso" name="peso" min="0.1" max="50" step="0.1" placeholder="kg"
+                                required>
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="descricao">Descrição da Encomenda</label>
-                        <textarea id="descricao" name="descricao" placeholder="Ex: Documentos, pacote, eletrônico, etc." rows="2"></textarea>
+                        <textarea id="descricao" name="descricao" placeholder="Ex: Documentos, pacote, eletrônico, etc."
+                            rows="2"></textarea>
                     </div>
                 </div>
-                
+
                 <!-- Resultado do Orçamento -->
                 <div id="orcamento-resultado" class="orcamento-resultado">
                     <h3><i class="bi bi-calculator"></i> Orçamento Calculado</h3>
@@ -615,13 +427,13 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Botões -->
                 <div class="form-buttons">
                     <button type="button" id="btn-calcular" class="btn btn-secondary">
                         <i class="bi bi-calculator"></i> Calcular Orçamento
                     </button>
-                    
+
                     <button type="button" id="btn-confirmar" class="btn" style="display: none;">
                         <i class="bi bi-check-circle"></i> Confirmar e Gerar Comprovante
                     </button>
@@ -634,7 +446,7 @@
     <div class="modal" id="comprovante-modal">
         <div class="modal-content comprovante-content">
             <span class="close-comprovante">&times;</span>
-            
+
             <!-- Cabeçalho do Comprovante -->
             <div class="comprovante-header">
                 <h2>N&G EXPRESS</h2>
@@ -642,7 +454,7 @@
                 <p class="comprovante-numero">Pedido #<span id="pedido-numero">0000</span></p>
                 <p><small>Data: <span id="pedido-data">--/--/---- --:--</span></small></p>
             </div>
-            
+
             <!-- Informações do Pedido -->
             <div class="comprovante-info">
                 <div class="info-section">
@@ -650,45 +462,45 @@
                     <p><strong>Nome:</strong> <span id="comprovante-nome">--</span></p>
                     <p><strong>Telefone:</strong> <span id="comprovante-telefone">--</span></p>
                 </div>
-                
+
                 <div class="info-section">
                     <h4><i class="bi bi-geo-alt"></i> COLETA</h4>
                     <p><span id="comprovante-coleta">--</span></p>
                 </div>
-                
+
                 <div class="info-section">
                     <h4><i class="bi bi-geo-alt-fill"></i> ENTREGA</h4>
                     <p><strong>Cidade:</strong> <span id="comprovante-cidade">--</span></p>
                     <p><strong>Endereço:</strong> <span id="comprovante-entrega">--</span></p>
                 </div>
-                
+
                 <div class="info-section">
                     <h4><i class="bi bi-box"></i> ENCOMENDA</h4>
                     <p><strong>Dimensões:</strong> <span id="comprovante-dimensoes">--</span></p>
                     <p><strong>Peso:</strong> <span id="comprovante-peso">--</span></p>
                     <p><strong>Descrição:</strong> <span id="comprovante-descricao">--</span></p>
                 </div>
-                
+
                 <div class="info-section destaque">
                     <h4><i class="bi bi-currency-dollar"></i> VALOR</h4>
                     <p class="valor-total">TOTAL: <span id="comprovante-valor">R$ 0,00</span></p>
                 </div>
-                
+
                 <div class="info-section instrucoes">
                     <h4><i class="bi bi-info-circle"></i> INSTRUÇÕES</h4>
                     <p>1. Imprima este comprovante</p>
-                    <p>2. Entregue ao motoboy/carro no momento da coleta</p>
+                    <p>2. Entregue ao motoboy/motorista no momento da coleta</p>
                     <p>3. Será redirecionado ao WhatsApp para confirmação</p>
                     <p>4. Aguarde nosso contato para agendar a coleta</p>
                 </div>
-                
+
                 <div class="info-section rodape">
                     <p><strong>N&G EXPRESS</strong></p>
                     <p>Rua Olga Bernardes Amorim, 101, Centro, Camboriú - SC</p>
                     <p>Telefone: (47) 9.9912-3260 | WhatsApp: (47) 9.9912-3260</p>
                 </div>
             </div>
-            
+
             <!-- Botões do Comprovante -->
             <div class="comprovante-buttons">
                 <button id="btn-imprimir" class="btn btn-secondary">
@@ -702,339 +514,7 @@
     </div>
 
     <script src="https://unpkg.com/swiper@8/swiper-bundle.min.js"></script>
-
-    <script>
-        // Tabela de preços baseada nas imagens (saindo de Itajaí)
-        const TABELA_PRECOS = {
-            'balneario-camboriu': { min: 20, max: 50 },
-            'camboriu': { min: 20, max: 50 },
-            'tijucas': { min: 15, max: 40 },
-            'brusque': { min: 80, max: 80 },
-            'gaspar': { min: 80, max: 80 },
-            'ilhota': { min: 80, max: 80 },
-            'blumenau': { min: 100, max: 150 },
-            'navegantes': { min: 30, max: 50 },
-            'penha': { min: 10, max: 10 },
-            'balneario-picarras': { min: 100, max: 100 },
-            'sao-joao-batista': { min: 120, max: 120 },
-            'barra-velha': { min: 120, max: 120 },
-            'guabiruba': { min: 100, max: 100 },
-            'bombas': { min: 120, max: 120 },
-            'bombinhas': { min: 120, max: 120 },
-            'porto-belo': { min: 70, max: 70 },
-            'itapema': { min: 40, max: 50 },
-            'florianopolis': { min: 150, max: 200 },
-            'joinville': { min: 150, max: 200 }
-        };
-
-        // Variáveis globais
-        let orcamentoAtual = null;
-
-        // Event Listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            // Abrir modal de orçamento
-            document.querySelectorAll('.open-orcamento, #quote-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    abrirModalOrcamento();
-                });
-            });
-
-            // Fechar modais
-            document.querySelectorAll('.close-modal, .close-comprovante').forEach(btn => {
-                btn.addEventListener('click', fecharModal);
-            });
-
-            // Fechar modal ao clicar fora
-            window.addEventListener('click', function(e) {
-                if (e.target.classList.contains('modal')) {
-                    fecharModal();
-                }
-            });
-
-            // Calcular orçamento
-            document.getElementById('btn-calcular').addEventListener('click', calcularOrcamento);
-
-            // Confirmar orçamento
-            document.getElementById('btn-confirmar').addEventListener('click', gerarComprovante);
-
-            // Imprimir comprovante
-            document.getElementById('btn-imprimir').addEventListener('click', function() {
-                window.print();
-            });
-
-            // Confirmar no WhatsApp
-            document.getElementById('btn-whatsapp').addEventListener('click', confirmarWhatsApp);
-        });
-
-        // Funções
-        function abrirModalOrcamento() {
-            document.getElementById('orcamento-modal').style.display = 'block';
-            document.body.style.overflow = 'hidden';
-            // Resetar formulário
-            document.getElementById('orcamento-resultado').style.display = 'none';
-            document.getElementById('btn-confirmar').style.display = 'none';
-        }
-
-        function fecharModal() {
-            document.querySelectorAll('.modal').forEach(modal => {
-                modal.style.display = 'none';
-            });
-            document.body.style.overflow = 'auto';
-        }
-
-        function calcularOrcamento() {
-            // Validar formulário
-            if (!validarFormulario()) {
-                mostrarToast('Preencha todos os campos obrigatórios!', 'error');
-                return;
-            }
-            
-            // Coletar dados
-            const cidade = document.getElementById('cidade-destino').value;
-            const comprimento = parseFloat(document.getElementById('comprimento').value);
-            const largura = parseFloat(document.getElementById('largura').value);
-            const altura = parseFloat(document.getElementById('altura').value);
-            const peso = parseFloat(document.getElementById('peso').value);
-            const cidadeNome = document.getElementById('cidade-destino').options[document.getElementById('cidade-destino').selectedIndex].text;
-            
-            // Calcular volume em cm³
-            const volumeCm3 = comprimento * largura * altura;
-            const volumeLitros = volumeCm3 / 1000;
-            
-            // Obter valor base da cidade
-            const cidadeInfo = TABELA_PRECOS[cidade];
-            if (!cidadeInfo) {
-                mostrarToast('Cidade não encontrada na tabela de preços!', 'error');
-                return;
-            }
-            
-            let valorBase = cidadeInfo.min;
-            
-            // Adicional por tamanho (volume)
-            let adicionalTamanho = 0;
-            if (volumeCm3 > 30000) { // Acima de 30x30x30cm = 27,000cm³
-                adicionalTamanho = Math.floor(volumeCm3 / 30000) * 10; // R$10 a cada 30x30x30cm adicional
-            }
-            
-            // Adicional por peso
-            let adicionalPeso = 0;
-            if (peso > 5) { // Acima de 5kg
-                adicionalPeso = Math.floor((peso - 5)) * 5; // R$5 a cada kg adicional
-            }
-            
-            // Calcular total
-            const total = valorBase + adicionalTamanho + adicionalPeso;
-            
-            // Limitar ao valor máximo da cidade
-            const totalFinal = Math.min(total, cidadeInfo.max);
-            
-            // Salvar orçamento atual
-            orcamentoAtual = {
-                nome: document.getElementById('cliente-nome').value,
-                telefone: document.getElementById('cliente-telefone').value,
-                coleta: document.getElementById('coleta-endereco').value,
-                cidade: cidadeNome,
-                cidadeId: cidade,
-                entrega: document.getElementById('entrega-endereco').value,
-                dimensoes: `${comprimento}x${largura}x${altura}cm`,
-                volume: volumeLitros,
-                peso: peso,
-                descricao: document.getElementById('descricao').value || 'Não informada',
-                valores: {
-                    base: valorBase,
-                    tamanho: adicionalTamanho,
-                    peso: adicionalPeso,
-                    total: totalFinal
-                },
-                data: new Date().toLocaleString('pt-BR')
-            };
-            
-            // Mostrar resultado
-            document.getElementById('base-valor').textContent = formatarMoeda(valorBase);
-            document.getElementById('tamanho-valor').textContent = formatarMoeda(adicionalTamanho);
-            document.getElementById('peso-valor').textContent = formatarMoeda(adicionalPeso);
-            document.getElementById('total-valor').textContent = formatarMoeda(totalFinal);
-            
-            document.getElementById('orcamento-resultado').style.display = 'block';
-            document.getElementById('btn-confirmar').style.display = 'block';
-            
-            // Rolar para o resultado
-            document.getElementById('orcamento-resultado').scrollIntoView({ behavior: 'smooth' });
-            
-            mostrarToast('Orçamento calculado com sucesso!', 'success');
-        }
-
-        function validarFormulario() {
-            const campos = [
-                'cliente-nome',
-                'cliente-telefone', 
-                'coleta-endereco',
-                'cidade-destino',
-                'entrega-endereco',
-                'comprimento',
-                'largura',
-                'altura',
-                'peso'
-            ];
-            
-            for (const campoId of campos) {
-                const campo = document.getElementById(campoId);
-                if (!campo.value.trim()) {
-                    campo.style.borderColor = '#f44336';
-                    campo.focus();
-                    return false;
-                } else {
-                    campo.style.borderColor = '';
-                }
-            }
-            
-            return true;
-        }
-
-        function formatarMoeda(valor) {
-            return `R$ ${valor.toFixed(2).replace('.', ',')}`;
-        }
-
-        function gerarComprovante() {
-            if (!orcamentoAtual) {
-                mostrarToast('Calcule o orçamento primeiro!', 'error');
-                return;
-            }
-            
-            // Gerar número de pedido
-            const numeroPedido = 'NG' + Date.now().toString().slice(-6);
-            
-            // Preencher comprovante
-            document.getElementById('pedido-numero').textContent = numeroPedido;
-            document.getElementById('pedido-data').textContent = orcamentoAtual.data;
-            document.getElementById('comprovante-nome').textContent = orcamentoAtual.nome;
-            document.getElementById('comprovante-telefone').textContent = orcamentoAtual.telefone;
-            document.getElementById('comprovante-coleta').textContent = orcamentoAtual.coleta;
-            document.getElementById('comprovante-cidade').textContent = orcamentoAtual.cidade;
-            document.getElementById('comprovante-entrega').textContent = orcamentoAtual.entrega;
-            document.getElementById('comprovante-dimensoes').textContent = orcamentoAtual.dimensoes;
-            document.getElementById('comprovante-peso').textContent = `${orcamentoAtual.peso}kg`;
-            document.getElementById('comprovante-descricao').textContent = orcamentoAtual.descricao;
-            document.getElementById('comprovante-valor').textContent = formatarMoeda(orcamentoAtual.valores.total);
-            
-            // Adicionar número ao objeto
-            orcamentoAtual.numeroPedido = numeroPedido;
-            
-            // Fechar modal de orçamento e abrir comprovante
-            fecharModal();
-            document.getElementById('comprovante-modal').style.display = 'block';
-            
-            mostrarToast('Comprovante gerado! Imprima e confirme no WhatsApp.', 'success');
-        }
-
-        function confirmarWhatsApp() {
-            if (!orcamentoAtual) return;
-            
-            // Formatar mensagem para WhatsApp
-            const mensagem = `*PEDIDO CONFIRMADO - N&G EXPRESS*%0A%0A` +
-                            `*Pedido:* ${orcamentoAtual.numeroPedido}%0A` +
-                            `*Cliente:* ${orcamentoAtual.nome}%0A` +
-                            `*Telefone:* ${orcamentoAtual.telefone}%0A` +
-                            `*Coleta (Itajaí):* ${orcamentoAtual.coleta}%0A` +
-                            `*Entrega (${orcamentoAtual.cidade}):* ${orcamentoAtual.entrega}%0A` +
-                            `*Encomenda:* ${orcamentoAtual.dimensoes} - ${orcamentoAtual.peso}kg%0A` +
-                            `*Descrição:* ${orcamentoAtual.descricao}%0A` +
-                            `*Valor Total:* ${formatarMoeda(orcamentoAtual.valores.total)}%0A%0A` +
-                            `*Data/Hora:* ${orcamentoAtual.data}%0A` +
-                            `_Este pedido foi gerado automaticamente pelo site_`;
-            
-            // Número da N&G EXPRESS
-            const telefoneWhatsApp = '5547999123260';
-            
-            // Redirecionar para WhatsApp
-            window.open(`https://wa.me/${telefoneWhatsApp}?text=${mensagem}`, '_blank');
-            
-            // Fechar modal
-            fecharModal();
-            
-            mostrarToast('Redirecionando para WhatsApp...', 'success');
-        }
-
-        function mostrarToast(mensagem, tipo = 'success') {
-            const toastContainer = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${tipo}`;
-            toast.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <i class="bi ${tipo === 'success' ? 'bi-check-circle' : 'bi-exclamation-circle'}"></i>
-                    <span>${mensagem}</span>
-                </div>
-            `;
-            
-            toastContainer.appendChild(toast);
-            
-            // Remover após 5 segundos
-            setTimeout(() => {
-                toast.remove();
-            }, 5000);
-        }
-
-        // Inicializar Swiper
-        const swiper = new Swiper('.hero-swiper', {
-            loop: true,
-            autoplay: {
-                delay: 5000,
-                disableOnInteraction: false,
-            },
-            pagination: {
-                el: '.swiper-pagination',
-                clickable: true,
-            },
-        });
-
-        // Back to Top
-        const backToTop = document.querySelector('.back-to-top');
-        window.addEventListener('scroll', function() {
-            if (window.pageYOffset > 300) {
-                backToTop.style.display = 'block';
-            } else {
-                backToTop.style.display = 'none';
-            }
-        });
-
-        backToTop.addEventListener('click', function() {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        });
-
-        // Mobile menu
-        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-        const navLinks = document.querySelector('.nav-links');
-
-        mobileMenuBtn.addEventListener('click', function() {
-            navLinks.classList.toggle('active');
-        });
-
-        // Smooth scroll para links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                const targetId = this.getAttribute('href');
-                if (targetId === '#') return;
-                
-                const targetElement = document.querySelector(targetId);
-                if (targetElement) {
-                    window.scrollTo({
-                        top: targetElement.offsetTop - 80,
-                        behavior: 'smooth'
-                    });
-                    
-                    // Fechar menu mobile se aberto
-                    if (navLinks.classList.contains('active')) {
-                        navLinks.classList.remove('active');
-                    }
-                }
-            });
-        });
-    </script>
+    <script src="./js/main.js"></script>
 </body>
 
 </html>
