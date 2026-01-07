@@ -167,6 +167,109 @@
     animation: slideUp 0.5s ease;
 }
 
+/* Estilos para impressão do comprovante */
+@media print {
+    @page {
+        size: A4;
+        margin: 15mm;
+    }
+    
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .modal {
+        position: static;
+        display: block !important;
+        background: white;
+    }
+    
+    .modal-content {
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+        border: none;
+        max-width: 100%;
+        width: 100%;
+    }
+    
+    .close-modal, 
+    .close-comprovante,
+    .no-print,
+    .form-buttons,
+    .comprovante-buttons {
+        display: none !important;
+    }
+    
+    .comprovante-header {
+        text-align: center;
+        padding: 20px 0;
+        border-bottom: 2px solid var(--primary-color);
+        margin-bottom: 20px;
+        color: black;
+        background: white !important;
+    }
+    
+    .comprovante-header h2 {
+        color: black !important;
+    }
+    
+    .comprovante-numero {
+        background: #f0f0f0 !important;
+        color: black !important;
+        border: 1px solid #ccc;
+    }
+    
+    .info-section {
+        page-break-inside: avoid;
+        break-inside: avoid;
+        border: 1px solid #ddd !important;
+        margin-bottom: 15px;
+    }
+    
+    h2, h3, h4 {
+        page-break-after: avoid;
+    }
+    
+    .valor-total {
+        page-break-before: avoid;
+    }
+    
+    .instrucoes {
+        page-break-before: always;
+    }
+}
+
+/* Estilo para o select de local de coleta */
+#local-coleta {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23FF6B00' class='bi bi-chevron-down' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+/* Estilo para o container do endereço detalhado */
+#endereco-detalhado-container {
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 @keyframes slideUp {
     from {
         opacity: 0;

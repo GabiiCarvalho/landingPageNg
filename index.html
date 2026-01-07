@@ -327,43 +327,37 @@
                     </div>
                 </div>
 
-                <!-- Endereços -->
+                <!-- Endereço de Coleta -->
                 <div class="form-section">
-                    <h3><i class="bi bi-geo-alt"></i> Endereços</h3>
+                    <h3><i class="bi bi-geo-alt"></i> Local de Coleta</h3>
                     <div class="form-group">
-                        <label for="coleta-endereco">Endereço de Coleta </label>
-                        <input type="text" id="coleta-endereco" name="coleta-endereco"
-                            placeholder="Rua, número, bairro - Itajaí/SC" required value="Itajaí/SC">
+                        <label for="local-coleta">Cidade de Coleta*</label>
+                        <select id="local-coleta" name="local-coleta" required>
+                            <option value="" disabled selected>Selecione o local de coleta</option>
+                        </select>
                     </div>
 
+                    <div id="endereco-detalhado-container" style="display: none;">
+                        <div class="form-group">
+                            <label for="endereco-detalhado">Endereço Completo de Coleta*</label>
+                            <input type="text" id="endereco-detalhado" name="endereco-detalhado"
+                                placeholder="Rua, número, bairro, complemento" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Endereço de Entrega -->
+                <div class="form-section">
+                    <h3><i class="bi bi-geo-alt-fill"></i> Endereço de Entrega</h3>
                     <div class="form-group">
-                        <label for="cidade-destino">Cidade de Destino</label>
+                        <label for="cidade-destino">Cidade de Destino*</label>
                         <select id="cidade-destino" name="cidade-destino" required>
                             <option value="" disabled selected>Selecione a cidade</option>
-                            <option value="balneario-camboriu">Balneário Camboriú</option>
-                            <option value="camboriu">Camboriú</option>
-                            <option value="tijucas">Tijucas</option>
-                            <option value="brusque">Brusque</option>
-                            <option value="gaspar">Gaspar</option>
-                            <option value="ilhota">Ilhota</option>
-                            <option value="blumenau">Blumenau</option>
-                            <option value="navegantes">Navegantes</option>
-                            <option value="penha">Penha</option>
-                            <option value="balneario-picarras">Balneário Piçarras</option>
-                            <option value="sao-joao-batista">São João Batista</option>
-                            <option value="barra-velha">Barra Velha</option>
-                            <option value="guabiruba">Guabiruba</option>
-                            <option value="bombas">Bombas</option>
-                            <option value="bombinhas">Bombinhas</option>
-                            <option value="porto-belo">Porto Belo</option>
-                            <option value="itapema">Itapema</option>
-                            <option value="florianopolis">Florianópolis</option>
-                            <option value="joinville">Joinville</option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label for="entrega-endereco">Endereço de Entrega</label>
+                        <label for="entrega-endereco">Endereço Completo de Entrega*</label>
                         <input type="text" id="entrega-endereco" name="entrega-endereco"
                             placeholder="Rua, número, bairro, complemento" required>
                     </div>
@@ -400,8 +394,8 @@
 
                     <div class="form-group">
                         <label for="descricao">Descrição da Encomenda</label>
-                        <textarea id="descricao" name="descricao" placeholder="Ex: Documentos, pacote, eletrônico, etc."
-                            rows="2"></textarea>
+                        <textarea id="descricao" name="descricao"
+                            placeholder="Ex: Documentos, pacote, eletrônico, caixa de sapato, etc." rows="3"></textarea>
                     </div>
                 </div>
 
