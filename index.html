@@ -449,49 +449,57 @@
                 <p><small>Data: <span id="pedido-data">--/--/---- --:--</span></small></p>
             </div>
 
-            <!-- Informações do Pedido -->
+            <!-- Informações do Pedido - ESTRUTURA OTIMIZADA PARA IMPRESSÃO -->
             <div class="comprovante-info">
-                <div class="info-section">
+                <!-- Cliente e Contato -->
+                <div class="info-section cliente-section">
                     <h4><i class="bi bi-person"></i> CLIENTE</h4>
                     <p><strong>Nome:</strong> <span id="comprovante-nome">--</span></p>
                     <p><strong>Telefone:</strong> <span id="comprovante-telefone">--</span></p>
                 </div>
 
-                <div class="info-section">
+                <!-- Coleta -->
+                <div class="info-section coleta-section">
                     <h4><i class="bi bi-geo-alt"></i> COLETA</h4>
                     <p><span id="comprovante-coleta">--</span></p>
                 </div>
 
-                <div class="info-section">
+                <!-- Entrega -->
+                <div class="info-section entrega-section">
                     <h4><i class="bi bi-geo-alt-fill"></i> ENTREGA</h4>
                     <p><strong>Cidade:</strong> <span id="comprovante-cidade">--</span></p>
                     <p><strong>Endereço:</strong> <span id="comprovante-entrega">--</span></p>
                 </div>
 
-                <div class="info-section">
+                <!-- Encomenda -->
+                <div class="info-section encomenda-section">
                     <h4><i class="bi bi-box"></i> ENCOMENDA</h4>
                     <p><strong>Dimensões:</strong> <span id="comprovante-dimensoes">--</span></p>
                     <p><strong>Peso:</strong> <span id="comprovante-peso">--</span></p>
                     <p><strong>Descrição:</strong> <span id="comprovante-descricao">--</span></p>
                 </div>
 
+                <!-- Valor Total - SEÇÃO DESTAQUE -->
                 <div class="info-section destaque">
-                    <h4><i class="bi bi-currency-dollar"></i> VALOR</h4>
+                    <h4><i class="bi bi-currency-dollar"></i> VALOR TOTAL</h4>
                     <p class="valor-total">TOTAL: <span id="comprovante-valor">R$ 0,00</span></p>
                 </div>
 
+                <!-- Instruções -->
                 <div class="info-section instrucoes">
                     <h4><i class="bi bi-info-circle"></i> INSTRUÇÕES</h4>
                     <p>1. Imprima este comprovante</p>
-                    <p>2. Entregue ao motoboy/motorista no momento da coleta</p>
+                    <p>2. Entregue ao motoboy/carro no momento da coleta</p>
                     <p>3. Será redirecionado ao WhatsApp para confirmação</p>
                     <p>4. Aguarde nosso contato para agendar a coleta</p>
                 </div>
 
+                <!-- Rodapé -->
                 <div class="info-section rodape">
                     <p><strong>N&G EXPRESS</strong></p>
                     <p>Rua Olga Bernardes Amorim, 101, Centro, Camboriú - SC</p>
                     <p>Telefone: (47) 9.9912-3260 | WhatsApp: (47) 9.9912-3260</p>
+                    <p>Email: comercial.ngexpress@gmail.com</p>
                 </div>
             </div>
 
