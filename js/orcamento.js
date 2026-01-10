@@ -381,105 +381,139 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // HTML otimizado para impressão
         janelaImpressao.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Comprovante N&G EXPRESS</title>
-                <meta charset="UTF-8">
-                <style>
-                    @media print {
-                        @page {
-                            size: A4;
-                            margin: 15mm;
-                        }
-                        body {
-                            font-family: Arial, sans-serif;
-                            margin: 0;
-                            padding: 0;
-                        }
-                        .no-print {
-                            display: none !important;
-                        }
-                        .comprovante-content {
-                            max-width: 100%;
-                            margin: 0;
-                            padding: 0;
-                            box-shadow: none;
-                            border: none;
-                        }
-                        .info-section {
-                            page-break-inside: avoid;
-                            break-inside: avoid;
-                        }
-                        h2, h3, h4 {
-                            page-break-after: avoid;
-                        }
-                        .comprovante-header {
-                            text-align: center;
-                            padding: 20px 0;
-                            border-bottom: 2px solid #007bff;
-                            margin-bottom: 20px;
-                        }
-                        .comprovante-numero {
-                            background: #007bff;
-                            color: white;
-                            padding: 5px 15px;
-                            border-radius: 20px;
-                            font-weight: bold;
-                            margin: 10px 0;
-                            display: inline-block;
-                        }
-                        .info-section {
-                            padding: 15px;
-                            margin-bottom: 15px;
-                            border-left: 3px solid #ddd;
-                            page-break-inside: avoid;
-                        }
-                        .valor-total {
-                            font-size: 1.4em;
-                            text-align: center;
-                            margin: 20px 0;
-                            color: #007bff;
-                            font-weight: bold;
-                            page-break-before: avoid;
-                        }
-                        .instrucoes {
-                            page-break-before: always;
-                        }
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Recibo N&G EXPRESS</title>
+            <meta charset="UTF-8">
+            <style>
+                @media print {
+                    @page {
+                        size: 80mm 297mm;
+                        margin: 0;
+                        padding: 0;
                     }
-                </style>
-            </head>
-            <body>
-                ${conteudoComprovante}
-            </body>
-            </html>
-        `);
+                    body {
+                        font-family: 'Courier New', monospace;
+                        font-size: 12px;
+                        width: 80mm;
+                        margin: 0;
+                        padding: 5mm;
+                        white-space: pre-wrap;
+                        word-wrap: break-word;
+                    }
+                    .no-print {
+                        display: none !important;
+                    }
+                    h1, h2, h3 {
+                        text-align: center;
+                        margin: 5px 0;
+                    }
+                    hr {
+                        border: none;
+                        border-top: 1px dashed #000;
+                        margin: 10px 0;
+                    }
+                }
+                @media screen {
+                    body {
+                        font-family: 'Courier New', monospace;
+                        font-size: 12px;
+                        background: #f5f5f5;
+                        padding: 20px;
+                    }
+                    pre {
+                        background: white;
+                        padding: 20px;
+                        border: 1px solid #ddd;
+                        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                        max-width: 80mm;
+                        margin: 0 auto;
+                        white-space: pre-wrap;
+                        word-wrap: break-word;
+                    }
+                    .print-button {
+                        display: block;
+                        margin: 20px auto;
+                        padding: 10px 20px;
+                        background: #007bff;
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 16px;
+                    }
+                    .print-button:hover {
+                        background: #0056b3;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <pre>${receiptContent}</pre>
+            <button class="print-button" onclick="window.print()">Imprimir Recibo</button>
+            <button class="print-button" onclick="window.close()" style="background: #6c757d;">Fechar</button>
+        </body>
+        </html>
+    `);
 
         janelaImpressao.document.close();
 
-        // Aguardar o carregamento e imprimir
-        janelaImpressao.onload = function () {
-            janelaImpressao.focus();
+        
+        setTimeout(() => {
             janelaImpressao.print();
-            janelaImpressao.onafterprint = function () {
-                janelaImpressao.close();
-            };
-        };
+        }, 500);
     }
 
     function confirmarWhatsApp() {
         if (!orcamentoAtual) return;
 
         // Mensagem simplificada
-        const mensagem = `✅ *PEDIDO CONFIRMADO - N&G EXPRESS*%0A%0A` +
-            `👤 ${orcamentoAtual.nome} 📱 ${orcamentoAtual.telefone}%0A%0A` +
-            `📍 *RETIRADA:*%0A${orcamentoAtual.localColeta}%0A${orcamentoAtual.enderecoColeta}%0A%0A` +
-            `🎯 *ENTREGA:*%0A${orcamentoAtual.cidadeDestino}%0A${orcamentoAtual.enderecoEntrega}%0A%0A` +
-            `📦 ${orcamentoAtual.dimensoes} / ${orcamentoAtual.peso}kg%0A` +
-            `📝 ${orcamentoAtual.descricao}%0A%0A` +
-            `💰 ${formatarMoeda(orcamentoAtual.valores.total)}%0A%0A` +
-            `🔢 Pedido: ${orcamentoAtual.numeroPedido}%0A` +
-            `📅 ${orcamentoAtual.data}`;
+        const receiptContent = `
+        ========================
+              N&G EXPRESS
+        ========================
+
+        Cliente: ${orcamentoAtual.nome}
+        Telefone: ${orcamentoAtual.telefone}
+        Data: ${orcamentoAtual.data}
+        Nº Pedido: ${orcamentoAtual.numeroPedido}
+        -------------------------
+        COLETA:
+
+        ${orcamentoAtual.localColeta}
+        ${orcamentoAtual.enderecoColeta}
+        -------------------------
+        ENTREGA:
+
+        ${orcamentoAtual.cidadeDestino}
+        ${orcamentoAtual.enderecoEntrega}    
+        -------------------------
+        ENCOMENDA:
+
+        Dimensões: ${orcamentoAtual.dimensoes}
+        Volume: ${orcamentoAtual.volume}
+        Peso: ${orcamentoAtual.peso}Kg
+        Descrição: ${orcamentoAtual.descricao}
+        -------------------------
+        VALORES:
+
+        Base: R$ ${orcamentoAtual.valores.base.toFixed(2)}
+        Adicional tamanho: R$ ${orcamentoAtual.valores.tamanho.toFixed(2)}
+        Adicional peso: R$ ${orcamentoAtual.valores.peso.toFixed(2)} 
+        ------------------------
+
+        TOTAL: R$ ${orcamentoAtual.valores.total.toFixed(2)}
+
+        ==========================
+
+        OBRIGADO PELA PREFERÊNCIA!
+        Aguarde nosso contato para
+        confirmação da coleta.
+        ==========================
+        `
+
+
 
         const telefoneWhatsApp = '5547999123260';
         window.open(`https://wa.me/${telefoneWhatsApp}?text=${mensagem}`, '_blank');
