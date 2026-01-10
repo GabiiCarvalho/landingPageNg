@@ -1,4 +1,4 @@
-// Sistema de orçamento - VERSÃO CORRIGIDA E FUNCIONAL
+// Sistema de orçamento - VERSÃO CORRIGIDA (APENAS VALOR TOTAL)
 document.addEventListener('DOMContentLoaded', function () {
     console.log('Script de orçamento carregado com sucesso!');
 
@@ -461,7 +461,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (localColetaId === 'balneario-camboriu' && cidadeDestinoId === 'camboriu') {
             valorBase = 20;
             if (bairroEntregaInfo.tipoBairro === 'especial') {
-                adicionalBairro = 35; // CORRIGIDO: 30 para 35
+                adicionalBairro = 35;
                 isBairroEspecial = true;
                 tipoBairroEspecial = 'camboriu';
             }
@@ -477,11 +477,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         // 3. Camboriú para Camboriú - CORREÇÃO AQUI
         else if (localColetaId === 'camboriu' && cidadeDestinoId === 'camboriu') {
-            valorBase = 15; // Base sempre 15 para Camboriú → Camboriú
+            valorBase = 15;
 
-            // Se o bairro de entrega é especial, adiciona R$ 30
             if (bairroEntregaInfo.tipoBairro === 'especial') {
-                adicionalBairro = 30; // CORREÇÃO: 20 para 30
+                adicionalBairro = 30;
                 isBairroEspecial = true;
                 tipoBairroEspecial = 'camboriu';
             }
@@ -515,17 +514,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         // 7. Outras cidades
         else {
-            // Usar valor da tabela de preços
             valorBase = TABELA_PRECOS[cidadeDestinoId] ? TABELA_PRECOS[cidadeDestinoId].min : 0;
 
-            // Verificar se é bairro especial de Camboriú
             if (cidadeDestinoId === 'camboriu' && bairroEntregaInfo.tipoBairro === 'especial') {
                 adicionalBairro = 35;
                 isBairroEspecial = true;
                 tipoBairroEspecial = 'camboriu';
             }
 
-            // Verificar se é bairro especial de Itajaí
             if (cidadeDestinoId === 'itajai' && bairroEntregaInfo.tipoBairro === 'especial') {
                 adicionalBairro = 20;
                 isBairroEspecial = true;
@@ -542,23 +538,19 @@ document.addEventListener('DOMContentLoaded', function () {
     function calcularOrcamento() {
         console.log('Iniciando cálculo do orçamento...');
 
-        // Validar formulário
         if (!validarFormulario()) {
             console.log('Formulário inválido');
             return;
         }
 
-        // Coletar dados do formulário
         const localColetaId = document.getElementById('local-coleta').value;
         const localColetaNome = document.getElementById('local-coleta').options[document.getElementById('local-coleta').selectedIndex].text;
         const cidadeDestinoId = document.getElementById('cidade-destino').value;
         const cidadeDestinoNome = document.getElementById('cidade-destino').options[document.getElementById('cidade-destino').selectedIndex].text;
 
-        // Obter informações dos bairros
         const bairroColetaInfo = obterValorBairroSelecionado('bairro-coleta', localColetaId);
         const bairroEntregaInfo = obterValorBairroSelecionado('bairro-entrega', cidadeDestinoId);
 
-        // Coletar dimensões
         const comprimento = parseFloat(document.getElementById('comprimento').value) || 0;
         const largura = parseFloat(document.getElementById('largura').value) || 0;
         const altura = parseFloat(document.getElementById('altura').value) || 0;
@@ -569,31 +561,24 @@ document.addEventListener('DOMContentLoaded', function () {
             bairroColetaInfo, bairroEntregaInfo
         });
 
-        // Calcular valor base
         const { valorBase, adicionalBairro, isBairroEspecial, tipoBairroEspecial } =
             calcularValorBase(localColetaId, cidadeDestinoId, bairroColetaInfo, bairroEntregaInfo);
 
-        // Calcular volume
         const volumeCm3 = comprimento * largura * altura;
-        const volumeLitros = volumeCm3 / 1000;
 
-        // Adicional por tamanho (somente se não for bairro especial)
         let adicionalTamanho = 0;
         if (!isBairroEspecial && volumeCm3 > 30000) {
             adicionalTamanho = Math.floor(volumeCm3 / 30000) * 10;
         }
 
-        // Adicional por peso (somente se não for bairro especial)
         let adicionalPeso = 0;
         if (!isBairroEspecial && peso > 5) {
             adicionalPeso = Math.floor((peso - 5)) * 5;
         }
 
-        // Obter valor máximo da tabela
         const cidadeInfo = TABELA_PRECOS[cidadeDestinoId];
         const valorMaximo = cidadeInfo ? cidadeInfo.max : 999;
 
-        // Calcular total
         const total = valorBase + adicionalTamanho + adicionalPeso + adicionalBairro;
         const totalFinal = Math.min(total, valorMaximo);
 
@@ -602,7 +587,6 @@ document.addEventListener('DOMContentLoaded', function () {
             total, totalFinal, valorMaximo
         });
 
-        // Salvar orçamento atual
         orcamentoAtual = {
             nome: document.getElementById('cliente-nome').value,
             telefone: document.getElementById('cliente-telefone').value,
@@ -615,7 +599,6 @@ document.addEventListener('DOMContentLoaded', function () {
             enderecoEntrega: document.getElementById('entrega-endereco').value,
             bairroEntrega: bairroEntregaInfo.nomeBairro,
             dimensoes: `${comprimento}x${largura}x${altura}cm`,
-            volume: volumeLitros.toFixed(1),
             peso: peso.toFixed(1),
             descricao: document.getElementById('descricao').value || 'Não informada',
             valores: {
@@ -627,114 +610,117 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             isBairroEspecial: isBairroEspecial,
             tipoBairroEspecial: tipoBairroEspecial,
-            tipoBairroEntrega: bairroEntregaInfo.tipoBairro,
-            tipoBairroColeta: bairroColetaInfo.tipoBairro,
             data: new Date().toLocaleString('pt-BR'),
             timestamp: Date.now()
         };
 
-        // Exibir resultado
-        exibirResultadoOrcamento(valorBase, adicionalTamanho, adicionalPeso, adicionalBairro, totalFinal, tipoBairroEspecial);
+        // Exibir APENAS o valor total
+        exibirResultadoOrcamentoAPENASValorTotal(totalFinal);
 
-        // Mostrar toast de sucesso
-        if (isBairroEspecial) {
-            let mensagem = '';
-            if (tipoBairroEspecial === 'itajai') {
-                mensagem = 'Orçamento calculado com adicional para bairro especial de Itajaí!';
-            } else if (tipoBairroEspecial === 'camboriu') {
-                mensagem = 'Orçamento calculado com adicional para bairro distante de Camboriú!';
-            }
-            mostrarToast(mensagem, 'info');
-        } else {
-            mostrarToast('Orçamento calculado com sucesso!', 'success');
-        }
+        // Mostrar toast sem mencionar adicionais
+        mostrarToast('Orçamento calculado com sucesso!', 'success');
     }
 
-    // FUNÇÃO CORRIGIDA: exibirResultadoOrcamento
-    function exibirResultadoOrcamento(valorBase, adicionalTamanho, adicionalPeso, adicionalBairro, totalFinal, tipoBairroEspecial) {
-        // Criar elemento de valores detalhados se não existir
-        let valoresDetalhes = document.querySelector('.valores-detalhes');
-        if (!valoresDetalhes) {
-            valoresDetalhes = document.createElement('div');
-            valoresDetalhes.className = 'valores-detalhes';
-            const orcamentoResultado = document.getElementById('orcamento-resultado');
-            if (orcamentoResultado) {
-                const resultadoContent = orcamentoResultado.querySelector('.resultado-content');
-                if (resultadoContent) {
-                    resultadoContent.appendChild(valoresDetalhes);
-                }
-            }
-        }
-
-        // Limpar valores anteriores
-        valoresDetalhes.innerHTML = '';
-
-        // Criar estrutura de valores
-        const valorBaseHTML = `
-            <div class="resultado-item">
-                <span>Valor Base:</span>
-                <span>${formatarMoeda(valorBase)}</span>
-            </div>
-        `;
-        valoresDetalhes.innerHTML = valorBaseHTML;
-
-        // Adicionar adicionais se houver
-        if (adicionalTamanho > 0) {
-            const tamanhoItem = document.createElement('div');
-            tamanhoItem.className = 'resultado-item';
-            tamanhoItem.innerHTML = `
-                <span>Adicional Tamanho:</span>
-                <span>${formatarMoeda(adicionalTamanho)}</span>
-            `;
-            valoresDetalhes.appendChild(tamanhoItem);
-        }
-
-        if (adicionalPeso > 0) {
-            const pesoItem = document.createElement('div');
-            pesoItem.className = 'resultado-item';
-            pesoItem.innerHTML = `
-                <span>Adicional Peso:</span>
-                <span>${formatarMoeda(adicionalPeso)}</span>
-            `;
-            valoresDetalhes.appendChild(pesoItem);
-        }
-
-        if (adicionalBairro > 0) {
-            const bairroItem = document.createElement('div');
-            bairroItem.className = 'resultado-item';
-            const label = tipoBairroEspecial === 'itajai' ? 'Adicional Bairro (Itajaí):' : 'Adicional Bairro (Camboriú):';
-            bairroItem.innerHTML = `
-                <span>${label}</span>
-                <span>${formatarMoeda(adicionalBairro)}</span>
-            `;
-            valoresDetalhes.appendChild(bairroItem);
-        }
-
-        // Adicionar total
-        const totalItem = document.createElement('div');
-        totalItem.className = 'resultado-item total';
-        totalItem.innerHTML = `
-            <span><strong>VALOR TOTAL:</strong></span>
-            <span id="total-valor"><strong>${formatarMoeda(totalFinal)}</strong></span>
-        `;
-        valoresDetalhes.appendChild(totalItem);
-
-        // Mostrar resultados
+    // NOVA FUNÇÃO: Exibir APENAS o valor total
+    function exibirResultadoOrcamentoAPENASValorTotal(totalFinal) {
+        console.log('Exibindo APENAS valor total:', totalFinal);
+        
         const orcamentoResultado = document.getElementById('orcamento-resultado');
-        const btnConfirmar = document.getElementById('btn-confirmar');
-
-        if (orcamentoResultado) {
-            orcamentoResultado.style.display = 'block';
-            // Scroll para resultado
-            setTimeout(() => {
-                orcamentoResultado.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }, 100);
+        if (!orcamentoResultado) {
+            console.error('Elemento #orcamento-resultado não encontrado!');
+            return;
         }
-
+        
+        // Limpar completamente e criar APENAS o valor total
+        orcamentoResultado.innerHTML = `
+            <div style="
+                background: white;
+                border-radius: 15px;
+                padding: 30px;
+                margin: 20px 0;
+                text-align: center;
+                border: 3px solid #28a745;
+                box-shadow: 0 10px 30px rgba(40, 167, 69, 0.15);
+                animation: fadeIn 0.5s ease-out;
+            ">
+                <div style="margin-bottom: 20px;">
+                    <i class="bi bi-check-circle-fill" style="font-size: 48px; color: #28a745;"></i>
+                </div>
+                
+                <h3 style="color: #333; margin-bottom: 15px; font-size: 20px;">
+                    <i class="bi bi-calculator"></i> ORÇAMENTO CALCULADO
+                </h3>
+                
+                <div style="
+                    font-size: 16px;
+                    color: #666;
+                    margin-bottom: 25px;
+                    padding: 15px;
+                    background: #f8f9fa;
+                    border-radius: 10px;
+                    border-left: 4px solid #28a745;
+                ">
+                    Valor total para entrega
+                </div>
+                
+                <div id="total-valor" style="
+                    font-size: 48px;
+                    font-weight: bold;
+                    color: #28a745;
+                    margin: 20px 0;
+                    padding: 20px;
+                    background: linear-gradient(135deg, #f8fff9 0%, #e8f5e9 100%);
+                    border-radius: 12px;
+                    border: 2px solid #c3e6cb;
+                ">
+                    ${formatarMoeda(totalFinal)}
+                </div>
+                
+                <div style="
+                    font-size: 14px;
+                    color: #6c757d;
+                    margin-top: 15px;
+                    padding: 10px;
+                    background: #fff;
+                    border-radius: 8px;
+                    border: 1px solid #e9ecef;
+                ">
+                    <i class="bi bi-info-circle"></i> Valor final para o cliente
+                </div>
+            </div>
+            
+            <style>
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+            </style>
+        `;
+        
+        orcamentoResultado.style.display = 'block';
+        
+        const btnConfirmar = document.getElementById('btn-confirmar');
         if (btnConfirmar) {
             btnConfirmar.style.display = 'block';
         }
+        
+        setTimeout(() => {
+            orcamentoResultado.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+        }, 100);
+        
+        console.log('APENAS valor total exibido:', totalFinal);
     }
+
+    // REMOVA COMPLETAMENTE a função antiga exibirResultadoOrcamento
 
     // FUNÇÃO CORRIGIDA: validarFormulario
     function validarFormulario() {
@@ -772,7 +758,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // Validação de bairro para cidades que têm bairros
         const localColetaId = document.getElementById('local-coleta').value;
         const bairroColetaContainer = document.getElementById('bairro-coleta-container');
         const bairroColetaSelect = document.getElementById('bairro-coleta');
@@ -799,7 +784,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return false;
         }
 
-        // Validação de telefone
         const telefone = document.getElementById('cliente-telefone').value;
         const telefoneDigits = telefone.replace(/\D/g, '');
         if (telefoneDigits.length < 10) {
@@ -809,7 +793,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return false;
         }
 
-        // Validações de dimensões
         const comprimento = parseFloat(document.getElementById('comprimento').value) || 0;
         const largura = parseFloat(document.getElementById('largura').value) || 0;
         const altura = parseFloat(document.getElementById('altura').value) || 0;
@@ -833,7 +816,6 @@ document.addEventListener('DOMContentLoaded', function () {
     window.mostrarToast = function (mensagem, tipo = 'success') {
         console.log(`Toast [${tipo}]: ${mensagem}`);
 
-        // Remover toasts antigos
         const oldToasts = document.querySelectorAll('.custom-toast');
         oldToasts.forEach(toast => {
             if (toast.parentNode) {
@@ -841,7 +823,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // Criar toast
         const toast = document.createElement('div');
         toast.className = `custom-toast toast-${tipo}`;
         toast.style.cssText = `
@@ -871,7 +852,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         document.body.appendChild(toast);
 
-        // Adicionar animação CSS se não existir
         if (!document.querySelector('#toast-animation-style')) {
             const style = document.createElement('style');
             style.id = 'toast-animation-style';
@@ -900,7 +880,6 @@ document.addEventListener('DOMContentLoaded', function () {
             document.head.appendChild(style);
         }
 
-        // Remover após 5 segundos
         setTimeout(() => {
             if (toast.parentNode) {
                 toast.style.animation = 'toastSlideOut 0.3s ease-out';
@@ -923,14 +902,11 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Gerar número de pedido
         numeroPedidoGerado = 'NG' + Date.now().toString().slice(-6);
         orcamentoAtual.numeroPedido = numeroPedidoGerado;
 
-        // CORREÇÃO: Preencher os dados do comprovante antes de abrir o modal
         preencherComprovanteModal();
 
-        // Fechar modal de orçamento e abrir comprovante
         fecharModal();
         const comprovanteModal = document.getElementById('comprovante-modal');
         if (comprovanteModal) {
@@ -940,59 +916,23 @@ document.addEventListener('DOMContentLoaded', function () {
         mostrarToast('Comprovante gerado! Imprima e confirme no WhatsApp.', 'success');
     }
 
-    // NOVA FUNÇÃO: Preencher modal do comprovante
+    // FUNÇÃO CORRIGIDA: Preencher modal do comprovante
     function preencherComprovanteModal() {
         if (!orcamentoAtual || !orcamentoAtual.numeroPedido) return;
 
-        const comprovanteContent = document.getElementById('comprovante-content');
-        if (!comprovanteContent) return;
-
-        // Criar conteúdo do comprovante
-        const content = `
-            <div class="comprovante-preview">
-                <div class="header">
-                    <h3>🚚 N&G EXPRESS 🚚</h3>
-                    <div><strong>Pedido:</strong> ${orcamentoAtual.numeroPedido}</div>
-                    <div><strong>Data:</strong> ${orcamentoAtual.data}</div>
-                </div>
-                
-                <div class="section">
-                    <h4>Cliente</h4>
-                    <div><strong>Nome:</strong> ${orcamentoAtual.nome}</div>
-                    <div><strong>Telefone:</strong> ${orcamentoAtual.telefone}</div>
-                </div>
-                
-                <div class="section">
-                    <h4>Coleta</h4>
-                    <div><strong>Local:</strong> ${orcamentoAtual.localColeta}</div>
-                    ${orcamentoAtual.bairroColeta ? `<div><strong>Bairro:</strong> ${orcamentoAtual.bairroColeta}</div>` : ''}
-                    <div><strong>Endereço:</strong> ${orcamentoAtual.enderecoColeta}</div>
-                </div>
-                
-                <div class="section">
-                    <h4>Entrega</h4>
-                    <div><strong>Cidade:</strong> ${orcamentoAtual.cidadeDestino}</div>
-                    ${orcamentoAtual.bairroEntrega ? `<div><strong>Bairro:</strong> ${orcamentoAtual.bairroEntrega}</div>` : ''}
-                    <div><strong>Endereço:</strong> ${orcamentoAtual.enderecoEntrega}</div>
-                </div>
-                
-                <div class="section">
-                    <h4>Encomenda</h4>
-                    <div><strong>Dimensões:</strong> ${orcamentoAtual.dimensoes}</div>
-                    <div><strong>Peso:</strong> ${orcamentoAtual.peso}kg</div>
-                    <div><strong>Descrição:</strong> ${orcamentoAtual.descricao}</div>
-                </div>
-                
-                <div class="total-section">
-                    <h4>Valor Total</h4>
-                    <div class="total-amount">${formatarMoeda(orcamentoAtual.valores.total)}</div>
-                </div>
-            </div>
-        `;
-
-        comprovanteContent.innerHTML = content;
+        document.getElementById('pedido-numero').textContent = orcamentoAtual.numeroPedido;
+        document.getElementById('pedido-data').textContent = orcamentoAtual.data;
+        document.getElementById('comprovante-nome').textContent = orcamentoAtual.nome;
+        document.getElementById('comprovante-telefone').textContent = orcamentoAtual.telefone;
+        document.getElementById('comprovante-cidade').textContent = orcamentoAtual.cidadeDestino;
+        document.getElementById('comprovante-entrega').textContent = orcamentoAtual.enderecoEntrega;
+        document.getElementById('comprovante-coleta-cidade').textContent = orcamentoAtual.localColeta;
+        document.getElementById('comprovante-coleta').textContent = orcamentoAtual.enderecoColeta;
+        document.getElementById('comprovante-dimensoes').textContent = orcamentoAtual.dimensoes;
+        document.getElementById('comprovante-peso').textContent = orcamentoAtual.peso + 'kg';
+        document.getElementById('comprovante-descricao').textContent = orcamentoAtual.descricao;
+        document.getElementById('comprovante-valor').textContent = formatarMoeda(orcamentoAtual.valores.total);
     }
-
 
     function imprimirRecibo() {
         if (!orcamentoAtual || !orcamentoAtual.numeroPedido) {
@@ -1000,10 +940,8 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Usar a variável global numeroPedidoGerado
         const numeroPedido = numeroPedidoGerado || orcamentoAtual.numeroPedido;
 
-        // Criar nova janela para impressão
         const printWindow = window.open('', '_blank', 'width=600,height=800');
         printWindow.document.write(`
     <!DOCTYPE html>
@@ -1021,7 +959,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     padding: 0;
                 }
                 .no-print { display: none !important; }
-                .valores-detalhados { display: none !important; }
             }
             body { 
                 font-family: Arial, sans-serif; 
@@ -1096,9 +1033,6 @@ document.addEventListener('DOMContentLoaded', function () {
             strong {
                 color: #333;
             }
-            .valores-detalhados {
-                display: none;
-            }
         </style>
     </head>
     <body>
@@ -1145,15 +1079,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             </div>
             
-            <!-- Valores detalhados (ocultos para o cliente) -->
-            <div class="valores-detalhados">
-                <h4>Detalhamento Interno:</h4>
-                <div>Valor base: ${formatarMoeda(orcamentoAtual.valores.base)}</div>
-                ${orcamentoAtual.valores.tamanho > 0 ? `<div>Adicional tamanho: ${formatarMoeda(orcamentoAtual.valores.tamanho)}</div>` : ''}
-                ${orcamentoAtual.valores.peso > 0 ? `<div>Adicional peso: ${formatarMoeda(orcamentoAtual.valores.peso)}</div>` : ''}
-                ${orcamentoAtual.valores.bairro > 0 ? `<div>Adicional bairro: ${formatarMoeda(orcamentoAtual.valores.bairro)}</div>` : ''}
-            </div>
-            
             <div class="no-print">
                 <button onclick="window.print()">
                     🖨️ Imprimir Recibo
@@ -1183,7 +1108,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // CORREÇÃO: Mensagem simplificada e organizada
         const mensagem = `*NOVO PEDIDO - N&G EXPRESS*
 
 *Pedido:* ${orcamentoAtual.numeroPedido}
@@ -1210,7 +1134,6 @@ Descrição: ${orcamentoAtual.descricao}
 
 Confirme este pedido para iniciar a coleta.`;
 
-        // Codificar a mensagem para URL
         const mensagemCodificada = encodeURIComponent(mensagem);
         const telefoneWhatsApp = '5547999123260';
         const whatsappUrl = `https://wa.me/${telefoneWhatsApp}?text=${mensagemCodificada}`;
@@ -1230,24 +1153,24 @@ Confirme este pedido para iniciar a coleta.`;
         modalOrcamento.style.display = 'block';
         document.body.style.overflow = 'hidden';
 
-        // Resetar campos
         const orcamentoResultado = document.getElementById('orcamento-resultado');
         const btnConfirmar = document.getElementById('btn-confirmar');
 
-        if (orcamentoResultado) orcamentoResultado.style.display = 'none';
+        if (orcamentoResultado) {
+            orcamentoResultado.style.display = 'none';
+            orcamentoResultado.innerHTML = '';
+        }
+        
         if (btnConfirmar) btnConfirmar.style.display = 'none';
 
-        // Limpar selects de bairro
         const bairroColeta = document.getElementById('bairro-coleta');
         const bairroEntrega = document.getElementById('bairro-entrega');
         if (bairroColeta) bairroColeta.innerHTML = '<option value="" disabled selected>Selecione o bairro</option>';
         if (bairroEntrega) bairroEntrega.innerHTML = '<option value="" disabled selected>Selecione o bairro</option>';
 
-        // Limpar variáveis globais
         orcamentoAtual = null;
         numeroPedidoGerado = null;
 
-        // Inicializar sistema
         inicializarSistema();
     }
 

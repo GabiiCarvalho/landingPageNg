@@ -902,3 +902,33 @@ select option[data-tipo="especial"] {
     padding: 12px;
     font-size: 16px;
 }
+
+/* CSS para garantir que APENAS o valor total aparece */
+.valores-detalhes,
+.resultado-item:not(.total),
+.resultado-item span:contains("Valor Base"),
+.resultado-item span:contains("Adicional"),
+.resultado-item span:contains("Bairro"),
+.resultado-item span:contains("Tamanho"),
+.resultado-item span:contains("Peso") {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Garantir que APENAS o total seja visível */
+#total-valor {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Remover qualquer mensagem sobre bairros especiais */
+.toast-info,
+.comprovante-preview .section:contains("adicional"),
+.comprovante-preview .section:contains("bairro especial") {
+    display: none !important;
+}
