@@ -1,4 +1,4 @@
-// Sistema de orçamento - ATUALIZADO COM MULTIPLOS LOCAIS DE COLETA
+// Sistema de orçamento - ATUALIZADO COM MULTIPLOS LOCAIS DE COLETA E BAIRROS ESPECIAIS
 document.addEventListener('DOMContentLoaded', function () {
     // Tabela de preços baseada nas imagens
     const TABELA_PRECOS = {
@@ -23,6 +23,30 @@ document.addEventListener('DOMContentLoaded', function () {
         'florianopolis': { min: 150, max: 200, descricao: 'Florianópolis' },
         'joinville': { min: 150, max: 200, descricao: 'Joinville' }
     };
+
+    // Bairros de Itajaí com valor adicional de R$ 20,00 (30 + 20 = 50)
+    const BAIRROS_ITAJAI_ADICIONAL = [
+        'espinheiros',
+        'itaipava', 
+        'santa regina',
+        'rio do meio',
+        'brilhante',
+        'são roque',
+        'volta de cima',
+        'salseiros',
+        'arraial dos cunhas'
+    ];
+
+    // Bairros de Camboriú com valor adicional de R$ 35,00
+    const BAIRROS_CAMBORIU_ADICIONAL = [
+        'rio pequeno',
+        'rodovia dos macacos',
+        'braço',
+        'caminho da palha',
+        'avenida arquipélago encantado',
+        'caetes',
+        'vila conceição'
+    ];
 
     // Variáveis globais
     let orcamentoAtual = null;
@@ -154,6 +178,61 @@ document.addEventListener('DOMContentLoaded', function () {
                 e.target.value = value;
             });
         }
+    }
+
+    // Função para verificar se o endereço é de bairro especial
+    function verificarBairroEspecial(endereco, cidade) {
+        if (!endereco) return false;
+        
+        const enderecoLower = endereco.toLowerCase().trim();
+        let bairrosParaVerificar = [];
+        
+        if (cidade === 'itajai') {
+            bairrosParaVerificar = BAIRROS_ITAJAI_ADICIONAL;
+        } else if (cidade === 'camboriu') {
+            bairrosParaVerificar = BAIRROS_CAMBORIU_ADICIONAL;
+        }
+        
+        // Verificar se contém algum dos bairros
+        for (const bairro of bairrosParaVerificar) {
+            if (enderecoLower.includes(bairro)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    // Função para calcular valor base baseado na cidade
+    function calcularValorBase(cidadeId, localColetaId, enderecoColeta, enderecoEntrega) {
+        let valorBase = TABELA_PRECOS[cidadeId].min;
+        let adicionalBairro = 0;
+        let isBairroEspecial = false;
+        let tipoBairroEspecial = '';
+        
+        // Verificar se é entrega em Itajaí em bairro especial
+        if (cidadeId === 'itajai' && verificarBairroEspecial(enderecoEntrega, 'itajai')) {
+            adicionalBairro = 20; // R$ 20,00 de adicional (30 + 20 = 50)
+            isBairroEspecial = true;
+            tipoBairroEspecial = 'itajai';
+        }
+        // Verificar se é entrega em Camboriú em bairro especial
+        else if (cidadeId === 'camboriu' && verificarBairroEspecial(enderecoEntrega, 'camboriu')) {
+            adicionalBairro = 35; // R$ 35,00 de adicional
+            isBairroEspecial = true;
+            tipoBairroEspecial = 'camboriu';
+            
+            // Ajustar valor base se a coleta também for em bairro especial
+            if (localColetaId === 'itajai' && verificarBairroEspecial(enderecoColeta, 'itajai')) {
+                valorBase = 30; // Coleta em bairro especial de Itajaí
+            } else if (localColetaId === 'camboriu' && verificarBairroEspecial(enderecoColeta, 'camboriu')) {
+                valorBase = 15; // Coleta em bairro especial de Camboriú
+            } else if (localColetaId === 'balneario-camboriu') {
+                valorBase = 20; // Coleta em Balneário Camboriú
+            }
+        }
+        
+        return { valorBase, adicionalBairro, isBairroEspecial, tipoBairroEspecial };
     }
 
     // Inicializar
@@ -356,6 +435,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const localColetaSelect = document.getElementById('local-coleta');
         const enderecoDetalhado = document.getElementById('endereco-detalhado');
         const cidadeDestinoSelect = document.getElementById('cidade-destino');
+        const enderecoEntrega = document.getElementById('entrega-endereco').value;
 
         if (!localColetaSelect || !enderecoDetalhado || !cidadeDestinoSelect) {
             console.error('Elementos do formulário não encontrados');
@@ -389,29 +469,31 @@ document.addEventListener('DOMContentLoaded', function () {
         const volumeCm3 = comprimento * largura * altura;
         const volumeLitros = volumeCm3 / 1000;
 
-        // Obter valor base
+        // Obter valor base com verificação de bairros especiais
         const cidadeInfo = TABELA_PRECOS[cidadeDestinoId];
         if (!cidadeInfo) {
             mostrarToast('Cidade não encontrada na tabela de preços!', 'error');
             return;
         }
 
-        let valorBase = cidadeInfo.min;
+        // Calcular valores base e adicionais
+        const { valorBase, adicionalBairro, isBairroEspecial, tipoBairroEspecial } = 
+            calcularValorBase(cidadeDestinoId, localColetaId, enderecoColeta, enderecoEntrega);
 
-        // Adicional por tamanho
+        // Adicional por tamanho (somente se não for bairro especial)
         let adicionalTamanho = 0;
-        if (volumeCm3 > 30000) {
+        if (!isBairroEspecial && volumeCm3 > 30000) {
             adicionalTamanho = Math.floor(volumeCm3 / 30000) * 10;
         }
 
-        // Adicional por peso
+        // Adicional por peso (somente se não for bairro especial)
         let adicionalPeso = 0;
-        if (peso > 5) {
+        if (!isBairroEspecial && peso > 5) {
             adicionalPeso = Math.floor((peso - 5)) * 5;
         }
 
         // Calcular total
-        const total = valorBase + adicionalTamanho + adicionalPeso;
+        const total = valorBase + adicionalTamanho + adicionalPeso + adicionalBairro;
         const totalFinal = Math.min(total, cidadeInfo.max);
 
         // Salvar orçamento atual
@@ -419,9 +501,11 @@ document.addEventListener('DOMContentLoaded', function () {
             nome: document.getElementById('cliente-nome').value,
             telefone: document.getElementById('cliente-telefone').value,
             localColeta: localColetaNome,
+            localColetaId: localColetaId,
             enderecoColeta: enderecoColeta,
             cidadeDestino: cidadeDestinoNome,
-            enderecoEntrega: document.getElementById('entrega-endereco').value,
+            cidadeDestinoId: cidadeDestinoId,
+            enderecoEntrega: enderecoEntrega,
             dimensoes: `${comprimento}x${largura}x${altura}cm`,
             volume: volumeLitros.toFixed(1),
             peso: peso.toFixed(1),
@@ -430,23 +514,68 @@ document.addEventListener('DOMContentLoaded', function () {
                 base: valorBase,
                 tamanho: adicionalTamanho,
                 peso: adicionalPeso,
+                bairro: adicionalBairro,
                 total: totalFinal
             },
+            isBairroEspecial: isBairroEspecial,
+            tipoBairroEspecial: tipoBairroEspecial,
             data: new Date().toLocaleString('pt-BR'),
             timestamp: Date.now()
         };
 
         // Mostrar resultado
         document.getElementById('base-valor').textContent = formatarMoeda(valorBase);
-        document.getElementById('tamanho-valor').textContent = formatarMoeda(adicionalTamanho);
-        document.getElementById('peso-valor').textContent = formatarMoeda(adicionalPeso);
+        
+        if (isBairroEspecial) {
+            document.getElementById('tamanho-valor').textContent = formatarMoeda(0);
+            document.getElementById('peso-valor').textContent = formatarMoeda(0);
+            // Criar elemento para mostrar adicional de bairro se não existir
+            let adicionalBairroElement = document.getElementById('bairro-valor');
+            if (!adicionalBairroElement) {
+                const novoElemento = document.createElement('div');
+                novoElemento.id = 'bairro-valor';
+                novoElemento.className = 'valor-item';
+                const label = tipoBairroEspecial === 'itajai' ? 'Adicional bairro (Itajaí):' : 'Adicional bairro (Camboriú):';
+                novoElemento.innerHTML = `
+                    <span>${label}</span>
+                    <span>${formatarMoeda(adicionalBairro)}</span>
+                `;
+                document.querySelector('.valores-detalhes').appendChild(novoElemento);
+            } else {
+                const label = tipoBairroEspecial === 'itajai' ? 'Adicional bairro (Itajaí):' : 'Adicional bairro (Camboriú):';
+                adicionalBairroElement.innerHTML = `
+                    <span>${label}</span>
+                    <span>${formatarMoeda(adicionalBairro)}</span>
+                `;
+            }
+        } else {
+            document.getElementById('tamanho-valor').textContent = formatarMoeda(adicionalTamanho);
+            document.getElementById('peso-valor').textContent = formatarMoeda(adicionalPeso);
+            // Remover elemento de adicional de bairro se existir
+            const adicionalBairroElement = document.getElementById('bairro-valor');
+            if (adicionalBairroElement) {
+                adicionalBairroElement.remove();
+            }
+        }
+        
         document.getElementById('total-valor').textContent = formatarMoeda(totalFinal);
 
         document.getElementById('orcamento-resultado').style.display = 'block';
         document.getElementById('btn-confirmar').style.display = 'block';
 
         document.getElementById('orcamento-resultado').scrollIntoView({ behavior: 'smooth' });
-        mostrarToast('Orçamento calculado com sucesso!', 'success');
+        
+        if (isBairroEspecial) {
+            let mensagem = '';
+            if (tipoBairroEspecial === 'itajai') {
+                mensagem = 'Orçamento calculado com adicional para bairro especial de Itajaí!';
+            } else if (tipoBairroEspecial === 'camboriu') {
+                mensagem = 'Orçamento calculado com adicional para bairro distante de Camboriú!';
+            }
+            mostrarToast(mensagem, 'info');
+        } else {
+            mostrarToast('Orçamento calculado com sucesso!', 'success');
+        }
     }
 
     function validarFormulario() {
@@ -506,6 +635,35 @@ document.addEventListener('DOMContentLoaded', function () {
         // Atualizar o comprovante com os dados
         const comprovanteContent = document.getElementById('comprovante-content');
         if (comprovanteContent) {
+            let adicionalBairroHtml = '';
+            let bairroInfoHtml = '';
+            
+            if (orcamentoAtual.isBairroEspecial) {
+                const bairroTipo = orcamentoAtual.tipoBairroEspecial === 'itajai' ? 'Itajaí' : 'Camboriú';
+                const bairroValor = orcamentoAtual.tipoBairroEspecial === 'itajai' ? 'R$ 20,00' : 'R$ 35,00';
+                
+                adicionalBairroHtml = `
+                    <div class="comprovante-item">
+                        <span class="comprovante-label">Adicional bairro (${bairroTipo}):</span>
+                        <span class="comprovante-value">${formatarMoeda(orcamentoAtual.valores.bairro)}</span>
+                    </div>
+                `;
+                
+                if (orcamentoAtual.tipoBairroEspecial === 'camboriu') {
+                    let origemInfo = '';
+                    if (orcamentoAtual.localColetaId === 'camboriu') {
+                        origemInfo = 'Coleta em Camboriú (R$ 15,00)';
+                    } else if (orcamentoAtual.localColetaId === 'balneario-camboriu') {
+                        origemInfo = 'Coleta em Balneário Camboriú (R$ 20,00)';
+                    } else if (orcamentoAtual.localColetaId === 'itajai') {
+                        origemInfo = 'Coleta em Itajaí (R$ 30,00)';
+                    }
+                    bairroInfoHtml = `<div style="font-size: 12px; color: #666; margin-top: 5px;">(${origemInfo} + ${bairroValor} adicional bairro distante)</div>`;
+                } else {
+                    bairroInfoHtml = `<div style="font-size: 12px; color: #666; margin-top: 5px;">(Bairro especial de Itajaí: R$ 30,00 + ${bairroValor} = R$ 50,00)</div>`;
+                }
+            }
+
             comprovanteContent.innerHTML = `
                 <div class="comprovante-header">
                     <h2>🚚 N&G EXPRESS 🚚</h2>
@@ -549,6 +707,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <span class="comprovante-label">Endereço:</span>
                         <span class="comprovante-value">${orcamentoAtual.enderecoEntrega}</span>
                     </div>
+                    ${bairroInfoHtml}
                 </div>
 
                 <div class="comprovante-section">
@@ -574,6 +733,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div>Base: ${formatarMoeda(orcamentoAtual.valores.base)}</div>
                         ${orcamentoAtual.valores.tamanho > 0 ? `<div>Adicional tamanho: ${formatarMoeda(orcamentoAtual.valores.tamanho)}</div>` : ''}
                         ${orcamentoAtual.valores.peso > 0 ? `<div>Adicional peso: ${formatarMoeda(orcamentoAtual.valores.peso)}</div>` : ''}
+                        ${orcamentoAtual.valores.bairro > 0 ? `<div>Adicional bairro: ${formatarMoeda(orcamentoAtual.valores.bairro)}</div>` : ''}
                     </div>
                 </div>
 
@@ -596,70 +756,6 @@ document.addEventListener('DOMContentLoaded', function () {
             mostrarToast('Gere o comprovante primeiro!', 'error');
             return;
         }
-
-        // Gerar conteúdo do recibo no formato tradicional
-        const reciboContent = `
-===========================================
-            🚚 N&G EXPRESS 🚚
-        TRANSPORTE E ENTREGAS RÁPIDAS
-===========================================
-
-🔢 PEDIDO: ${orcamentoAtual.numeroPedido}
-📅 DATA: ${orcamentoAtual.data}
--------------------------------------------
-
-👤 **CLIENTE**
--------------------------------------------
-Nome: ${orcamentoAtual.nome}
-Telefone: ${orcamentoAtual.telefone}
-
-📍 **COLETA**
--------------------------------------------
-Local: ${orcamentoAtual.localColeta}
-Endereço: ${orcamentoAtual.enderecoColeta}
-
-🎯 **ENTREGA**
--------------------------------------------
-Cidade: ${orcamentoAtual.cidadeDestino}
-Endereço: ${orcamentoAtual.enderecoEntrega}
-
-📦 **ENCOMENDA**
--------------------------------------------
-Dimensões: ${orcamentoAtual.dimensoes}
-Volume: ${orcamentoAtual.volume}L
-Peso: ${orcamentoAtual.peso}kg
-Descrição: ${orcamentoAtual.descricao}
-
-💰 **VALORES**
--------------------------------------------
-Base: ${formatarMoeda(orcamentoAtual.valores.base)}
-${orcamentoAtual.valores.tamanho > 0 ? `Adicional tamanho: ${formatarMoeda(orcamentoAtual.valores.tamanho)}` : ''}
-${orcamentoAtual.valores.peso > 0 ? `Adicional peso: ${formatarMoeda(orcamentoAtual.valores.peso)}` : ''}
--------------------------------------------
-
-💵 **TOTAL A PAGAR**
-         ${formatarMoeda(orcamentoAtual.valores.total)}
--------------------------------------------
-
-📋 **OBSERVAÇÕES**
--------------------------------------------
-• Este é um orçamento/autorização de coleta
-• Valor sujeito a confirmação após análise
-• Aguarde contato para agendamento
-• Pagamento na entrega
-
-===========================================
-         ✅ RECIBO AUTORIZADO ✅
-===========================================
-
-📞 CONTATO: (47) 99912-3260
-📧 E-MAIL: contato@ngexpress.com.br
-🌐 SITE: www.ngexpress.com.br
-
-===========================================
-          OBRIGADO PELA PREFERÊNCIA!
-===========================================
-        `;
 
         // Criar nova janela para impressão
         const printWindow = window.open('', '_blank', 'width=800,height=600');
@@ -709,8 +805,6 @@ ${orcamentoAtual.valores.peso > 0 ? `Adicional peso: ${formatarMoeda(orcamentoAt
                             padding: 30px;
                             box-shadow: 0 0 20px rgba(0,0,0,0.1);
                             border-radius: 5px;
-                            white-space: pre-wrap;
-                            word-wrap: break-word;
                         }
                         .print-buttons {
                             text-align: center;
@@ -782,6 +876,14 @@ ${orcamentoAtual.valores.peso > 0 ? `Adicional peso: ${formatarMoeda(orcamentoAt
                         margin: 20px 0;
                     }
                     
+                    .info-item {
+                        margin-bottom: 8px;
+                    }
+                    
+                    .info-label {
+                        font-weight: bold;
+                    }
+                    
                     /* Mobile */
                     @media (max-width: 768px) {
                         body {
@@ -814,52 +916,64 @@ ${orcamentoAtual.valores.peso > 0 ? `Adicional peso: ${formatarMoeda(orcamentoAt
                         <div style="font-size: 14px; color: #666;">-------------------------------------------</div>
                     </div>
                     
-                    <div style="margin-bottom: 20px;">
-                        <div><strong>🔢 PEDIDO:</strong> ${orcamentoAtual.numeroPedido}</div>
-                        <div><strong>📅 DATA/HORA:</strong> ${orcamentoAtual.data}</div>
+                    <div style="margin-bottom: 10px;">
+                        <div class="info-item"><span class="info-label">🔢 PEDIDO:</span> ${orcamentoAtual.numeroPedido}</div>
+                        <div class="info-item"><span class="info-label">📅 DATA/HORA:</span> ${orcamentoAtual.data}</div>
+                    </div>
+                    
+                    <div class="separator"></div>
+                    
+                    <div style="margin-bottom: 10px;">
+                        <div style="font-weight: bold; margin-bottom: 10px; font-size: 18px;">👤 CLIENTE</div>
+                        <div class="info-item"><span class="info-label">Nome:</span> ${orcamentoAtual.nome}</div>
+                        <div class="info-item"><span class="info-label">Telefone:</span> ${orcamentoAtual.telefone}</div>
+                    </div>
+                    
+                    <div class="separator"></div>
+                    
+                    <div style="margin-bottom: 10px;">
+                        <div style="font-weight: bold; margin-bottom: 10px; font-size: 18px;">📍 COLETA</div>
+                        <div class="info-item"><span class="info-label">Local:</span> ${orcamentoAtual.localColeta}</div>
+                        <div class="info-item"><span class="info-label">Endereço:</span> ${orcamentoAtual.enderecoColeta}</div>
+                    </div>
+                    
+                    <div class="separator"></div>
+                    
+                    <div style="margin-bottom: 10px;">
+                        <div style="font-weight: bold; margin-bottom: 10px; font-size: 18px;">🎯 ENTREGA</div>
+                        <div class="info-item"><span class="info-label">Cidade:</span> ${orcamentoAtual.cidadeDestino}</div>
+                        <div class="info-item"><span class="info-label">Endereço:</span> ${orcamentoAtual.enderecoEntrega}</div>
+                        ${orcamentoAtual.isBairroEspecial ? 
+                            `<div style="font-size: 12px; color: #666; margin-top: 5px; font-style: italic;">
+                                ${orcamentoAtual.tipoBairroEspecial === 'itajai' ? 
+                                    '(Bairro especial de Itajaí - R$ 30,00 + R$ 20,00)' : 
+                                    '(Bairro distante de Camboriú - Valor ajustado conforme origem)'}
+                            </div>` : 
+                            ''}
+                    </div>
+                    
+                    <div class="separator"></div>
+                    
+                    <div style="margin-bottom: 10px;">
+                        <div style="font-weight: bold; margin-bottom: 10px; font-size: 18px;">📦 ENCOMENDA</div>
+                        <div class="info-item"><span class="info-label">Dimensões:</span> ${orcamentoAtual.dimensoes}</div>
+                        <div class="info-item"><span class="info-label">Peso:</span> ${orcamentoAtual.peso}kg</div>
+                        <div class="info-item"><span class="info-label">Descrição:</span> ${orcamentoAtual.descricao}</div>
                     </div>
                     
                     <div class="separator"></div>
                     
                     <div style="margin-bottom: 20px;">
-                        <div style="font-weight: bold; margin-bottom: 10px;">👤 CLIENTE</div>
-                        <div><strong>Nome:</strong> ${orcamentoAtual.nome}</div>
-                        <div><strong>Telefone:</strong> ${orcamentoAtual.telefone}</div>
-                    </div>
-                    
-                    <div class="separator"></div>
-                    
-                    <div style="margin-bottom: 20px;">
-                        <div style="font-weight: bold; margin-bottom: 10px;">📍 COLETA</div>
-                        <div><strong>Local:</strong> ${orcamentoAtual.localColeta}</div>
-                        <div><strong>Endereço:</strong> ${orcamentoAtual.enderecoColeta}</div>
-                    </div>
-                    
-                    <div class="separator"></div>
-                    
-                    <div style="margin-bottom: 20px;">
-                        <div style="font-weight: bold; margin-bottom: 10px;">🎯 ENTREGA</div>
-                        <div><strong>Cidade:</strong> ${orcamentoAtual.cidadeDestino}</div>
-                        <div><strong>Endereço:</strong> ${orcamentoAtual.enderecoEntrega}</div>
-                    </div>
-                    
-                    <div class="separator"></div>
-                    
-                    <div style="margin-bottom: 20px;">
-                        <div style="font-weight: bold; margin-bottom: 10px;">📦 ENCOMENDA</div>
-                        <div><strong>Dimensões:</strong> ${orcamentoAtual.dimensoes}</div>
-                        <div><strong>Volume:</strong> ${orcamentoAtual.volume}L</div>
-                        <div><strong>Peso:</strong> ${orcamentoAtual.peso}kg</div>
-                        <div><strong>Descrição:</strong> ${orcamentoAtual.descricao}</div>
-                    </div>
-                    
-                    <div class="separator"></div>
-                    
-                    <div style="margin-bottom: 20px;">
-                        <div style="font-weight: bold; margin-bottom: 10px;">💰 VALORES</div>
-                        <div>Base: ${formatarMoeda(orcamentoAtual.valores.base)}</div>
-                        ${orcamentoAtual.valores.tamanho > 0 ? `<div>Adicional tamanho: ${formatarMoeda(orcamentoAtual.valores.tamanho)}</div>` : ''}
-                        ${orcamentoAtual.valores.peso > 0 ? `<div>Adicional peso: ${formatarMoeda(orcamentoAtual.valores.peso)}</div>` : ''}
+                        <div style="font-weight: bold; margin-bottom: 10px; font-size: 18px;">💰 VALORES</div>
+                        <div class="info-item"><span class="info-label">Base:</span> ${formatarMoeda(orcamentoAtual.valores.base)}</div>
+                        ${orcamentoAtual.valores.tamanho > 0 ? `<div class="info-item"><span class="info-label">Adicional tamanho:</span> ${formatarMoeda(orcamentoAtual.valores.tamanho)}</div>` : ''}
+                        ${orcamentoAtual.valores.peso > 0 ? `<div class="info-item"><span class="info-label">Adicional peso:</span> ${formatarMoeda(orcamentoAtual.valores.peso)}</div>` : ''}
+                        ${orcamentoAtual.valores.bairro > 0 ? 
+                            `<div class="info-item">
+                                <span class="info-label">Adicional bairro (${orcamentoAtual.tipoBairroEspecial === 'itajai' ? 'Itajaí' : 'Camboriú'}):</span> 
+                                ${formatarMoeda(orcamentoAtual.valores.bairro)}
+                            </div>` : 
+                            ''}
                     </div>
                     
                     <div class="total-box">
@@ -869,7 +983,7 @@ ${orcamentoAtual.valores.peso > 0 ? `Adicional peso: ${formatarMoeda(orcamentoAt
                     
                     <div class="separator"></div>
                     
-                    <div style="margin-bottom: 20px; font-size: 13px;">
+                    <div style="margin-bottom: 15px; font-size: 13px;">
                         <div style="font-weight: bold; margin-bottom: 10px;">📋 OBSERVAÇÕES</div>
                         <div>• Este é um orçamento/autorização de coleta</div>
                         <div>• Valor sujeito a confirmação após análise</div>
@@ -877,7 +991,7 @@ ${orcamentoAtual.valores.peso > 0 ? `Adicional peso: ${formatarMoeda(orcamentoAt
                         <div>• Pagamento na entrega</div>
                     </div>
                     
-                    <div style="text-align: center; margin: 25px 0; padding: 10px; border: 2px solid #000; font-weight: bold; font-size: 16px;">
+                    <div style="text-align: center; margin: 10px 0; padding: 10px; border: 2px solid #000; font-weight: bold; font-size: 16px;">
                         ✅ RECIBO AUTORIZADO ✅
                     </div>
                     
@@ -889,7 +1003,7 @@ ${orcamentoAtual.valores.peso > 0 ? `Adicional peso: ${formatarMoeda(orcamentoAt
                     
                     <div class="footer">
                         <div>===========================================</div>
-                        <div style="font-weight: bold; margin: 10px 0;">OBRIGADO PELA PREFERÊNCIA!</div>
+                        <div style="font-weight: bold; margin: 5px 0;">OBRIGADO PELA PREFERÊNCIA!</div>
                         <div>===========================================</div>
                     </div>
                 </div>
@@ -906,7 +1020,6 @@ ${orcamentoAtual.valores.peso > 0 ? `Adicional peso: ${formatarMoeda(orcamentoAt
                 <script>
                     // Auto-print após carregar a página
                     window.onload = function() {
-                        // Dar um pequeno delay para garantir que tudo carregou
                         setTimeout(function() {
                             window.print();
                         }, 500);
@@ -933,8 +1046,18 @@ ${orcamentoAtual.valores.peso > 0 ? `Adicional peso: ${formatarMoeda(orcamentoAt
             `*Cliente:*${orcamentoAtual.nome} ${orcamentoAtual.telefone}` +
             `*Coleta:*${orcamentoAtual.localColeta} ${orcamentoAtual.enderecoColeta}` +
             `*Entrega:*${orcamentoAtual.cidadeDestino} ${orcamentoAtual.enderecoEntrega}` +
+            `${orcamentoAtual.isBairroEspecial ? 
+                (orcamentoAtual.tipoBairroEspecial === 'itajai' ? 
+                    '(Bairro especial de Itajaí)' : 
+                    '(Bairro distante de Camboriú)') : 
+                ''}` +
             `*Encomenda:*${orcamentoAtual.dimensoes} ${orcamentoAtual.peso}kg ${orcamentoAtual.descricao}` +
-            `*Valor Total:* ${formatarMoeda(orcamentoAtual.valores.total)}` +
+            `*Valores:*` +
+            `Base: ${formatarMoeda(orcamentoAtual.valores.base)}` +
+            `${orcamentoAtual.valores.tamanho > 0 ? `Adicional tamanho: ${formatarMoeda(orcamentoAtual.valores.tamanho)}` : ''}` +
+            `${orcamentoAtual.valores.peso > 0 ? `Adicional peso: ${formatarMoeda(orcamentoAtual.valores.peso)}` : ''}` +
+            `${orcamentoAtual.valores.bairro > 0 ? `Adicional bairro: ${formatarMoeda(orcamentoAtual.valores.bairro)}` : ''}` +
+            `*TOTAL: ${formatarMoeda(orcamentoAtual.valores.total)}*` +
             `Confirme este pedido para iniciar a coleta.`;
 
         const telefoneWhatsApp = '5547999123260';
