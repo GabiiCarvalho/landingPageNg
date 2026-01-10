@@ -304,7 +304,7 @@
         <i class="bi bi-arrow-up"></i>
     </div>
 
-    <!-- Modal de Orçamento -->
+    <!-- Modal de Orçamento - ATUALIZADO -->
     <div class="modal" id="orcamento-modal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
@@ -337,6 +337,19 @@
                         </select>
                     </div>
 
+                    <!-- Container para bairro de coleta -->
+                    <div class="bairro-container" id="bairro-coleta-container" style="display: none;">
+                        <div class="form-group">
+                            <label for="bairro-coleta">Bairro de Coleta*</label>
+                            <select id="bairro-coleta" name="bairro-coleta">
+                                <option value="" disabled selected>Selecione o bairro</option>
+                            </select>
+                            <div class="bairro-info">
+                                <small>Alguns bairros podem ter valor adicional</small>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="endereco-detalhado-container" style="display: none;">
                         <div class="form-group">
                             <label for="endereco-detalhado">Endereço Completo de Coleta*</label>
@@ -354,6 +367,19 @@
                         <select id="cidade-destino" name="cidade-destino" required>
                             <option value="" disabled selected>Selecione a cidade</option>
                         </select>
+                    </div>
+
+                    <!-- Container para bairro de entrega -->
+                    <div class="bairro-container" id="bairro-entrega-container" style="display: none;">
+                        <div class="form-group">
+                            <label for="bairro-entrega">Bairro de Entrega*</label>
+                            <select id="bairro-entrega" name="bairro-entrega">
+                                <option value="" disabled selected>Selecione o bairro</option>
+                            </select>
+                            <div class="bairro-info">
+                                <small>Alguns bairros podem ter valor adicional</small>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -400,25 +426,10 @@
                 </div>
 
                 <!-- Resultado do Orçamento -->
-                <div id="orcamento-resultado" class="orcamento-resultado">
+                <div id="orcamento-resultado" class="orcamento-resultado" style="display: none;">
                     <h3><i class="bi bi-calculator"></i> Orçamento Calculado</h3>
-                    <div class="resultado-content">
-                        <div class="resultado-item">
-                            <span>Valor Base (cidade):</span>
-                            <span id="base-valor">R$ 0,00</span>
-                        </div>
-                        <div class="resultado-item">
-                            <span>Adicional Tamanho:</span>
-                            <span id="tamanho-valor">R$ 0,00</span>
-                        </div>
-                        <div class="resultado-item">
-                            <span>Adicional Peso:</span>
-                            <span id="peso-valor">R$ 0,00</span>
-                        </div>
-                        <div class="resultado-item total">
-                            <span><strong>VALOR TOTAL:</strong></span>
-                            <span id="total-valor"><strong>R$ 0,00</strong></span>
-                        </div>
+                    <div class="valores-detalhes">
+                        <!-- Valores serão inseridos dinamicamente aqui -->
                     </div>
                 </div>
 
