@@ -1,5 +1,7 @@
 // Sistema de orçamento - ATUALIZADO COM MULTIPLOS LOCAIS DE COLETA E BAIRROS ESPECIAIS
 document.addEventListener('DOMContentLoaded', function () {
+    console.log('Script de orçamento carregado com sucesso!');
+    
     // Tabela de preços baseada nas imagens
     const TABELA_PRECOS = {
         'balneario-camboriu': { min: 15, max: 30, descricao: 'Balneário Camboriú' },
@@ -34,8 +36,7 @@ document.addEventListener('DOMContentLoaded', function () {
         { nome: 'São Roque', valor: 20 },
         { nome: 'Volta de Cima', valor: 20 },
         { nome: 'Salseiros', valor: 20 },
-        { nome: 'Arraial dos Cunhas', valor: 20 },
-        { nome: 'Outro bairro', valor: 0 }
+        { nome: 'Arraial dos Cunhas', valor: 20 }
     ];
 
     // Bairros de Camboriú com valor adicional de R$ 35,00
@@ -46,8 +47,20 @@ document.addEventListener('DOMContentLoaded', function () {
         { nome: 'Caminho da Palha', valor: 35 },
         { nome: 'Avenida Arquipélago Encantado', valor: 35 },
         { nome: 'Caetes', valor: 35 },
-        { nome: 'Vila Conceição', valor: 35 },
-        { nome: 'Outro bairro', valor: 0 }
+        { nome: 'Vila Conceição', valor: 35 }
+    ];
+
+    // Bairros normais de Itajaí (sem adicional)
+    const BAIRROS_ITAJAI_NORMAIS = [
+        'Centro', 'Fazenda', 'Fazendinha', 'Murta', 'Barra do Rio', 
+        'Cabeçudas', 'Atalaia', 'São João', 'São Vicente', 'Cordeiros', 
+        'Cidade Nova', 'Canhanduba', 'Ressacada', 'Beira Rio', 'Praia Brava'
+    ];
+
+    // Bairros normais de Camboriú (sem adicional)
+    const BAIRROS_CAMBORIU_NORMAIS = [
+        'Centro', 'Lídia Duarte', 'Santa Regina', 'Areias', 'Cedros', 
+        'Monte Alegre', 'Tabuleiro', 'São Francisco', 'Barranco', 'Jardim Europa'
     ];
 
     // Variáveis globais
@@ -71,16 +84,29 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    document.getElementById('btn-calcular').addEventListener('click', calcularOrcamento);
-    document.getElementById('btn-confirmar').addEventListener('click', gerarComprovante);
+    const btnCalcular = document.getElementById('btn-calcular');
+    if (btnCalcular) {
+        btnCalcular.addEventListener('click', calcularOrcamento);
+    }
 
-    document.getElementById('btn-imprimir').addEventListener('click', function () {
-        imprimirRecibo();
-    });
+    const btnConfirmar = document.getElementById('btn-confirmar');
+    if (btnConfirmar) {
+        btnConfirmar.addEventListener('click', gerarComprovante);
+    }
 
-    document.getElementById('btn-whatsapp').addEventListener('click', confirmarWhatsApp);
+    const btnImprimir = document.getElementById('btn-imprimir');
+    if (btnImprimir) {
+        btnImprimir.addEventListener('click', function () {
+            imprimirRecibo();
+        });
+    }
 
-    // Configurar locais de coleta COM SELECTOR DE BAIRROS ESPECIAIS
+    const btnWhatsapp = document.getElementById('btn-whatsapp');
+    if (btnWhatsapp) {
+        btnWhatsapp.addEventListener('click', confirmarWhatsApp);
+    }
+
+    // Configurar locais de coleta COM SELECTOR DE BAIRROS
     function configurarLocaisColeta() {
         const locaisColeta = [
             {
@@ -96,7 +122,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 enderecoBase: 'Camboriú/SC',
                 temBairros: true,
                 bairrosEspeciais: true,
-                bairros: BAIRROS_CAMBORIU_ADICIONAL
+                bairrosEspeciaisLista: BAIRROS_CAMBORIU_ADICIONAL,
+                bairrosNormais: BAIRROS_CAMBORIU_NORMAIS
             },
             {
                 id: 'itajai',
@@ -104,7 +131,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 enderecoBase: 'Itajaí/SC',
                 temBairros: true,
                 bairrosEspeciais: true,
-                bairros: BAIRROS_ITAJAI_ADICIONAL
+                bairrosEspeciaisLista: BAIRROS_ITAJAI_ADICIONAL,
+                bairrosNormais: BAIRROS_ITAJAI_NORMAIS
             }
         ];
 
@@ -114,7 +142,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const enderecoDetalhadoContainer = document.getElementById('endereco-detalhado-container');
         const enderecoInput = document.getElementById('endereco-detalhado');
 
-        if (!selectColeta || !bairroColetaContainer || !selectBairroColeta) return;
+        if (!selectColeta || !bairroColetaContainer || !selectBairroColeta) {
+            console.warn('Elementos do formulário de coleta não encontrados');
+            return;
+        }
 
         // Limpar opções existentes
         selectColeta.innerHTML = '<option value="" disabled selected>Selecione o local de coleta</option>';
@@ -137,14 +168,58 @@ document.addEventListener('DOMContentLoaded', function () {
             if (localSelecionado && localSelecionado.temBairros) {
                 bairroColetaContainer.style.display = 'block';
 
-                // Adicionar bairros
-                localSelecionado.bairros.forEach(bairro => {
-                    const option = document.createElement('option');
-                    option.value = bairro.nome.toLowerCase();
-                    option.textContent = bairro.nome;
-                    option.dataset.valor = bairro.valor;
-                    selectBairroColeta.appendChild(option);
-                });
+                // Adicionar opção "Selecione o bairro"
+                const optionSelecione = document.createElement('option');
+                optionSelecione.value = '';
+                optionSelecione.textContent = 'Selecione o bairro';
+                optionSelecione.disabled = true;
+                optionSelecione.selected = true;
+                selectBairroColeta.appendChild(optionSelecione);
+
+                // Separador para bairros normais
+                const optionSeparadorNormais = document.createElement('option');
+                optionSeparadorNormais.disabled = true;
+                optionSeparadorNormais.textContent = '── Bairros Normais ──';
+                selectBairroColeta.appendChild(optionSeparadorNormais);
+
+                // Adicionar bairros normais (sem adicional)
+                if (localSelecionado.bairrosNormais) {
+                    localSelecionado.bairrosNormais.forEach(bairro => {
+                        const option = document.createElement('option');
+                        option.value = bairro.toLowerCase();
+                        option.textContent = bairro;
+                        option.dataset.valor = 0;
+                        option.dataset.tipo = 'normal';
+                        selectBairroColeta.appendChild(option);
+                    });
+                }
+
+                // Separador para bairros especiais (se houver)
+                if (localSelecionado.bairrosEspeciaisLista && localSelecionado.bairrosEspeciaisLista.length > 0) {
+                    const optionSeparadorEspeciais = document.createElement('option');
+                    optionSeparadorEspeciais.disabled = true;
+                    optionSeparadorEspeciais.textContent = '── Bairros Especiais ──';
+                    selectBairroColeta.appendChild(optionSeparadorEspeciais);
+
+                    // Adicionar bairros especiais (com adicional)
+                    localSelecionado.bairrosEspeciaisLista.forEach(bairro => {
+                        const option = document.createElement('option');
+                        option.value = bairro.nome.toLowerCase();
+                        option.textContent = bairro.nome;
+                        option.dataset.valor = bairro.valor;
+                        option.dataset.tipo = 'especial';
+                        selectBairroColeta.appendChild(option);
+                    });
+                }
+
+                // Opção "Outro bairro"
+                const optionOutro = document.createElement('option');
+                optionOutro.value = 'outro';
+                optionOutro.textContent = 'Outro bairro';
+                optionOutro.dataset.valor = 0;
+                optionOutro.dataset.tipo = 'normal';
+                selectBairroColeta.appendChild(optionOutro);
+
             } else {
                 bairroColetaContainer.style.display = 'none';
                 selectBairroColeta.value = '';
@@ -173,18 +248,34 @@ document.addEventListener('DOMContentLoaded', function () {
             if (this.value && this.options[this.selectedIndex].dataset.valor > 0) {
                 const bairroNome = this.options[this.selectedIndex].text;
                 const adicional = this.options[this.selectedIndex].dataset.valor;
-                mostrarToast(`Bairro ${bairroNome} selecionado (adicional: R$ ${adicional},00)`, 'info');
+                const tipo = this.options[this.selectedIndex].dataset.tipo;
+                
+                if (tipo === 'especial') {
+                    mostrarToast(`Bairro ${bairroNome} selecionado (adicional: R$ ${adicional},00)`, 'info');
+                } else {
+                    mostrarToast(`Bairro ${bairroNome} selecionado (sem adicional)`, 'info');
+                }
+            } else if (this.value) {
+                const bairroNome = this.options[this.selectedIndex].text;
+                const tipo = this.options[this.selectedIndex].dataset.tipo;
+                
+                if (tipo === 'normal') {
+                    mostrarToast(`Bairro ${bairroNome} selecionado (sem adicional)`, 'info');
+                }
             }
         });
     }
 
-    // Atualizar select de cidades de destino COM SELECTOR DE BAIRROS ESPECIAIS
+    // Atualizar select de cidades de destino COM SELECTOR DE BAIRROS
     function atualizarSelectCidades() {
         const select = document.getElementById('cidade-destino');
         const bairroEntregaContainer = document.getElementById('bairro-entrega-container');
         const selectBairroEntrega = document.getElementById('bairro-entrega');
 
-        if (!select || !bairroEntregaContainer || !selectBairroEntrega) return;
+        if (!select || !bairroEntregaContainer || !selectBairroEntrega) {
+            console.warn('Elementos do formulário de destino não encontrados');
+            return;
+        }
 
         // Limpar apenas as opções após a primeira
         while (select.options.length > 1) {
@@ -215,29 +306,108 @@ document.addEventListener('DOMContentLoaded', function () {
             // Limpar bairros existentes
             selectBairroEntrega.innerHTML = '<option value="" disabled selected>Selecione o bairro</option>';
 
-            // VERIFICAÇÃO CORRIGIDA: Itajaí E Camboriú têm bairros especiais
             if (cidadeId === 'itajai') {
                 bairroEntregaContainer.style.display = 'block';
 
-                // Adicionar bairros de Itajaí
+                // Adicionar opção "Selecione o bairro"
+                const optionSelecione = document.createElement('option');
+                optionSelecione.value = '';
+                optionSelecione.textContent = 'Selecione o bairro';
+                optionSelecione.disabled = true;
+                optionSelecione.selected = true;
+                selectBairroEntrega.appendChild(optionSelecione);
+
+                // Separador para bairros normais
+                const optionSeparadorNormais = document.createElement('option');
+                optionSeparadorNormais.disabled = true;
+                optionSeparadorNormais.textContent = '── Bairros Normais ──';
+                selectBairroEntrega.appendChild(optionSeparadorNormais);
+
+                // Adicionar bairros normais de Itajaí
+                BAIRROS_ITAJAI_NORMAIS.forEach(bairro => {
+                    const option = document.createElement('option');
+                    option.value = bairro.toLowerCase();
+                    option.textContent = bairro;
+                    option.dataset.valor = 0;
+                    option.dataset.tipo = 'normal';
+                    selectBairroEntrega.appendChild(option);
+                });
+
+                // Separador para bairros especiais
+                const optionSeparadorEspeciais = document.createElement('option');
+                optionSeparadorEspeciais.disabled = true;
+                optionSeparadorEspeciais.textContent = '── Bairros Especiais ──';
+                selectBairroEntrega.appendChild(optionSeparadorEspeciais);
+
+                // Adicionar bairros especiais de Itajaí
                 BAIRROS_ITAJAI_ADICIONAL.forEach(bairro => {
                     const option = document.createElement('option');
                     option.value = bairro.nome.toLowerCase();
                     option.textContent = bairro.nome;
                     option.dataset.valor = bairro.valor;
+                    option.dataset.tipo = 'especial';
                     selectBairroEntrega.appendChild(option);
                 });
+
+                // Opção "Outro bairro"
+                const optionOutro = document.createElement('option');
+                optionOutro.value = 'outro';
+                optionOutro.textContent = 'Outro bairro';
+                optionOutro.dataset.valor = 0;
+                optionOutro.dataset.tipo = 'normal';
+                selectBairroEntrega.appendChild(optionOutro);
+
             } else if (cidadeId === 'camboriu') {
                 bairroEntregaContainer.style.display = 'block';
 
-                // Adicionar bairros de Camboriú
+                // Adicionar opção "Selecione o bairro"
+                const optionSelecione = document.createElement('option');
+                optionSelecione.value = '';
+                optionSelecione.textContent = 'Selecione o bairro';
+                optionSelecione.disabled = true;
+                optionSelecione.selected = true;
+                selectBairroEntrega.appendChild(optionSelecione);
+
+                // Separador para bairros normais
+                const optionSeparadorNormais = document.createElement('option');
+                optionSeparadorNormais.disabled = true;
+                optionSeparadorNormais.textContent = '── Bairros Normais ──';
+                selectBairroEntrega.appendChild(optionSeparadorNormais);
+
+                // Adicionar bairros normais de Camboriú
+                BAIRROS_CAMBORIU_NORMAIS.forEach(bairro => {
+                    const option = document.createElement('option');
+                    option.value = bairro.toLowerCase();
+                    option.textContent = bairro;
+                    option.dataset.valor = 0;
+                    option.dataset.tipo = 'normal';
+                    selectBairroEntrega.appendChild(option);
+                });
+
+                // Separador para bairros especiais
+                const optionSeparadorEspeciais = document.createElement('option');
+                optionSeparadorEspeciais.disabled = true;
+                optionSeparadorEspeciais.textContent = '── Bairros Especiais ──';
+                selectBairroEntrega.appendChild(optionSeparadorEspeciais);
+
+                // Adicionar bairros especiais de Camboriú
                 BAIRROS_CAMBORIU_ADICIONAL.forEach(bairro => {
                     const option = document.createElement('option');
                     option.value = bairro.nome.toLowerCase();
                     option.textContent = bairro.nome;
                     option.dataset.valor = bairro.valor;
+                    option.dataset.tipo = 'especial';
                     selectBairroEntrega.appendChild(option);
                 });
+
+                // Opção "Outro bairro"
+                const optionOutro = document.createElement('option');
+                optionOutro.value = 'outro';
+                optionOutro.textContent = 'Outro bairro';
+                optionOutro.dataset.valor = 0;
+                optionOutro.dataset.tipo = 'normal';
+                selectBairroEntrega.appendChild(optionOutro);
+
             } else {
                 bairroEntregaContainer.style.display = 'none';
                 selectBairroEntrega.value = '';
@@ -254,7 +424,18 @@ document.addEventListener('DOMContentLoaded', function () {
             if (this.value && this.options[this.selectedIndex].dataset.valor > 0) {
                 const bairroNome = this.options[this.selectedIndex].text;
                 const adicional = this.options[this.selectedIndex].dataset.valor;
-                mostrarToast(`Bairro ${bairroNome} selecionado (adicional: R$ ${adicional},00)`, 'info');
+                const tipo = this.options[this.selectedIndex].dataset.tipo;
+                
+                if (tipo === 'especial') {
+                    mostrarToast(`Bairro ${bairroNome} selecionado (adicional: R$ ${adicional},00)`, 'info');
+                }
+            } else if (this.value) {
+                const bairroNome = this.options[this.selectedIndex].text;
+                const tipo = this.options[this.selectedIndex].dataset.tipo;
+                
+                if (tipo === 'normal') {
+                    mostrarToast(`Bairro ${bairroNome} selecionado (sem adicional)`, 'info');
+                }
             }
         });
     }
@@ -281,60 +462,62 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Função para verificar se o endereço é de bairro especial
-    function verificarBairroEspecial(endereco, cidade) {
-        if (!endereco) return false;
-
-        const enderecoLower = endereco.toLowerCase().trim();
-        let bairrosParaVerificar = [];
-
-        if (cidade === 'itajai') {
-            bairrosParaVerificar = BAIRROS_ITAJAI_ADICIONAL;
-        } else if (cidade === 'camboriu') {
-            bairrosParaVerificar = BAIRROS_CAMBORIU_ADICIONAL;
+    // Função para verificar se o bairro é especial
+    function verificarBairroEspecial(bairroNome, cidadeId) {
+        if (!bairroNome) return false;
+        
+        const bairroLower = bairroNome.toLowerCase().trim();
+        
+        if (cidadeId === 'itajai') {
+            return BAIRROS_ITAJAI_ADICIONAL.some(bairro => 
+                bairro.nome.toLowerCase() === bairroLower
+            );
+        } else if (cidadeId === 'camboriu') {
+            return BAIRROS_CAMBORIU_ADICIONAL.some(bairro => 
+                bairro.nome.toLowerCase() === bairroLower
+            );
         }
-
-        // Verificar se contém algum dos bairros
-        for (const bairro of bairrosParaVerificar) {
-            if (enderecoLower.includes(bairro.nome.toLowerCase())) {
-                return bairro.valor > 0;
-            }
-        }
-
+        
         return false;
     }
 
     // Função para obter valor do bairro selecionado
     function obterValorBairroSelecionado(bairroSelectId, cidadeId) {
         const select = document.getElementById(bairroSelectId);
-        if (!select || !select.value) return 0;
+        if (!select || !select.value) return {
+            valorAdicional: 0,
+            tipoBairro: 'normal',
+            nomeBairro: ''
+        };
 
         const selectedOption = select.options[select.selectedIndex];
-        return parseInt(selectedOption.dataset.valor) || 0;
+        const valorAdicional = parseInt(selectedOption.dataset.valor) || 0;
+        const tipoBairro = selectedOption.dataset.tipo || 'normal';
+        
+        return {
+            valorAdicional: valorAdicional,
+            tipoBairro: tipoBairro,
+            nomeBairro: selectedOption.text
+        };
     }
 
-    // Função para calcular valor base baseado na cidade (CORRIGIDA)
-    function calcularValorBase(cidadeId, localColetaId, bairroColetaValor, bairroEntregaValor) {
+    // Função para calcular valor base baseado na cidade
+    function calcularValorBase(cidadeId, localColetaId, bairroColetaInfo, bairroEntregaInfo) {
         let valorBase = TABELA_PRECOS[cidadeId].min;
         let adicionalBairro = 0;
         let isBairroEspecial = false;
         let tipoBairroEspecial = '';
 
-        // LÓGICA CORRIGIDA: Itajaí e Camboriú têm bairros especiais
-        if (cidadeId === 'itajai' && bairroEntregaValor > 0) {
+        // LÓGICA: Itajaí e Camboriú têm bairros especiais
+        if (cidadeId === 'itajai' && bairroEntregaInfo.tipoBairro === 'especial') {
             // Entrega em bairro especial de Itajaí
-            adicionalBairro = bairroEntregaValor;
+            adicionalBairro = bairroEntregaInfo.valorAdicional; // R$ 20,00
             isBairroEspecial = true;
             tipoBairroEspecial = 'itajai';
-            valorBase = 30; // Valor base para bairros especiais de Itajaí
+            valorBase = 30; // Valor base para Itajaí
         }
-        else if (cidadeId === 'camboriu' && bairroEntregaValor > 0) {
-            // Entrega em bairro especial de Camboriú
-            adicionalBairro = bairroEntregaValor;
-            isBairroEspecial = true;
-            tipoBairroEspecial = 'camboriu';
-
-            // Ajustar valor base conforme a cidade de coleta
+        else if (cidadeId === 'camboriu') {
+            // Para Camboriú, o valor base depende da cidade de coleta
             if (localColetaId === 'balneario-camboriu') {
                 valorBase = 20; // Coleta em Balneário Camboriú
             } else if (localColetaId === 'camboriu') {
@@ -342,8 +525,15 @@ document.addEventListener('DOMContentLoaded', function () {
             } else if (localColetaId === 'itajai') {
                 valorBase = 30; // Coleta em Itajaí
             }
+            
+            // Se for bairro especial de Camboriú, adiciona R$ 35,00
+            if (bairroEntregaInfo.tipoBairro === 'especial') {
+                adicionalBairro = bairroEntregaInfo.valorAdicional; // R$ 35,00
+                isBairroEspecial = true;
+                tipoBairroEspecial = 'camboriu';
+            }
         }
-
+        
         return { valorBase, adicionalBairro, isBairroEspecial, tipoBairroEspecial };
     }
 
@@ -536,21 +726,60 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Funções principais
     function abrirModalOrcamento() {
-        document.getElementById('orcamento-modal').style.display = 'block';
+        const modalOrcamento = document.getElementById('orcamento-modal');
+        if (!modalOrcamento) {
+            console.error('Modal de orçamento não encontrado!');
+            return;
+        }
+        
+        modalOrcamento.style.display = 'block';
         document.body.style.overflow = 'hidden';
 
-        // Resetar campos
-        document.getElementById('orcamento-resultado').style.display = 'none';
-        document.getElementById('btn-confirmar').style.display = 'none';
-        document.getElementById('endereco-detalhado-container').style.display = 'none';
-        document.getElementById('bairro-coleta-container').style.display = 'none';
-        document.getElementById('bairro-entrega-container').style.display = 'none';
+        // Resetar campos - COM VERIFICAÇÕES DE SEGURANÇA
+        const elementosParaResetar = [
+            'orcamento-resultado',
+            'btn-confirmar',
+            'endereco-detalhado-container',
+            'bairro-coleta-container',
+            'bairro-entrega-container'
+        ];
+
+        elementosParaResetar.forEach(id => {
+            const elemento = document.getElementById(id);
+            if (elemento) {
+                if (id === 'btn-confirmar' || id === 'orcamento-resultado') {
+                    elemento.style.display = 'none';
+                } else {
+                    elemento.style.display = 'none';
+                }
+            }
+        });
 
         // Limpar campos
-        ['comprimento', 'largura', 'altura', 'peso', 'descricao', 'bairro-coleta', 'bairro-entrega'].forEach(id => {
+        const camposParaLimpar = ['comprimento', 'largura', 'altura', 'peso', 'descricao', 'bairro-coleta', 'bairro-entrega'];
+        camposParaLimpar.forEach(id => {
             const campo = document.getElementById(id);
             if (campo) campo.value = '';
         });
+
+        // Resetar selects principais
+        const selectColeta = document.getElementById('local-coleta');
+        if (selectColeta) selectColeta.selectedIndex = 0;
+        
+        const selectDestino = document.getElementById('cidade-destino');
+        if (selectDestino) selectDestino.selectedIndex = 0;
+        
+        const enderecoDetalhado = document.getElementById('endereco-detalhado');
+        if (enderecoDetalhado) enderecoDetalhado.value = '';
+        
+        const enderecoEntrega = document.getElementById('entrega-endereco');
+        if (enderecoEntrega) enderecoEntrega.value = '';
+        
+        const clienteNome = document.getElementById('cliente-nome');
+        if (clienteNome) clienteNome.value = '';
+        
+        const clienteTelefone = document.getElementById('cliente-telefone');
+        if (clienteTelefone) clienteTelefone.value = '';
     }
 
     function fecharModal() {
@@ -570,11 +799,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const localColetaSelect = document.getElementById('local-coleta');
         const enderecoDetalhado = document.getElementById('endereco-detalhado');
         const cidadeDestinoSelect = document.getElementById('cidade-destino');
-        const enderecoEntrega = document.getElementById('entrega-endereco').value;
+        const enderecoEntrega = document.getElementById('entrega-endereco');
         const bairroColetaSelect = document.getElementById('bairro-coleta');
         const bairroEntregaSelect = document.getElementById('bairro-entrega');
 
-        if (!localColetaSelect || !enderecoDetalhado || !cidadeDestinoSelect) {
+        if (!localColetaSelect || !enderecoDetalhado || !cidadeDestinoSelect || !enderecoEntrega) {
             console.error('Elementos do formulário não encontrados');
             mostrarToast('Erro no formulário!', 'error');
             return;
@@ -585,8 +814,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const enderecoColeta = enderecoDetalhado.value;
         const cidadeDestinoId = cidadeDestinoSelect.value;
         const cidadeDestinoNome = cidadeDestinoSelect.options[cidadeDestinoSelect.selectedIndex].text;
-        const bairroColeta = bairroColetaSelect ? bairroColetaSelect.options[bairroColetaSelect.selectedIndex]?.text : '';
-        const bairroEntrega = bairroEntregaSelect ? bairroEntregaSelect.options[bairroEntregaSelect.selectedIndex]?.text : '';
+        
+        // Obter informações dos bairros
+        const bairroColetaInfo = obterValorBairroSelecionado('bairro-coleta', localColetaId);
+        const bairroEntregaInfo = obterValorBairroSelecionado('bairro-entrega', cidadeDestinoId);
+        
+        const bairroColeta = bairroColetaInfo.nomeBairro;
+        const bairroEntrega = bairroEntregaInfo.nomeBairro;
 
         const comprimento = parseFloat(document.getElementById('comprimento').value) || 0;
         const largura = parseFloat(document.getElementById('largura').value) || 0;
@@ -615,13 +849,9 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Obter valores dos bairros selecionados
-        const bairroColetaValor = obterValorBairroSelecionado('bairro-coleta', localColetaId);
-        const bairroEntregaValor = obterValorBairroSelecionado('bairro-entrega', cidadeDestinoId);
-
-        // Calcular valores base e adicionais (CORRIGIDO)
+        // Calcular valores base e adicionais
         const { valorBase, adicionalBairro, isBairroEspecial, tipoBairroEspecial } =
-            calcularValorBase(cidadeDestinoId, localColetaId, bairroColetaValor, bairroEntregaValor);
+            calcularValorBase(cidadeDestinoId, localColetaId, bairroColetaInfo, bairroEntregaInfo);
 
         // Adicional por tamanho (somente se não for bairro especial)
         let adicionalTamanho = 0;
@@ -649,7 +879,7 @@ document.addEventListener('DOMContentLoaded', function () {
             bairroColeta: bairroColeta,
             cidadeDestino: cidadeDestinoNome,
             cidadeDestinoId: cidadeDestinoId,
-            enderecoEntrega: enderecoEntrega,
+            enderecoEntrega: enderecoEntrega.value,
             bairroEntrega: bairroEntrega,
             dimensoes: `${comprimento}x${largura}x${altura}cm`,
             volume: volumeLitros.toFixed(1),
@@ -664,6 +894,7 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             isBairroEspecial: isBairroEspecial,
             tipoBairroEspecial: tipoBairroEspecial,
+            tipoBairroEntrega: bairroEntregaInfo.tipoBairro,
             data: new Date().toLocaleString('pt-BR'),
             timestamp: Date.now()
         };
@@ -730,10 +961,15 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        document.getElementById('orcamento-resultado').style.display = 'block';
-        document.getElementById('btn-confirmar').style.display = 'block';
+        const orcamentoResultado = document.getElementById('orcamento-resultado');
+        const btnConfirmar = document.getElementById('btn-confirmar');
+        
+        if (orcamentoResultado) orcamentoResultado.style.display = 'block';
+        if (btnConfirmar) btnConfirmar.style.display = 'block';
 
-        document.getElementById('orcamento-resultado').scrollIntoView({ behavior: 'smooth' });
+        if (orcamentoResultado) {
+            orcamentoResultado.scrollIntoView({ behavior: 'smooth' });
+        }
 
         if (isBairroEspecial) {
             let mensagem = '';
@@ -773,6 +1009,25 @@ document.addEventListener('DOMContentLoaded', function () {
             } else if (campo) {
                 campo.style.borderColor = '';
             }
+        }
+
+        // Validação de bairro para cidades que têm bairros
+        const localColeta = document.getElementById('local-coleta').value;
+        const bairroColeta = document.getElementById('bairro-coleta');
+        if (bairroColeta && bairroColeta.style.display !== 'none' && (!bairroColeta.value || bairroColeta.value === '')) {
+            mostrarToast('Selecione o bairro de coleta!', 'error');
+            bairroColeta.style.borderColor = '#f44336';
+            bairroColeta.focus();
+            return false;
+        }
+
+        const cidadeDestino = document.getElementById('cidade-destino').value;
+        const bairroEntrega = document.getElementById('bairro-entrega');
+        if (bairroEntrega && bairroEntrega.style.display !== 'none' && (!bairroEntrega.value || bairroEntrega.value === '')) {
+            mostrarToast('Selecione o bairro de entrega!', 'error');
+            bairroEntrega.style.borderColor = '#f44336';
+            bairroEntrega.focus();
+            return false;
         }
 
         // Validação de telefone
@@ -930,7 +1185,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Fechar modal de orçamento e abrir comprovante
         fecharModal();
-        document.getElementById('comprovante-modal').style.display = 'block';
+        const comprovanteModal = document.getElementById('comprovante-modal');
+        if (comprovanteModal) {
+            comprovanteModal.style.display = 'block';
+        }
 
         mostrarToast('Comprovante gerado! Imprima e confirme no WhatsApp.', 'success');
     }
@@ -1297,7 +1555,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // Função para mostrar toast
     window.mostrarToast = function (mensagem, tipo = 'success') {
         const toastContainer = document.getElementById('toast-container');
-        if (!toastContainer) return;
+        if (!toastContainer) {
+            console.warn('Container de toast não encontrado');
+            return;
+        }
 
         const toast = document.createElement('div');
         toast.className = `toast toast-${tipo}`;
@@ -1312,7 +1573,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Remover após 5 segundos
         setTimeout(() => {
-            toast.remove();
+            if (toast.parentNode) {
+                toast.remove();
+            }
         }, 5000);
     };
 });
