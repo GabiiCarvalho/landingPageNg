@@ -447,6 +447,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // CORREÇÃO COMPLETA: Calcular valor base com valores atualizados
+    // CORREÇÃO COMPLETA: Calcular valor base com valores atualizados
     function calcularValorBase(localColetaId, cidadeDestinoId, bairroColetaInfo, bairroEntregaInfo) {
         let valorBase = 0;
         let adicionalBairro = 0;
@@ -457,37 +458,44 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('Coleta:', localColetaId, 'Bairro coleta:', bairroColetaInfo);
         console.log('Entrega:', cidadeDestinoId, 'Bairro entrega:', bairroEntregaInfo);
 
-        // 1. Balneário Camboriú para Camboriú - CORREÇÃO: 20,00
-        if (localColetaId === 'balneario-camboriu' && cidadeDestinoId === 'camboriu') {
-            valorBase = 20; // CORREÇÃO: 20,00 para bairro normal
+        // 1. Camboriú para Camboriú (mesma cidade) - CORREÇÃO APLICADA
+        if (localColetaId === 'camboriu' && cidadeDestinoId === 'camboriu') {
+            valorBase = 15; // Valor base para Camboriú → Camboriú (mesma cidade)
+
+            // VERIFICAÇÃO: Se o bairro de ENTREGA é especial
+            if (bairroEntregaInfo.tipoBairro === 'especial') {
+                adicionalBairro = 30; // +30 para bairro especial de Camboriú (mesma cidade)
+                isBairroEspecial = true;
+                tipoBairroEspecial = 'camboriu';
+            }
+            // VERIFICAÇÃO: Se o bairro de COLETA é especial (caso o usuário selecione bairro de coleta especial)
+            else if (bairroColetaInfo.tipoBairro === 'especial') {
+                adicionalBairro = 30; // +30 para bairro especial de Camboriú (mesma cidade)
+                isBairroEspecial = true;
+                tipoBairroEspecial = 'camboriu';
+            }
+        }
+        // 2. Balneário Camboriú para Camboriú
+        else if (localColetaId === 'balneario-camboriu' && cidadeDestinoId === 'camboriu') {
+            valorBase = 20; // 20,00 para bairro normal
             if (bairroEntregaInfo.tipoBairro === 'especial') {
                 adicionalBairro = 35; // +35 para bairro especial
                 isBairroEspecial = true;
                 tipoBairroEspecial = 'camboriu';
             }
         }
-        // 2. Camboriú para Balneário Camboriú - CORREÇÃO: 20,00
+        // 3. Camboriú para Balneário Camboriú
         else if (localColetaId === 'camboriu' && cidadeDestinoId === 'balneario-camboriu') {
-            valorBase = 20; // CORREÇÃO: 20,00 para bairro normal
+            valorBase = 20; // 20,00 para bairro normal
             // Não há bairros especiais em Balneário Camboriú
         }
-        // 3. Balneário Camboriú para Itajaí
+        // 4. Balneário Camboriú para Itajaí
         else if (localColetaId === 'balneario-camboriu' && cidadeDestinoId === 'itajai') {
             valorBase = 30;
             if (bairroEntregaInfo.tipoBairro === 'especial') {
                 adicionalBairro = 20;
                 isBairroEspecial = true;
                 tipoBairroEspecial = 'itajai';
-            }
-        }
-        // 4. Camboriú para Camboriú (mesma cidade)
-        else if (localColetaId === 'camboriu' && cidadeDestinoId === 'camboriu') {
-            valorBase = 15; // Mantido 15 para Camboriú → Camboriú (mesma cidade)
-
-            if (bairroEntregaInfo.tipoBairro === 'especial') {
-                adicionalBairro = 30;
-                isBairroEspecial = true;
-                tipoBairroEspecial = 'camboriu';
             }
         }
         // 5. Camboriú para Itajaí
