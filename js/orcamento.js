@@ -447,7 +447,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // CORREÇÃO COMPLETA: Calcular valor base com valores atualizados
-    // CORREÇÃO COMPLETA: Calcular valor base com valores atualizados
+    // FUNÇÃO CORRIGIDA: Calcular valor base com regras específicas para coleta e entrega
     function calcularValorBase(localColetaId, cidadeDestinoId, bairroColetaInfo, bairroEntregaInfo) {
         let valorBase = 0;
         let adicionalBairro = 0;
@@ -458,101 +458,146 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('Coleta:', localColetaId, 'Bairro coleta:', bairroColetaInfo);
         console.log('Entrega:', cidadeDestinoId, 'Bairro entrega:', bairroEntregaInfo);
 
-        // 1. Camboriú para Camboriú (mesma cidade) - CORREÇÃO APLICADA
+        // REGRA 1: Mesma cidade (Camboriú para Camboriú)
         if (localColetaId === 'camboriu' && cidadeDestinoId === 'camboriu') {
-            valorBase = 15; // Valor base para Camboriú → Camboriú (mesma cidade)
+            valorBase = 15; // Valor base para Camboriú → Camboriú
+
+            // VERIFICAÇÃO: Se o bairro de ENTREGA OU COLETA é especial
+            if (bairroEntregaInfo.tipoBairro === 'especial' || bairroColetaInfo.tipoBairro === 'especial') {
+                adicionalBairro = 25; // +25 para bairro especial (coleta OU entrega)
+                isBairroEspecial = true;
+                tipoBairroEspecial = 'camboriu';
+                console.log('Aplicado adicional +25 para bairro especial Camboriú (mesma cidade)');
+            }
+        }
+        // REGRA 2: Camboriú (qualquer bairro) para Balneário Camboriú
+        else if (localColetaId === 'camboriu' && cidadeDestinoId === 'balneario-camboriu') {
+            valorBase = 20; // Valor base normal
+
+            // VERIFICAÇÃO: Se o bairro de COLETA é especial
+            if (bairroColetaInfo.tipoBairro === 'especial') {
+                valorBase = 45; // 20 + 25 = 45,00
+                isBairroEspecial = true;
+                tipoBairroEspecial = 'camboriu';
+                console.log('Aplicado valor 45 para Camboriú bairro especial → Balneário');
+            }
+        }
+        // REGRA 3: Balneário Camboriú para Camboriú
+        else if (localColetaId === 'balneario-camboriu' && cidadeDestinoId === 'camboriu') {
+            valorBase = 20; // Valor base normal
 
             // VERIFICAÇÃO: Se o bairro de ENTREGA é especial
             if (bairroEntregaInfo.tipoBairro === 'especial') {
-                adicionalBairro = 30; // +30 para bairro especial de Camboriú (mesma cidade)
+                valorBase = 45; // 20 + 25 = 45,00
                 isBairroEspecial = true;
                 tipoBairroEspecial = 'camboriu';
-            }
-            // VERIFICAÇÃO: Se o bairro de COLETA é especial (caso o usuário selecione bairro de coleta especial)
-            else if (bairroColetaInfo.tipoBairro === 'especial') {
-                adicionalBairro = 30; // +30 para bairro especial de Camboriú (mesma cidade)
-                isBairroEspecial = true;
-                tipoBairroEspecial = 'camboriu';
+                console.log('Aplicado valor 45 para Balneário → Camboriú bairro especial');
             }
         }
-        // 2. Balneário Camboriú para Camboriú
-        else if (localColetaId === 'balneario-camboriu' && cidadeDestinoId === 'camboriu') {
-            valorBase = 20; // 20,00 para bairro normal
-            if (bairroEntregaInfo.tipoBairro === 'especial') {
-                adicionalBairro = 35; // +35 para bairro especial
-                isBairroEspecial = true;
-                tipoBairroEspecial = 'camboriu';
-            }
-        }
-        // 3. Camboriú para Balneário Camboriú
-        else if (localColetaId === 'camboriu' && cidadeDestinoId === 'balneario-camboriu') {
-            valorBase = 20; // 20,00 para bairro normal
-            // Não há bairros especiais em Balneário Camboriú
-        }
-        // 4. Balneário Camboriú para Itajaí
-        else if (localColetaId === 'balneario-camboriu' && cidadeDestinoId === 'itajai') {
-            valorBase = 30;
-            if (bairroEntregaInfo.tipoBairro === 'especial') {
-                adicionalBairro = 20;
-                isBairroEspecial = true;
-                tipoBairroEspecial = 'itajai';
-            }
-        }
-        // 5. Camboriú para Itajaí
+        // REGRA 4: Camboriú para Itajaí
         else if (localColetaId === 'camboriu' && cidadeDestinoId === 'itajai') {
-            valorBase = 30;
-            if (bairroEntregaInfo.tipoBairro === 'especial') {
-                adicionalBairro = 20;
+            // Se bairro de coleta NORMAL e bairro de entrega NORMAL
+            if (bairroColetaInfo.tipoBairro === 'normal' && bairroEntregaInfo.tipoBairro === 'normal') {
+                valorBase = 40; // 20 + 20 = 40,00
+            }
+            // Se bairro de coleta ESPECIAL e/ou bairro de entrega ESPECIAL
+            else if (bairroColetaInfo.tipoBairro === 'especial' || bairroEntregaInfo.tipoBairro === 'especial') {
+                valorBase = 65; // 25 + 40 = 65,00
                 isBairroEspecial = true;
-                tipoBairroEspecial = 'itajai';
+                tipoBairroEspecial = 'camboriu-itajai';
+                console.log('Aplicado valor 65 para Camboriú bairro especial → Itajaí bairro especial');
             }
         }
-        // 6. Itajaí para Itajaí
-        else if (localColetaId === 'itajai' && cidadeDestinoId === 'itajai') {
-            valorBase = 30;
-            if (bairroEntregaInfo.tipoBairro === 'especial') {
-                adicionalBairro = 20;
-                isBairroEspecial = true;
-                tipoBairroEspecial = 'itajai';
-            }
-        }
-        // 7. Itajaí para Camboriú
+        // REGRA 5: Itajaí para Camboriú
         else if (localColetaId === 'itajai' && cidadeDestinoId === 'camboriu') {
-            valorBase = 30;
-            if (bairroEntregaInfo.tipoBairro === 'especial') {
-                adicionalBairro = 35;
+            // Se bairro de coleta NORMAL e bairro de entrega NORMAL
+            if (bairroColetaInfo.tipoBairro === 'normal' && bairroEntregaInfo.tipoBairro === 'normal') {
+                valorBase = 40; // 20 + 20 = 40,00
+            }
+            // Se bairro de coleta ESPECIAL e/ou bairro de entrega ESPECIAL
+            else if (bairroColetaInfo.tipoBairro === 'especial' || bairroEntregaInfo.tipoBairro === 'especial') {
+                valorBase = 65; // 25 + 40 = 65,00
                 isBairroEspecial = true;
-                tipoBairroEspecial = 'camboriu';
+                tipoBairroEspecial = 'itajai-camboriu';
+                console.log('Aplicado valor 65 para Itajaí bairro especial → Camboriú bairro especial');
             }
         }
-        // 8. Itajaí para Balneário Camboriú
-        else if (localColetaId === 'itajai' && cidadeDestinoId === 'balneario-camboriu') {
-            valorBase = 30;
-            // Não há bairros especiais em Balneário Camboriú
+        // REGRA 6: Balneário Camboriú para Itajaí
+        else if (localColetaId === 'balneario-camboriu' && cidadeDestinoId === 'itajai') {
+            valorBase = 30; // Valor base normal
+
+            // VERIFICAÇÃO: Se o bairro de ENTREGA é especial
+            if (bairroEntregaInfo.tipoBairro === 'especial') {
+                valorBase = 50; // 30 + 20 = 50,00
+                isBairroEspecial = true;
+                tipoBairroEspecial = 'itajai';
+                console.log('Aplicado valor 50 para Balneário → Itajaí bairro especial');
+            }
         }
-        // 9. Outras cidades
+        // REGRA 7: Itajaí para Balneário Camboriú
+        else if (localColetaId === 'itajai' && cidadeDestinoId === 'balneario-camboriu') {
+            valorBase = 30; // Valor base normal
+
+            // VERIFICAÇÃO: Se o bairro de COLETA é especial
+            if (bairroColetaInfo.tipoBairro === 'especial') {
+                valorBase = 50; // 30 + 20 = 50,00
+                isBairroEspecial = true;
+                tipoBairroEspecial = 'itajai';
+                console.log('Aplicado valor 50 para Itajaí bairro especial → Balneário');
+            }
+        }
+        // REGRA 8: Balneário Camboriú para Balneário Camboriú (mesma cidade)
+        else if (localColetaId === 'balneario-camboriu' && cidadeDestinoId === 'balneario-camboriu') {
+            valorBase = 15; // 15,00 (não há bairros especiais em Balneário)
+        }
+        // REGRA 9: Itajaí para Itajaí (mesma cidade)
+        else if (localColetaId === 'itajai' && cidadeDestinoId === 'itajai') {
+            valorBase = 15; // Valor base
+
+            // VERIFICAÇÃO: Se o bairro de ENTREGA OU COLETA é especial
+            if (bairroEntregaInfo.tipoBairro === 'especial' || bairroColetaInfo.tipoBairro === 'especial') {
+                valorBase = 40; // 15 + 25 = 40,00
+                isBairroEspecial = true;
+                tipoBairroEspecial = 'itajai';
+                console.log('Aplicado valor 40 para Itajaí bairro especial → Itajaí (mesma cidade)');
+            }
+        }
+        // REGRA 10: Outras cidades (usar tabela de preços)
         else {
             // Usar valor da tabela de preços
             valorBase = TABELA_PRECOS[cidadeDestinoId] ? TABELA_PRECOS[cidadeDestinoId].min : 0;
 
-            // Verificar se é bairro especial de Camboriú
+            // Verificar se destino é Camboriú e bairro de entrega é especial
             if (cidadeDestinoId === 'camboriu' && bairroEntregaInfo.tipoBairro === 'especial') {
-                adicionalBairro = 35;
+                adicionalBairro = 35; // +35 para bairro especial de Camboriú
                 isBairroEspecial = true;
                 tipoBairroEspecial = 'camboriu';
+                console.log('Aplicado adicional +35 para bairro especial de Camboriú');
             }
 
-            // Verificar se é bairro especial de Itajaí
+            // Verificar se destino é Itajaí e bairro de entrega é especial
             if (cidadeDestinoId === 'itajai' && bairroEntregaInfo.tipoBairro === 'especial') {
-                adicionalBairro = 20;
+                adicionalBairro = 20; // +20 para bairro especial de Itajaí
                 isBairroEspecial = true;
                 tipoBairroEspecial = 'itajai';
-                valorBase = 30; // Força valor base 30 para Itajaí com bairro especial
+                console.log('Aplicado adicional +20 para bairro especial de Itajaí');
             }
         }
 
-        console.log('Resultado cálculo:', { valorBase, adicionalBairro, isBairroEspecial, tipoBairroEspecial });
-        return { valorBase, adicionalBairro, isBairroEspecial, tipoBairroEspecial };
+        console.log('Resultado cálculo:', {
+            valorBase,
+            adicionalBairro,
+            totalBase: valorBase + adicionalBairro,
+            isBairroEspecial,
+            tipoBairroEspecial
+        });
+
+        return {
+            valorBase: valorBase + adicionalBairro,
+            adicionalBairro,
+            isBairroEspecial,
+            tipoBairroEspecial
+        };
     }
 
     // FUNÇÃO CORRIGIDA: calcularOrcamento
