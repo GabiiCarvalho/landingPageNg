@@ -470,32 +470,22 @@ document.addEventListener('DOMContentLoaded', function () {
     function confirmarWhatsApp() {
         if (!orcamentoAtual) return;
 
-        // Formatar mensagem para WhatsApp com emojis
-        const mensagem = `🚚 *NOVO PEDIDO - N&G EXPRESS* 🚚%0A%0A` +
-            `👤 *SOLICITANTE:* ${orcamentoAtual.nome}%0A` +
-            `📱 *TELEFONE:* ${orcamentoAtual.telefone}%0A%0A` +
-            `📍 *COLETA:*%0A${orcamentoAtual.localColeta}%0A${orcamentoAtual.enderecoColeta}%0A%0A` +
+        // Mensagem simplificada
+        const mensagem = `✅ *PEDIDO CONFIRMADO - N&G EXPRESS*%0A%0A` +
+            `👤 ${orcamentoAtual.nome} 📱 ${orcamentoAtual.telefone}%0A%0A` +
+            `📍 *RETIRADA:*%0A${orcamentoAtual.localColeta}%0A${orcamentoAtual.enderecoColeta}%0A%0A` +
             `🎯 *ENTREGA:*%0A${orcamentoAtual.cidadeDestino}%0A${orcamentoAtual.enderecoEntrega}%0A%0A` +
-            `📦 *ENCOMENDA:*%0A` +
-            `📏 Dimensões: ${orcamentoAtual.dimensoes}%0A` +
-            `⚖️ Peso: ${orcamentoAtual.peso}kg%0A` +
-            `📝 Descrição: ${orcamentoAtual.descricao}%0A%0A` +
-            `💰 *VALOR TOTAL:* ${formatarMoeda(orcamentoAtual.valores.total)}%0A%0A` +
-            `📋 *DETALHES DO PEDIDO:*%0A` +
-            `🔢 Número: ${orcamentoAtual.numeroPedido}%0A` +
-            `📅 Data/Hora: ${orcamentoAtual.data}%0A%0A` +
-            `_Este pedido foi gerado automaticamente pelo site da N&G EXPRESS_`;
+            `📦 ${orcamentoAtual.dimensoes} / ${orcamentoAtual.peso}kg%0A` +
+            `📝 ${orcamentoAtual.descricao}%0A%0A` +
+            `💰 ${formatarMoeda(orcamentoAtual.valores.total)}%0A%0A` +
+            `🔢 Pedido: ${orcamentoAtual.numeroPedido}%0A` +
+            `📅 ${orcamentoAtual.data}`;
 
-        // Número da N&G EXPRESS
         const telefoneWhatsApp = '5547999123260';
-
-        // Redirecionar para WhatsApp
         window.open(`https://wa.me/${telefoneWhatsApp}?text=${mensagem}`, '_blank');
 
-        // Fechar modal
         fecharModal();
-
-        mostrarToast('Redirecionando para WhatsApp...', 'success');
+        mostrarToast('Enviando confirmação para WhatsApp...', 'success');
     }
 
     // Função para mostrar toast (deve estar no escopo global)
