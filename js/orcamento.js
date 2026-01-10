@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function () {
             nome: document.getElementById('cliente-nome').value,
             telefone: document.getElementById('cliente-telefone').value,
             localColeta: localColetaNome,
-            enderecoColeta: enderecoDetalhado,
+            enderecoColeta: enderecoColeta,
             cidadeDestino: cidadeDestinoNome,
             enderecoEntrega: document.getElementById('entrega-endereco').value,
             dimensoes: `${comprimento}x${largura}x${altura}cm`,
@@ -349,7 +349,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Gerar número de pedido
         const numeroPedido = 'NG' + Date.now().toString().slice(-6);
 
-        // Preencher comprovante
+        // Preencher comprovante corretamente
         document.getElementById('pedido-numero').textContent = numeroPedido;
         document.getElementById('pedido-data').textContent = orcamentoAtual.data;
         document.getElementById('comprovante-nome').textContent = orcamentoAtual.nome;
@@ -372,154 +372,169 @@ document.addEventListener('DOMContentLoaded', function () {
         mostrarToast('Comprovante gerado! Imprima e confirme no WhatsApp.', 'success');
     }
 
-    function imprimirComprovante() {
-        const conteudoOriginal = document.body.innerHTML;
-        const conteudoComprovante = document.getElementById('comprovante-modal').innerHTML;
+    function gerarConteudoRecibo() {
+        if (!orcamentoAtual) return '';
+        
+        return `
+=========================
+       N&G EXPRESS
+=========================
 
+CLIENTE
+Nome: ${orcamentoAtual.nome}
+Telefone: ${orcamentoAtual.telefone}
+Data: ${orcamentoAtual.data}
+Pedido: ${orcamentoAtual.numeroPedido}
+-------------------------
+COLETA
+${orcamentoAtual.localColeta}
+${orcamentoAtual.enderecoColeta}
+-------------------------
+ENTREGA
+${orcamentoAtual.cidadeDestino}
+${orcamentoAtual.enderecoEntrega}
+-------------------------
+ENCOMENDA
+Dimensões: ${orcamentoAtual.dimensoes}
+Volume: ${orcamentoAtual.volume}L
+Peso: ${orcamentoAtual.peso}kg
+Descrição: ${orcamentoAtual.descricao}
+-------------------------
+VALORES
+Base: R$ ${orcamentoAtual.valores.base.toFixed(2)}
+Adicional tamanho: R$ ${orcamentoAtual.valores.tamanho.toFixed(2)}
+Adicional peso: R$ ${orcamentoAtual.valores.peso.toFixed(2)}
+-------------------------
+TOTAL: R$ ${orcamentoAtual.valores.total.toFixed(2)}
+=========================
+Obrigado pela preferência!
+Aguarde nosso contato para
+confirmação da coleta.
+=========================
+`;
+    }
+
+    function imprimirComprovante() {
+        if (!orcamentoAtual) {
+            mostrarToast('Gere o comprovante primeiro!', 'error');
+            return;
+        }
+
+        // Gerar o conteúdo do recibo
+        const receiptContent = gerarConteudoRecibo();
+        
         // Criar uma nova janela para impressão
         const janelaImpressao = window.open('', '_blank');
-
+        
         // HTML otimizado para impressão
         janelaImpressao.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Recibo N&G EXPRESS</title>
-            <meta charset="UTF-8">
-            <style>
-                @media print {
-                    @page {
-                        size: 80mm 297mm;
-                        margin: 0;
-                        padding: 0;
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Recibo N&G EXPRESS</title>
+                <meta charset="UTF-8">
+                <style>
+                    @media print {
+                        @page {
+                            size: 80mm 297mm;
+                            margin: 0;
+                            padding: 0;
+                        }
+                        body {
+                            font-family: 'Courier New', monospace;
+                            font-size: 11px;
+                            line-height: 1.3;
+                            width: 76mm;
+                            margin: 0 auto;
+                            padding: 2mm;
+                            white-space: pre-wrap;
+                            word-wrap: break-word;
+                        }
+                        .no-print {
+                            display: none !important;
+                        }
                     }
-                    body {
-                        font-family: 'Courier New', monospace;
-                        font-size: 12px;
-                        width: 80mm;
-                        margin: 0;
-                        padding: 5mm;
-                        white-space: pre-wrap;
-                        word-wrap: break-word;
+                    @media screen {
+                        body {
+                            font-family: 'Courier New', monospace;
+                            font-size: 11px;
+                            background: #f5f5f5;
+                            padding: 20px;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            min-height: 100vh;
+                        }
+                        pre {
+                            background: white;
+                            padding: 20px;
+                            border: 1px solid #ddd;
+                            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                            width: 76mm;
+                            margin: 0 auto;
+                            white-space: pre-wrap;
+                            word-wrap: break-word;
+                        }
+                        .print-button {
+                            display: block;
+                            margin: 20px auto;
+                            padding: 10px 20px;
+                            background: #007bff;
+                            color: white;
+                            border: none;
+                            border-radius: 5px;
+                            cursor: pointer;
+                            font-size: 14px;
+                        }
+                        .print-button:hover {
+                            background: #0056b3;
+                        }
                     }
-                    .no-print {
-                        display: none !important;
-                    }
-                    h1, h2, h3 {
-                        text-align: center;
-                        margin: 5px 0;
-                    }
-                    hr {
-                        border: none;
-                        border-top: 1px dashed #000;
-                        margin: 10px 0;
-                    }
-                }
-                @media screen {
-                    body {
-                        font-family: 'Courier New', monospace;
-                        font-size: 12px;
-                        background: #f5f5f5;
-                        padding: 20px;
-                    }
-                    pre {
-                        background: white;
-                        padding: 20px;
-                        border: 1px solid #ddd;
-                        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-                        max-width: 80mm;
-                        margin: 0 auto;
-                        white-space: pre-wrap;
-                        word-wrap: break-word;
-                    }
-                    .print-button {
-                        display: block;
-                        margin: 20px auto;
-                        padding: 10px 20px;
-                        background: #007bff;
-                        color: white;
-                        border: none;
-                        border-radius: 5px;
-                        cursor: pointer;
-                        font-size: 16px;
-                    }
-                    .print-button:hover {
-                        background: #0056b3;
-                    }
-                }
-            </style>
-        </head>
-        <body>
-            <pre>${receiptContent}</pre>
-            <button class="print-button" onclick="window.print()">Imprimir Recibo</button>
-            <button class="print-button" onclick="window.close()" style="background: #6c757d;">Fechar</button>
-        </body>
-        </html>
-    `);
-
-        janelaImpressao.document.close();
-
+                </style>
+            </head>
+            <body>
+                <pre>${receiptContent}</pre>
+                <div style="text-align: center; margin-top: 20px;" class="no-print">
+                    <button class="print-button" onclick="window.print()">🖨️ Imprimir Recibo</button>
+                    <button class="print-button" onclick="window.close()" style="background: #6c757d; margin-left: 10px;">✖️ Fechar</button>
+                </div>
+                <script>
+                    // Imprimir automaticamente após carregar
+                    window.onload = function() {
+                        setTimeout(() => {
+                            window.print();
+                        }, 500);
+                    };
+                </script>
+            </body>
+            </html>
+        `);
         
-        setTimeout(() => {
-            janelaImpressao.print();
-        }, 500);
+        janelaImpressao.document.close();
     }
 
     function confirmarWhatsApp() {
         if (!orcamentoAtual) return;
 
-        // Mensagem simplificada
-        const receiptContent = `
-        ========================
-              N&G EXPRESS
-        ========================
-
-        Cliente: ${orcamentoAtual.nome}
-        Telefone: ${orcamentoAtual.telefone}
-        Data: ${orcamentoAtual.data}
-        Nº Pedido: ${orcamentoAtual.numeroPedido}
-        -------------------------
-        COLETA:
-
-        ${orcamentoAtual.localColeta}
-        ${orcamentoAtual.enderecoColeta}
-        -------------------------
-        ENTREGA:
-
-        ${orcamentoAtual.cidadeDestino}
-        ${orcamentoAtual.enderecoEntrega}    
-        -------------------------
-        ENCOMENDA:
-
-        Dimensões: ${orcamentoAtual.dimensoes}
-        Volume: ${orcamentoAtual.volume}
-        Peso: ${orcamentoAtual.peso}Kg
-        Descrição: ${orcamentoAtual.descricao}
-        -------------------------
-        VALORES:
-
-        Base: R$ ${orcamentoAtual.valores.base.toFixed(2)}
-        Adicional tamanho: R$ ${orcamentoAtual.valores.tamanho.toFixed(2)}
-        Adicional peso: R$ ${orcamentoAtual.valores.peso.toFixed(2)} 
-        ------------------------
-
-        TOTAL: R$ ${orcamentoAtual.valores.total.toFixed(2)}
-
-        ==========================
-
-        OBRIGADO PELA PREFERÊNCIA!
-        Aguarde nosso contato para
-        confirmação da coleta.
-        ==========================
-        `
-
-
+        // Formatar mensagem para WhatsApp
+        const mensagem = `🚚 *NOVO PEDIDO - N&G EXPRESS* 🚚%0A%0A` +
+            `👤 *CLIENTE:*%0A${orcamentoAtual.nome}%0A${orcamentoAtual.telefone}%0A%0A` +
+            `📍 *COLETA:*%0A${orcamentoAtual.localColeta}%0A${orcamentoAtual.enderecoColeta}%0A%0A` +
+            `🎯 *ENTREGA:*%0A${orcamentoAtual.cidadeDestino}%0A${orcamentoAtual.enderecoEntrega}%0A%0A` +
+            `📦 *ENCOMENDA:*%0A` +
+            `📏 ${orcamentoAtual.dimensoes}%0A` +
+            `⚖️ ${orcamentoAtual.peso}kg%0A` +
+            `📝 ${orcamentoAtual.descricao}%0A%0A` +
+            `💰 *TOTAL:* R$ ${orcamentoAtual.valores.total.toFixed(2)}%0A%0A` +
+            `🔢 *PEDIDO:* ${orcamentoAtual.numeroPedido}%0A` +
+            `📅 ${orcamentoAtual.data}%0A%0A` +
+            `_Gerado via site N&G EXPRESS_`;
 
         const telefoneWhatsApp = '5547999123260';
         window.open(`https://wa.me/${telefoneWhatsApp}?text=${mensagem}`, '_blank');
 
         fecharModal();
-        mostrarToast('Enviando confirmação para WhatsApp...', 'success');
+        mostrarToast('Redirecionando para WhatsApp...', 'success');
     }
 
     // Função para mostrar toast (deve estar no escopo global)
