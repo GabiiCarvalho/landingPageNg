@@ -1,4 +1,4 @@
-// Sistema de orçamento - ATUALIZADO COM MULTIPLOS LOCAIS DE COLETA E BAIRROS ESPECIAIS
+// Sistema de orçamento - CORRIGIDO COM CIDADES E BAIRROS
 document.addEventListener('DOMContentLoaded', function () {
     console.log('Script de orçamento carregado com sucesso!');
     
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
         btnWhatsapp.addEventListener('click', confirmarWhatsApp);
     }
 
-    // Configurar locais de coleta COM SELECTOR DE BAIRROS
+    // CORREÇÃO: Configurar locais de coleta - AGORA FUNCIONANDO
     function configurarLocaisColeta() {
         const locaisColeta = [
             {
@@ -142,15 +142,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const enderecoDetalhadoContainer = document.getElementById('endereco-detalhado-container');
         const enderecoInput = document.getElementById('endereco-detalhado');
 
-        if (!selectColeta || !bairroColetaContainer || !selectBairroColeta) {
-            console.warn('Elementos do formulário de coleta não encontrados');
+        if (!selectColeta) {
+            console.error('Elemento #local-coleta não encontrado!');
             return;
         }
 
-        // Limpar opções existentes
+        // CORREÇÃO: Limpar e preencher select de coleta
         selectColeta.innerHTML = '<option value="" disabled selected>Selecione o local de coleta</option>';
 
-        // Adicionar opções - ORDEM CORRETA
+        // Adicionar opções
         locaisColeta.forEach(local => {
             const option = document.createElement('option');
             option.value = local.id;
@@ -163,9 +163,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const localSelecionado = locaisColeta.find(local => local.id === cidadeId);
 
             // Limpar bairros existentes
-            selectBairroColeta.innerHTML = '<option value="" disabled selected>Selecione o bairro</option>';
+            if (selectBairroColeta) {
+                selectBairroColeta.innerHTML = '<option value="" disabled selected>Selecione o bairro</option>';
+            }
 
-            if (localSelecionado && localSelecionado.temBairros) {
+            if (localSelecionado && localSelecionado.temBairros && bairroColetaContainer && selectBairroColeta) {
                 bairroColetaContainer.style.display = 'block';
 
                 // Adicionar opção "Selecione o bairro"
@@ -220,9 +222,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 optionOutro.dataset.tipo = 'normal';
                 selectBairroColeta.appendChild(optionOutro);
 
-            } else {
+            } else if (bairroColetaContainer) {
                 bairroColetaContainer.style.display = 'none';
-                selectBairroColeta.value = '';
+                if (selectBairroColeta) {
+                    selectBairroColeta.value = '';
+                }
             }
         }
 
@@ -244,45 +248,47 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         // Event listener para bairro de coleta
-        selectBairroColeta.addEventListener('change', function () {
-            if (this.value && this.options[this.selectedIndex].dataset.valor > 0) {
-                const bairroNome = this.options[this.selectedIndex].text;
-                const adicional = this.options[this.selectedIndex].dataset.valor;
-                const tipo = this.options[this.selectedIndex].dataset.tipo;
-                
-                if (tipo === 'especial') {
-                    mostrarToast(`Bairro ${bairroNome} selecionado (adicional: R$ ${adicional},00)`, 'info');
-                } else {
-                    mostrarToast(`Bairro ${bairroNome} selecionado (sem adicional)`, 'info');
+        if (selectBairroColeta) {
+            selectBairroColeta.addEventListener('change', function () {
+                if (this.value && this.options[this.selectedIndex].dataset.valor > 0) {
+                    const bairroNome = this.options[this.selectedIndex].text;
+                    const adicional = this.options[this.selectedIndex].dataset.valor;
+                    const tipo = this.options[this.selectedIndex].dataset.tipo;
+                    
+                    if (tipo === 'especial') {
+                        mostrarToast(`Bairro ${bairroNome} selecionado (adicional: R$ ${adicional},00)`, 'info');
+                    } else {
+                        mostrarToast(`Bairro ${bairroNome} selecionado (sem adicional)`, 'info');
+                    }
+                } else if (this.value) {
+                    const bairroNome = this.options[this.selectedIndex].text;
+                    const tipo = this.options[this.selectedIndex].dataset.tipo;
+                    
+                    if (tipo === 'normal') {
+                        mostrarToast(`Bairro ${bairroNome} selecionado (sem adicional)`, 'info');
+                    }
                 }
-            } else if (this.value) {
-                const bairroNome = this.options[this.selectedIndex].text;
-                const tipo = this.options[this.selectedIndex].dataset.tipo;
-                
-                if (tipo === 'normal') {
-                    mostrarToast(`Bairro ${bairroNome} selecionado (sem adicional)`, 'info');
-                }
-            }
-        });
+            });
+        }
     }
 
-    // Atualizar select de cidades de destino COM SELECTOR DE BAIRROS
+    // CORREÇÃO: Atualizar select de cidades de destino - AGORA FUNCIONANDO
     function atualizarSelectCidades() {
         const select = document.getElementById('cidade-destino');
         const bairroEntregaContainer = document.getElementById('bairro-entrega-container');
         const selectBairroEntrega = document.getElementById('bairro-entrega');
 
-        if (!select || !bairroEntregaContainer || !selectBairroEntrega) {
-            console.warn('Elementos do formulário de destino não encontrados');
+        if (!select) {
+            console.error('Elemento #cidade-destino não encontrado!');
             return;
         }
 
-        // Limpar apenas as opções após a primeira
+        // CORREÇÃO: Limpar apenas as opções após a primeira
         while (select.options.length > 1) {
             select.remove(1);
         }
 
-        // Adicionar cidades na ordem correta, começando pelas cidades locais
+        // Adicionar cidades na ordem correta
         const cidadesOrdenadas = [
             'balneario-camboriu', 'camboriu', 'itajai',  // CIDADES PRINCIPAIS primeiro
             'itapema', 'porto-belo', 'bombinhas',
@@ -304,9 +310,11 @@ document.addEventListener('DOMContentLoaded', function () {
         // Função para atualizar bairros de entrega
         function atualizarBairrosEntrega(cidadeId) {
             // Limpar bairros existentes
-            selectBairroEntrega.innerHTML = '<option value="" disabled selected>Selecione o bairro</option>';
+            if (selectBairroEntrega) {
+                selectBairroEntrega.innerHTML = '<option value="" disabled selected>Selecione o bairro</option>';
+            }
 
-            if (cidadeId === 'itajai') {
+            if (cidadeId === 'itajai' && bairroEntregaContainer && selectBairroEntrega) {
                 bairroEntregaContainer.style.display = 'block';
 
                 // Adicionar opção "Selecione o bairro"
@@ -357,7 +365,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 optionOutro.dataset.tipo = 'normal';
                 selectBairroEntrega.appendChild(optionOutro);
 
-            } else if (cidadeId === 'camboriu') {
+            } else if (cidadeId === 'camboriu' && bairroEntregaContainer && selectBairroEntrega) {
                 bairroEntregaContainer.style.display = 'block';
 
                 // Adicionar opção "Selecione o bairro"
@@ -408,9 +416,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 optionOutro.dataset.tipo = 'normal';
                 selectBairroEntrega.appendChild(optionOutro);
 
-            } else {
+            } else if (bairroEntregaContainer) {
                 bairroEntregaContainer.style.display = 'none';
-                selectBairroEntrega.value = '';
+                if (selectBairroEntrega) {
+                    selectBairroEntrega.value = '';
+                }
             }
         }
 
@@ -420,24 +430,26 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         // Event listener para bairro de entrega
-        selectBairroEntrega.addEventListener('change', function () {
-            if (this.value && this.options[this.selectedIndex].dataset.valor > 0) {
-                const bairroNome = this.options[this.selectedIndex].text;
-                const adicional = this.options[this.selectedIndex].dataset.valor;
-                const tipo = this.options[this.selectedIndex].dataset.tipo;
-                
-                if (tipo === 'especial') {
-                    mostrarToast(`Bairro ${bairroNome} selecionado (adicional: R$ ${adicional},00)`, 'info');
+        if (selectBairroEntrega) {
+            selectBairroEntrega.addEventListener('change', function () {
+                if (this.value && this.options[this.selectedIndex].dataset.valor > 0) {
+                    const bairroNome = this.options[this.selectedIndex].text;
+                    const adicional = this.options[this.selectedIndex].dataset.valor;
+                    const tipo = this.options[this.selectedIndex].dataset.tipo;
+                    
+                    if (tipo === 'especial') {
+                        mostrarToast(`Bairro ${bairroNome} selecionado (adicional: R$ ${adicional},00)`, 'info');
+                    }
+                } else if (this.value) {
+                    const bairroNome = this.options[this.selectedIndex].text;
+                    const tipo = this.options[this.selectedIndex].dataset.tipo;
+                    
+                    if (tipo === 'normal') {
+                        mostrarToast(`Bairro ${bairroNome} selecionado (sem adicional)`, 'info');
+                    }
                 }
-            } else if (this.value) {
-                const bairroNome = this.options[this.selectedIndex].text;
-                const tipo = this.options[this.selectedIndex].dataset.tipo;
-                
-                if (tipo === 'normal') {
-                    mostrarToast(`Bairro ${bairroNome} selecionado (sem adicional)`, 'info');
-                }
-            }
-        });
+            });
+        }
     }
 
     // Aplicar máscara de telefone
@@ -503,7 +515,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Função para calcular valor base baseado na cidade
     function calcularValorBase(cidadeId, localColetaId, bairroColetaInfo, bairroEntregaInfo) {
-        let valorBase = TABELA_PRECOS[cidadeId].min;
+        let valorBase = TABELA_PRECOS[cidadeId] ? TABELA_PRECOS[cidadeId].min : 0;
         let adicionalBairro = 0;
         let isBairroEspecial = false;
         let tipoBairroEspecial = '';
@@ -537,14 +549,20 @@ document.addEventListener('DOMContentLoaded', function () {
         return { valorBase, adicionalBairro, isBairroEspecial, tipoBairroEspecial };
     }
 
-    // Inicializar
-    configurarLocaisColeta();
-    atualizarSelectCidades();
-    aplicarMascaraTelefone();
+    // CORREÇÃO: Inicializar quando o DOM estiver pronto
+    setTimeout(() => {
+        configurarLocaisColeta();
+        atualizarSelectCidades();
+        aplicarMascaraTelefone();
+        console.log('Sistema de orçamento inicializado com sucesso!');
+    }, 100);
 
     // Adicionar CSS para o comprovante
     function adicionarEstiloComprovante() {
+        if (document.getElementById('comprovante-styles')) return;
+        
         const style = document.createElement('style');
+        style.id = 'comprovante-styles';
         style.textContent = `
             .comprovante-content {
                 width: 100%;
@@ -679,6 +697,44 @@ document.addEventListener('DOMContentLoaded', function () {
                 font-style: italic;
             }
             
+            /* Toast notifications */
+            #toast-container {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 9999;
+            }
+            
+            .toast {
+                background: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                margin-bottom: 10px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                border-left: 4px solid #28a745;
+                animation: slideIn 0.3s ease-out;
+                max-width: 300px;
+            }
+            
+            .toast-error {
+                border-left-color: #dc3545;
+            }
+            
+            .toast-info {
+                border-left-color: #17a2b8;
+            }
+            
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
             /* Para impressão */
             @media print {
                 .no-print, .comprovante-buttons, .close-comprovante {
@@ -735,7 +791,7 @@ document.addEventListener('DOMContentLoaded', function () {
         modalOrcamento.style.display = 'block';
         document.body.style.overflow = 'hidden';
 
-        // Resetar campos - COM VERIFICAÇÕES DE SEGURANÇA
+        // Resetar campos
         const elementosParaResetar = [
             'orcamento-resultado',
             'btn-confirmar',
@@ -780,6 +836,10 @@ document.addEventListener('DOMContentLoaded', function () {
         
         const clienteTelefone = document.getElementById('cliente-telefone');
         if (clienteTelefone) clienteTelefone.value = '';
+        
+        // Atualizar os selects para garantir que estão corretos
+        configurarLocaisColeta();
+        atualizarSelectCidades();
     }
 
     function fecharModal() {
@@ -795,7 +855,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Coletar dados com verificação
+        // Coletar dados
         const localColetaSelect = document.getElementById('local-coleta');
         const enderecoDetalhado = document.getElementById('endereco-detalhado');
         const cidadeDestinoSelect = document.getElementById('cidade-destino');
@@ -842,7 +902,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const volumeCm3 = comprimento * largura * altura;
         const volumeLitros = volumeCm3 / 1000;
 
-        // Obter valor base com verificação de bairros especiais
+        // Obter valor base
         const cidadeInfo = TABELA_PRECOS[cidadeDestinoId];
         if (!cidadeInfo) {
             mostrarToast('Cidade não encontrada na tabela de preços!', 'error');
@@ -1554,17 +1614,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Função para mostrar toast
     window.mostrarToast = function (mensagem, tipo = 'success') {
-        const toastContainer = document.getElementById('toast-container');
+        let toastContainer = document.getElementById('toast-container');
+        
+        // Criar container se não existir
         if (!toastContainer) {
-            console.warn('Container de toast não encontrado');
-            return;
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            document.body.appendChild(toastContainer);
         }
 
         const toast = document.createElement('div');
         toast.className = `toast toast-${tipo}`;
         toast.innerHTML = `
             <div style="display: flex; align-items: center; gap: 10px;">
-                <i class="bi ${tipo === 'success' ? 'bi-check-circle' : 'bi-exclamation-circle'}"></i>
+                <span style="font-size: 18px;">${tipo === 'success' ? '✅' : tipo === 'error' ? '❌' : 'ℹ️'}</span>
                 <span>${mensagem}</span>
             </div>
         `;
@@ -1578,4 +1641,12 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }, 5000);
     };
+
+    // Garantir que o sistema seja inicializado após o DOM estar completamente carregado
+    setTimeout(() => {
+        configurarLocaisColeta();
+        atualizarSelectCidades();
+        aplicarMascaraTelefone();
+        console.log('Sistema de orçamento N&G Express inicializado!');
+    }, 500);
 });
