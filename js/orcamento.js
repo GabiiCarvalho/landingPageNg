@@ -2,9 +2,9 @@
 document.addEventListener('DOMContentLoaded', function () {
     console.log('Script de orçamento carregado com sucesso!');
 
-    // Tabela de preços baseada nas imagens
+    // Tabela de preços baseada nas imagens - ATUALIZADA
     const TABELA_PRECOS = {
-        'balneario-camboriu': { min: 15, max: 30, descricao: 'Balneário Camboriú' },
+        'balneario-camboriu': { min: 20, max: 30, descricao: 'Balneário Camboriú' }, // CORREÇÃO: 15 para 20
         'camboriu': { min: 20, max: 30, descricao: 'Camboriú' },
         'itapema': { min: 50, max: 50, descricao: 'Itapema' },
         'porto-belo': { min: 70, max: 70, descricao: 'Porto Belo' },
@@ -446,7 +446,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
     }
 
-    // CORREÇÃO: Calcular valor base com as novas regras (Camboriú → Camboriú: 15 + 30)
+    // CORREÇÃO COMPLETA: Calcular valor base com valores atualizados
     function calcularValorBase(localColetaId, cidadeDestinoId, bairroColetaInfo, bairroEntregaInfo) {
         let valorBase = 0;
         let adicionalBairro = 0;
@@ -457,16 +457,21 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('Coleta:', localColetaId, 'Bairro coleta:', bairroColetaInfo);
         console.log('Entrega:', cidadeDestinoId, 'Bairro entrega:', bairroEntregaInfo);
 
-        // 1. Balneário Camboriú para Camboriú
+        // 1. Balneário Camboriú para Camboriú - CORREÇÃO: 20,00
         if (localColetaId === 'balneario-camboriu' && cidadeDestinoId === 'camboriu') {
-            valorBase = 20;
+            valorBase = 20; // CORREÇÃO: 20,00 para bairro normal
             if (bairroEntregaInfo.tipoBairro === 'especial') {
-                adicionalBairro = 35;
+                adicionalBairro = 35; // +35 para bairro especial
                 isBairroEspecial = true;
                 tipoBairroEspecial = 'camboriu';
             }
         }
-        // 2. Balneário Camboriú para Itajaí
+        // 2. Camboriú para Balneário Camboriú - CORREÇÃO: 20,00
+        else if (localColetaId === 'camboriu' && cidadeDestinoId === 'balneario-camboriu') {
+            valorBase = 20; // CORREÇÃO: 20,00 para bairro normal
+            // Não há bairros especiais em Balneário Camboriú
+        }
+        // 3. Balneário Camboriú para Itajaí
         else if (localColetaId === 'balneario-camboriu' && cidadeDestinoId === 'itajai') {
             valorBase = 30;
             if (bairroEntregaInfo.tipoBairro === 'especial') {
@@ -475,9 +480,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 tipoBairroEspecial = 'itajai';
             }
         }
-        // 3. Camboriú para Camboriú - CORREÇÃO AQUI
+        // 4. Camboriú para Camboriú (mesma cidade)
         else if (localColetaId === 'camboriu' && cidadeDestinoId === 'camboriu') {
-            valorBase = 15;
+            valorBase = 15; // Mantido 15 para Camboriú → Camboriú (mesma cidade)
 
             if (bairroEntregaInfo.tipoBairro === 'especial') {
                 adicionalBairro = 30;
@@ -485,7 +490,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 tipoBairroEspecial = 'camboriu';
             }
         }
-        // 4. Camboriú para Itajaí
+        // 5. Camboriú para Itajaí
         else if (localColetaId === 'camboriu' && cidadeDestinoId === 'itajai') {
             valorBase = 30;
             if (bairroEntregaInfo.tipoBairro === 'especial') {
@@ -494,7 +499,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 tipoBairroEspecial = 'itajai';
             }
         }
-        // 5. Itajaí para Itajaí
+        // 6. Itajaí para Itajaí
         else if (localColetaId === 'itajai' && cidadeDestinoId === 'itajai') {
             valorBase = 30;
             if (bairroEntregaInfo.tipoBairro === 'especial') {
@@ -503,7 +508,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 tipoBairroEspecial = 'itajai';
             }
         }
-        // 6. Itajaí para Camboriú
+        // 7. Itajaí para Camboriú
         else if (localColetaId === 'itajai' && cidadeDestinoId === 'camboriu') {
             valorBase = 30;
             if (bairroEntregaInfo.tipoBairro === 'especial') {
@@ -512,21 +517,29 @@ document.addEventListener('DOMContentLoaded', function () {
                 tipoBairroEspecial = 'camboriu';
             }
         }
-        // 7. Outras cidades
+        // 8. Itajaí para Balneário Camboriú
+        else if (localColetaId === 'itajai' && cidadeDestinoId === 'balneario-camboriu') {
+            valorBase = 30;
+            // Não há bairros especiais em Balneário Camboriú
+        }
+        // 9. Outras cidades
         else {
+            // Usar valor da tabela de preços
             valorBase = TABELA_PRECOS[cidadeDestinoId] ? TABELA_PRECOS[cidadeDestinoId].min : 0;
 
+            // Verificar se é bairro especial de Camboriú
             if (cidadeDestinoId === 'camboriu' && bairroEntregaInfo.tipoBairro === 'especial') {
                 adicionalBairro = 35;
                 isBairroEspecial = true;
                 tipoBairroEspecial = 'camboriu';
             }
 
+            // Verificar se é bairro especial de Itajaí
             if (cidadeDestinoId === 'itajai' && bairroEntregaInfo.tipoBairro === 'especial') {
                 adicionalBairro = 20;
                 isBairroEspecial = true;
                 tipoBairroEspecial = 'itajai';
-                valorBase = 30;
+                valorBase = 30; // Força valor base 30 para Itajaí com bairro especial
             }
         }
 
@@ -624,13 +637,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // NOVA FUNÇÃO: Exibir APENAS o valor total
     function exibirResultadoOrcamentoAPENASValorTotal(totalFinal) {
         console.log('Exibindo APENAS valor total:', totalFinal);
-        
+
         const orcamentoResultado = document.getElementById('orcamento-resultado');
         if (!orcamentoResultado) {
             console.error('Elemento #orcamento-resultado não encontrado!');
             return;
         }
-        
+
         // Limpar completamente e criar APENAS o valor total
         orcamentoResultado.innerHTML = `
             <div style="
@@ -702,25 +715,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             </style>
         `;
-        
+
         orcamentoResultado.style.display = 'block';
-        
+
         const btnConfirmar = document.getElementById('btn-confirmar');
         if (btnConfirmar) {
             btnConfirmar.style.display = 'block';
         }
-        
+
         setTimeout(() => {
-            orcamentoResultado.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center' 
+            orcamentoResultado.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
             });
         }, 100);
-        
+
         console.log('APENAS valor total exibido:', totalFinal);
     }
-
-    // REMOVA COMPLETAMENTE a função antiga exibirResultadoOrcamento
 
     // FUNÇÃO CORRIGIDA: validarFormulario
     function validarFormulario() {
@@ -1160,7 +1171,7 @@ Confirme este pedido para iniciar a coleta.`;
             orcamentoResultado.style.display = 'none';
             orcamentoResultado.innerHTML = '';
         }
-        
+
         if (btnConfirmar) btnConfirmar.style.display = 'none';
 
         const bairroColeta = document.getElementById('bairro-coleta');
