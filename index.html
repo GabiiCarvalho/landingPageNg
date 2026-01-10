@@ -447,79 +447,95 @@
         </div>
     </div>
 
-    <!-- Modal de Comprovante -->
+    <!-- Modal de Comprovante CORRIGIDO -->
     <div class="modal" id="comprovante-modal">
         <div class="modal-content comprovante-content">
             <span class="close-comprovante">&times;</span>
 
-            <!-- Cabeçalho do Comprovante -->
-            <div class="comprovante-header">
-                <h2>N&G EXPRESS</h2>
-                <h3>COMPROVANTE DE PEDIDO</h3>
-                <p class="comprovante-numero">Pedido #<span id="pedido-numero">0000</span></p>
-                <p><small>Data: <span id="pedido-data">--/--/---- --:--</span></small></p>
+            <!-- Cabeçalho do Comprovante - CORRIGIDO -->
+            <div class="comprovante-header"
+                style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
+                <h2 style="margin: 0; font-size: 24px; color: #333;">N&G EXPRESS</h2>
+                <h3 style="margin: 5px 0; font-size: 18px; color: #666;">COMPROVANTE DE PEDIDO</h3>
+                <div style="margin: 10px 0;">
+                    <strong style="font-size: 20px;">Pedido <span id="pedido-numero">0000</span></strong>
+                </div>
+                <div style="font-style: italic; color: #777; margin-bottom: 5px;">Diseu-je/premiere:</div>
+                <div style="font-size: 14px; color: #666;">Data: <span id="pedido-data">--/--/---- --:--</span></div>
             </div>
 
-            <!-- Informações do Pedido - ESTRUTURA OTIMIZADA PARA IMPRESSÃO -->
+            <!-- Informações do Pedido - ESTRUTURA CORRIGIDA -->
             <div class="comprovante-info">
-                <!-- Cliente e Contato -->
-                <div class="info-section cliente-section">
-                    <h4><i class="bi bi-person"></i> CLIENTE</h4>
-                    <p><strong>Nome:</strong> <span id="comprovante-nome">--</span></p>
-                    <p><strong>Telefone:</strong> <span id="comprovante-telefone">--</span></p>
+                <!-- CLIENTE -->
+                <div class="info-section"
+                    style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #ccc;">
+                    <h4 style="background: #f5f5f5; padding: 8px; margin: 0 0 10px 0; color: #333;">CLIENTE</h4>
+                    <p style="margin: 5px 0;"><strong>Nome:</strong> <span id="comprovante-nome">--</span></p>
+                    <p style="margin: 5px 0;"><strong>Telefone:</strong> <span id="comprovante-telefone">--</span></p>
                 </div>
 
-                <!-- Coleta -->
-                <div class="info-section coleta-section">
-                    <h4><i class="bi bi-geo-alt"></i> COLETA</h4>
-                    <p><span id="comprovante-coleta">--</span></p>
+                <!-- ENTREGA -->
+                <div class="info-section"
+                    style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #ccc;">
+                    <h4 style="background: #f5f5f5; padding: 8px; margin: 0 0 10px 0; color: #333;">ENTREGA</h4>
+                    <p style="margin: 5px 0;"><strong>Cidade:</strong> <span id="comprovante-cidade">--</span></p>
+                    <p style="margin: 5px 0;"><strong>Endereço:</strong> <span id="comprovante-entrega">--</span></p>
                 </div>
 
-                <!-- Entrega -->
-                <div class="info-section entrega-section">
-                    <h4><i class="bi bi-geo-alt-fill"></i> ENTREGA</h4>
-                    <p><strong>Cidade:</strong> <span id="comprovante-cidade">--</span></p>
-                    <p><strong>Endereço:</strong> <span id="comprovante-entrega">--</span></p>
+                <!-- VALOR TOTAL - DESTAQUE -->
+                <div class="info-section"
+                    style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border: 2px solid #28a745; border-radius: 8px;">
+                    <h4 style="margin: 0 0 10px 0; color: #28a745; text-align: center;">VALOR TOTAL</h4>
+                    <div style="text-align: center;">
+                        <p style="font-size: 28px; font-weight: bold; color: #28a745; margin: 10px 0;">
+                            TOTAL: <span id="comprovante-valor">R$ 0,00</span>
+                        </p>
+                    </div>
                 </div>
 
-                <!-- Encomenda -->
-                <div class="info-section encomenda-section">
-                    <h4><i class="bi bi-box"></i> ENCOMENDA</h4>
-                    <p><strong>Dimensões:</strong> <span id="comprovante-dimensoes">--</span></p>
-                    <p><strong>Peso:</strong> <span id="comprovante-peso">--</span></p>
-                    <p><strong>Descrição:</strong> <span id="comprovante-descricao">--</span></p>
+                <!-- COLETA -->
+                <div class="info-section"
+                    style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #ccc;">
+                    <h4 style="background: #f5f5f5; padding: 8px; margin: 0 0 10px 0; color: #333;">COLETA</h4>
+                    <p style="margin: 5px 0;"><strong>Local:</strong> <span id="comprovante-coleta-cidade">--</span></p>
+                    <p style="margin: 5px 0;"><strong>Endereço:</strong> <span id="comprovante-coleta">--</span></p>
                 </div>
 
-                <!-- Valor Total - SEÇÃO DESTAQUE -->
-                <div class="info-section destaque">
-                    <h4><i class="bi bi-currency-dollar"></i> VALOR TOTAL</h4>
-                    <p class="valor-total">TOTAL: <span id="comprovante-valor">R$ 0,00</span></p>
+                <!-- ENCOMENDA -->
+                <div class="info-section"
+                    style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #ccc;">
+                    <h4 style="background: #f5f5f5; padding: 8px; margin: 0 0 10px 0; color: #333;">ENCOMENDA</h4>
+                    <p style="margin: 5px 0;"><strong>Dimensões:</strong> <span id="comprovante-dimensoes">--</span></p>
+                    <p style="margin: 5px 0;"><strong>Peso:</strong> <span id="comprovante-peso">--</span></p>
+                    <p style="margin: 5px 0;"><strong>Descrição:</strong> <span id="comprovante-descricao">--</span></p>
                 </div>
 
-                <!-- Instruções -->
-                <div class="info-section instrucoes">
-                    <h4><i class="bi bi-info-circle"></i> INSTRUÇÕES</h4>
-                    <p>1. Imprima este comprovante</p>
-                    <p>2. Entregue ao motoboy/carro no momento da coleta</p>
-                    <p>3. Será redirecionado ao WhatsApp para confirmação</p>
-                    <p>4. Aguarde nosso contato para agendar a coleta</p>
+                <!-- INSTRUÇÕES -->
+                <div class="info-section"
+                    style="margin-bottom: 15px; padding: 15px; background: #fff8e1; border-radius: 5px;">
+                    <h4 style="margin: 0 0 10px 0; color: #d35400;">INSTRUÇÕES</h4>
+                    <ol style="margin: 0; padding-left: 20px;">
+                        <li>Imprima este comprovante</li>
+                        <li>Entregue ao motoboy/carro no momento da coleta</li>
+                    </ol>
                 </div>
 
-                <!-- Rodapé -->
-                <div class="info-section rodape">
-                    <p><strong>N&G EXPRESS</strong></p>
-                    <p>Rua Olga Bernardes Amorim, 101, Centro, Camboriú - SC</p>
-                    <p>Telefone: (47) 9.9912-3260 | WhatsApp: (47) 9.9912-3260</p>
-                    <p>Email: comercial.ngexpress@gmail.com</p>
+                <!-- RODAPÉ -->
+                <div class="info-section"
+                    style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #ccc; color: #666; font-size: 14px;">
+                    <p style="margin: 5px 0; font-weight: bold;">N&G EXPRESS</p>
+                    <p style="margin: 5px 0;">Rua Olga Bernardes Amorim, 101, Centro, Camboriú - SC</p>
+                    <p style="margin: 5px 0;">Telefone: (47) 9.9912-3260</p>
+                    <p style="margin: 5px 0;">Email: comercial.ngexpress@gmail.com</p>
                 </div>
             </div>
 
             <!-- Botões do Comprovante -->
-            <div class="comprovante-buttons">
-                <button id="btn-imprimir" class="btn btn-secondary">
+            <div class="comprovante-buttons" style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="btn-imprimir" class="btn btn-secondary" style="flex: 1;">
                     <i class="bi bi-printer"></i> Imprimir Comprovante
                 </button>
-                <button id="btn-whatsapp" class="btn">
+                <button id="btn-whatsapp" class="btn" style="flex: 1;">
                     <i class="bi bi-whatsapp"></i> Confirmar no WhatsApp
                 </button>
             </div>
