@@ -699,75 +699,118 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Limpar completamente e criar APENAS o valor total
         orcamentoResultado.innerHTML = `
+        <div style="
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            text-align: center;
+            border: 3px solid #28a745;
+            box-shadow: 0 10px 30px rgba(40, 167, 69, 0.15);
+            animation: fadeIn 0.5s ease-out;
+        ">
+            <div style="margin-bottom: 20px;">
+                <i class="bi bi-check-circle-fill" style="font-size: 48px; color: #28a745;"></i>
+            </div>
+            
+            <h3 style="color: #333; margin-bottom: 15px; font-size: 20px;">
+                <i class="bi bi-calculator"></i> ORÇAMENTO CALCULADO
+            </h3>
+            
             <div style="
-                background: white;
-                border-radius: 15px;
-                padding: 30px;
-                margin: 20px 0;
-                text-align: center;
-                border: 3px solid #28a745;
-                box-shadow: 0 10px 30px rgba(40, 167, 69, 0.15);
-                animation: fadeIn 0.5s ease-out;
+                font-size: 16px;
+                color: #666;
+                margin-bottom: 25px;
+                padding: 15px;
+                background: #f8f9fa;
+                border-radius: 10px;
+                border-left: 4px solid #28a745;
             ">
-                <div style="margin-bottom: 20px;">
-                    <i class="bi bi-check-circle-fill" style="font-size: 48px; color: #28a745;"></i>
+                Valor total para entrega
+            </div>
+            
+            <div id="total-valor" style="
+                font-size: 48px;
+                font-weight: bold;
+                color: #28a745;
+                margin: 20px 0;
+                padding: 20px;
+                background: linear-gradient(135deg, #f8fff9 0%, #e8f5e9 100%);
+                border-radius: 12px;
+                border: 2px solid #c3e6cb;
+            ">
+                ${formatarMoeda(totalFinal)}
+            </div>
+            
+            <!-- QR Code Container -->
+            <div id="qr-code-container" style="
+                margin-top: 30px;
+                padding: 20px;
+                background: #f8f9fa;
+                border-radius: 10px;
+                border: 1px solid #dee2e6;
+            ">
+                <div style="margin-bottom: 15px;">
+                    <i class="bi bi-qr-code" style="font-size: 24px; color: #007bff; margin-right: 10px;"></i>
+                    <span style="font-weight: bold; color: #495057;">QR Code para rota de entrega</span>
                 </div>
-                
-                <h3 style="color: #333; margin-bottom: 15px; font-size: 20px;">
-                    <i class="bi bi-calculator"></i> ORÇAMENTO CALCULADO
-                </h3>
-                
-                <div style="
-                    font-size: 16px;
-                    color: #666;
-                    margin-bottom: 25px;
-                    padding: 15px;
-                    background: #f8f9fa;
-                    border-radius: 10px;
-                    border-left: 4px solid #28a745;
-                ">
-                    Valor total para entrega
+                <div id="qr-code-display" style="margin: 15px 0;"></div>
+                <div style="font-size: 12px; color: #6c757d; margin-top: 10px;">
+                    <i class="bi bi-info-circle"></i> Escaneie para abrir rota no Google Maps
                 </div>
-                
-                <div id="total-valor" style="
-                    font-size: 48px;
-                    font-weight: bold;
-                    color: #28a745;
-                    margin: 20px 0;
-                    padding: 20px;
-                    background: linear-gradient(135deg, #f8fff9 0%, #e8f5e9 100%);
-                    border-radius: 12px;
-                    border: 2px solid #c3e6cb;
-                ">
-                    ${formatarMoeda(totalFinal)}
-                </div>
-                
-                <div style="
-                    font-size: 14px;
-                    color: #6c757d;
-                    margin-top: 15px;
-                    padding: 10px;
-                    background: #fff;
-                    border-radius: 8px;
-                    border: 1px solid #e9ecef;
-                ">
-                    <i class="bi bi-info-circle"></i> Valor final para o cliente
+                <div class="qr-code-buttons" style="margin-top: 15px;">
+                    <button onclick="gerarQRCodeRota()" style="
+                        padding: 8px 20px;
+                        background: #007bff;
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 14px;
+                    ">
+                        <i class="bi bi-qr-code"></i> Gerar QR Code
+                    </button>
+                    <button onclick="abrirMapsDireto()" style="
+                        padding: 8px 20px;
+                        background: #28a745;
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        margin-left: 10px;
+                    ">
+                        <i class="bi bi-geo-alt"></i> Abrir Maps
+                    </button>
                 </div>
             </div>
             
-            <style>
-                @keyframes fadeIn {
-                    from {
-                        opacity: 0;
-                        transform: translateY(20px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
+            <div style="
+                font-size: 14px;
+                color: #6c757d;
+                margin-top: 15px;
+                padding: 10px;
+                background: #fff;
+                border-radius: 8px;
+                border: 1px solid #e9ecef;
+            ">
+                <i class="bi bi-info-circle"></i> Valor final para o cliente
+            </div>
+        </div>
+        
+        <style>
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
                 }
-            </style>
-        `;
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        </style>
+    `;
 
         orcamentoResultado.style.display = 'block';
 
@@ -1005,6 +1048,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const numeroPedido = numeroPedidoGerado || orcamentoAtual.numeroPedido;
+        const mapsURL = gerarURLMapsRota();
 
         const printWindow = window.open('', '_blank', 'width=600,height=800');
         printWindow.document.write(`
@@ -1023,6 +1067,13 @@ document.addEventListener('DOMContentLoaded', function () {
                     padding: 0;
                 }
                 .no-print { display: none !important; }
+                .qr-code-section { text-align: center; margin: 15px 0; }
+                .qr-code-url { 
+                    font-size: 9px; 
+                    word-break: break-all; 
+                    color: #007bff;
+                    margin: 10px 0;
+                }
             }
             body { 
                 font-family: Arial, sans-serif; 
@@ -1097,6 +1148,24 @@ document.addEventListener('DOMContentLoaded', function () {
             strong {
                 color: #333;
             }
+            .qr-code-section {
+                text-align: center;
+                margin: 20px 0;
+                padding: 15px;
+                background: #f8f9fa;
+                border-radius: 8px;
+                border: 1px dashed #007bff;
+            }
+            .qr-code-url {
+                font-size: 10px;
+                word-break: break-all;
+                color: #007bff;
+                margin: 10px 0;
+                padding: 8px;
+                background: white;
+                border-radius: 4px;
+                border: 1px solid #dee2e6;
+            }
         </style>
     </head>
     <body>
@@ -1142,6 +1211,19 @@ document.addEventListener('DOMContentLoaded', function () {
                     Valor final para o cliente
                 </div>
             </div>
+            
+            ${mapsURL ? `
+            <div class="qr-code-section">
+                <h4 style="color: #007bff; margin-bottom: 10px;">📍 ROTA DE ENTREGA</h4>
+                <div style="font-size: 11px; color: #666; margin-bottom: 10px;">
+                    Use o link abaixo para ver a rota no Google Maps:
+                </div>
+                <div class="qr-code-url">${mapsURL}</div>
+                <div style="font-size: 10px; color: #6c757d; margin-top: 10px;">
+                    <i>Copie e cole no navegador para ver a rota completa</i>
+                </div>
+            </div>
+            ` : ''}
             
             <div class="no-print">
                 <button onclick="window.print()">
@@ -1281,6 +1363,172 @@ Confirme este pedido para iniciar a coleta.`;
     const btnWhatsapp = document.getElementById('btn-whatsapp');
     if (btnWhatsapp) {
         btnWhatsapp.addEventListener('click', confirmarWhatsApp);
+    }
+
+    // Função para gerar URL do Google Maps com rota
+    function gerarURLMapsRota() {
+        if (!orcamentoAtual) {
+            console.error('Nenhum orçamento encontrado');
+            return null;
+        }
+
+        // Endereço de entrega (usar endereço do cliente ou um ponto de referência)
+        const enderecoEntrega = orcamentoAtual.enderecoEntrega || '';
+        const cidadeEntrega = orcamentoAtual.cidadeDestino || '';
+
+        // Endereço de coleta (opcional - pode ser o depósito da empresa)
+        const enderecoColeta = 'Depósito N&G Express'; // Você pode personalizar isso
+        const cidadeColeta = orcamentoAtual.localColeta || '';
+
+        // Criar URL do Google Maps com rota
+        const enderecoFinal = `${enderecoEntrega}, ${cidadeEntrega}, Santa Catarina, Brasil`;
+        const enderecoInicial = `${enderecoColeta}, ${cidadeColeta}, Santa Catarina, Brasil`;
+
+        // URL formatada para Google Maps com rota
+        const mapsURL = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(enderecoInicial)}&destination=${encodeURIComponent(enderecoFinal)}&travelmode=driving`;
+
+        return mapsURL;
+    }
+
+    // Função para gerar e exibir QR Code
+    window.gerarQRCodeRota = function () {
+        const mapsURL = gerarURLMapsRota();
+
+        if (!mapsURL) {
+            mostrarToast('Não foi possível gerar a rota. Verifique os dados de entrega.', 'error');
+            return;
+        }
+
+        const qrCodeDisplay = document.getElementById('qr-code-display');
+        if (!qrCodeDisplay) return;
+
+        // Limpar QR Code anterior
+        qrCodeDisplay.innerHTML = '';
+
+        // Gerar novo QR Code
+        QRCode.toCanvas(qrCodeDisplay, mapsURL, {
+            width: 200,
+            height: 200,
+            margin: 1,
+            color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+            }
+        }, function (error) {
+            if (error) {
+                console.error('Erro ao gerar QR Code:', error);
+                mostrarToast('Erro ao gerar QR Code', 'error');
+
+                // Fallback: mostrar link diretamente
+                qrCodeDisplay.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <div style="margin-bottom: 10px;">
+                        <i class="bi bi-map" style="font-size: 48px; color: #6c757d;"></i>
+                    </div>
+                    <a href="${mapsURL}" target="_blank" style="
+                        color: #007bff;
+                        text-decoration: none;
+                        font-size: 14px;
+                        word-break: break-all;
+                        padding: 10px;
+                        background: #f8f9fa;
+                        border-radius: 5px;
+                        display: inline-block;
+                        margin: 10px 0;
+                    ">
+                        ${mapsURL}
+                    </a>
+                    <div style="font-size: 12px; color: #6c757d; margin-top: 10px;">
+                        Clique para abrir no Google Maps
+                    </div>
+                </div>
+            `;
+            } else {
+                console.log('QR Code gerado com sucesso:', mapsURL);
+                mostrarToast('QR Code gerado! Escaneie para ver a rota.', 'success');
+
+                // Adicionar botão de download do QR Code
+                const qrContainer = document.querySelector('#qr-code-container');
+                if (qrContainer) {
+                    const downloadBtn = document.createElement('button');
+                    downloadBtn.innerHTML = '<i class="bi bi-download"></i> Baixar QR Code';
+                    downloadBtn.style.cssText = `
+                    padding: 8px 20px;
+                    background: #6c757d;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    margin-top: 10px;
+                    margin-left: 10px;
+                `;
+                    downloadBtn.onclick = function () {
+                        baixarQRCode();
+                    };
+
+                    const buttonsDiv = qrContainer.querySelector('.qr-code-buttons');
+                    if (buttonsDiv) {
+                        buttonsDiv.appendChild(downloadBtn);
+                    }
+                }
+            }
+        });
+    };
+
+    // Função para abrir Maps diretamente
+    window.abrirMapsDireto = function () {
+        const mapsURL = gerarURLMapsRota();
+
+        if (!mapsURL) {
+            mostrarToast('Não foi possível abrir o mapa. Verifique os dados de entrega.', 'error');
+            return;
+        }
+
+        window.open(mapsURL, '_blank');
+        mostrarToast('Abrindo Google Maps...', 'success');
+    };
+
+    // Função para baixar QR Code como imagem
+    function baixarQRCode() {
+        const canvas = document.querySelector('#qr-code-display canvas');
+        if (!canvas) {
+            mostrarToast('Gere o QR Code primeiro!', 'error');
+            return;
+        }
+
+        const link = document.createElement('a');
+        link.download = `rota-entrega-${orcamentoAtual.numeroPedido || Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+
+        mostrarToast('QR Code baixado com sucesso!', 'success');
+    }
+
+    // Função para adicionar QR Code ao comprovante impresso
+    function adicionarQRCodeAoComprovante(printWindow) {
+        if (!orcamentoAtual) return;
+
+        const mapsURL = gerarURLMapsRota();
+        if (!mapsURL) return;
+
+        // Adicionar seção de QR Code no comprovante impresso
+        const qrCodeHTML = `
+        <div style="text-align: center; margin: 20px 0; padding: 15px; border-top: 1px dashed #ccc;">
+            <h4 style="color: #007bff; margin-bottom: 15px;">📍 ROTA DE ENTREGA</h4>
+            <div style="font-size: 11px; color: #666; margin-bottom: 10px;">
+                Escaneie o código abaixo para ver a rota no Google Maps
+            </div>
+            <div style="margin: 15px 0; font-size: 10px; word-break: break-all; color: #007bff;">
+                ${mapsURL}
+            </div>
+            <div style="color: #6c757d; font-size: 10px; margin-top: 10px;">
+                <i>Para uma melhor experiência, escaneie o QR Code acima</i>
+            </div>
+        </div>
+    `;
+
+        return qrCodeHTML;
     }
 
     // Inicializar o sistema
