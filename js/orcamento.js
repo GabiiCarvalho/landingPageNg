@@ -80,28 +80,31 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('btn-whatsapp').addEventListener('click', confirmarWhatsApp);
 
-    // Configurar locais de coleta COM SELECTOR DE BAIRROS
+    // Configurar locais de coleta COM SELECTOR DE BAIRROS ESPECIAIS
     function configurarLocaisColeta() {
         const locaisColeta = [
             {
                 id: 'balneario-camboriu',
                 nome: 'Balneário Camboriú',
                 enderecoBase: 'Balneário Camboriú/SC',
-                temBairros: false
-            },
-            {
-                id: 'itajai',
-                nome: 'Itajaí',
-                enderecoBase: 'Itajaí/SC',
-                temBairros: true,
-                bairros: BAIRROS_ITAJAI_ADICIONAL
+                temBairros: false,
+                bairrosEspeciais: false
             },
             {
                 id: 'camboriu',
                 nome: 'Camboriú',
                 enderecoBase: 'Camboriú/SC',
                 temBairros: true,
+                bairrosEspeciais: true,
                 bairros: BAIRROS_CAMBORIU_ADICIONAL
+            },
+            {
+                id: 'itajai',
+                nome: 'Itajaí',
+                enderecoBase: 'Itajaí/SC',
+                temBairros: true,
+                bairrosEspeciais: true,
+                bairros: BAIRROS_ITAJAI_ADICIONAL
             }
         ];
 
@@ -116,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Limpar opções existentes
         selectColeta.innerHTML = '<option value="" disabled selected>Selecione o local de coleta</option>';
 
-        // Adicionar opções
+        // Adicionar opções - ORDEM CORRETA
         locaisColeta.forEach(local => {
             const option = document.createElement('option');
             option.value = local.id;
@@ -124,16 +127,16 @@ document.addEventListener('DOMContentLoaded', function () {
             selectColeta.appendChild(option);
         });
 
-        // Função para atualizar bairros
-        function atualizarBairros(cidadeId) {
+        // Função para atualizar bairros de coleta
+        function atualizarBairrosColeta(cidadeId) {
             const localSelecionado = locaisColeta.find(local => local.id === cidadeId);
-            
+
             // Limpar bairros existentes
             selectBairroColeta.innerHTML = '<option value="" disabled selected>Selecione o bairro</option>';
-            
+
             if (localSelecionado && localSelecionado.temBairros) {
                 bairroColetaContainer.style.display = 'block';
-                
+
                 // Adicionar bairros
                 localSelecionado.bairros.forEach(bairro => {
                     const option = document.createElement('option');
@@ -151,9 +154,9 @@ document.addEventListener('DOMContentLoaded', function () {
         // Event listener para mostrar campo de endereço detalhado e bairros
         selectColeta.addEventListener('change', function () {
             const localSelecionado = locaisColeta.find(local => local.id === this.value);
-            
-            // Atualizar bairros
-            atualizarBairros(this.value);
+
+            // Atualizar bairros de coleta
+            atualizarBairrosColeta(this.value);
 
             if (localSelecionado && enderecoDetalhadoContainer && enderecoInput) {
                 enderecoDetalhadoContainer.style.display = 'block';
@@ -175,7 +178,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Atualizar select de cidades de destino COM SELECTOR DE BAIRROS
+    // Atualizar select de cidades de destino COM SELECTOR DE BAIRROS ESPECIAIS
     function atualizarSelectCidades() {
         const select = document.getElementById('cidade-destino');
         const bairroEntregaContainer = document.getElementById('bairro-entrega-container');
@@ -183,15 +186,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!select || !bairroEntregaContainer || !selectBairroEntrega) return;
 
-        // Manter apenas a primeira opção
+        // Limpar apenas as opções após a primeira
         while (select.options.length > 1) {
             select.remove(1);
         }
 
-        // Adicionar cidades na ordem correta
+        // Adicionar cidades na ordem correta, começando pelas cidades locais
         const cidadesOrdenadas = [
-            'balneario-camboriu', 'camboriu', 'itapema', 'porto-belo', 'bombinhas',
-            'tijucas', 'itajai', 'navegantes', 'brusque', 'gaspar', 'ilhota',
+            'balneario-camboriu', 'camboriu', 'itajai',  // CIDADES PRINCIPAIS primeiro
+            'itapema', 'porto-belo', 'bombinhas',
+            'tijucas', 'navegantes', 'brusque', 'gaspar', 'ilhota',
             'guabiruba', 'blumenau', 'penha', 'balneario-picarras', 'bombas',
             'barra-velha', 'sao-joao-batista', 'florianopolis', 'joinville'
         ];
@@ -210,10 +214,11 @@ document.addEventListener('DOMContentLoaded', function () {
         function atualizarBairrosEntrega(cidadeId) {
             // Limpar bairros existentes
             selectBairroEntrega.innerHTML = '<option value="" disabled selected>Selecione o bairro</option>';
-            
+
+            // VERIFICAÇÃO CORRIGIDA: Itajaí E Camboriú têm bairros especiais
             if (cidadeId === 'itajai') {
                 bairroEntregaContainer.style.display = 'block';
-                
+
                 // Adicionar bairros de Itajaí
                 BAIRROS_ITAJAI_ADICIONAL.forEach(bairro => {
                     const option = document.createElement('option');
@@ -224,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             } else if (cidadeId === 'camboriu') {
                 bairroEntregaContainer.style.display = 'block';
-                
+
                 // Adicionar bairros de Camboriú
                 BAIRROS_CAMBORIU_ADICIONAL.forEach(bairro => {
                     const option = document.createElement('option');
@@ -279,23 +284,23 @@ document.addEventListener('DOMContentLoaded', function () {
     // Função para verificar se o endereço é de bairro especial
     function verificarBairroEspecial(endereco, cidade) {
         if (!endereco) return false;
-        
+
         const enderecoLower = endereco.toLowerCase().trim();
         let bairrosParaVerificar = [];
-        
+
         if (cidade === 'itajai') {
             bairrosParaVerificar = BAIRROS_ITAJAI_ADICIONAL;
         } else if (cidade === 'camboriu') {
             bairrosParaVerificar = BAIRROS_CAMBORIU_ADICIONAL;
         }
-        
+
         // Verificar se contém algum dos bairros
         for (const bairro of bairrosParaVerificar) {
             if (enderecoLower.includes(bairro.nome.toLowerCase())) {
                 return bairro.valor > 0;
             }
         }
-        
+
         return false;
     }
 
@@ -303,40 +308,42 @@ document.addEventListener('DOMContentLoaded', function () {
     function obterValorBairroSelecionado(bairroSelectId, cidadeId) {
         const select = document.getElementById(bairroSelectId);
         if (!select || !select.value) return 0;
-        
+
         const selectedOption = select.options[select.selectedIndex];
         return parseInt(selectedOption.dataset.valor) || 0;
     }
 
-    // Função para calcular valor base baseado na cidade
-    function calcularValorBase(cidadeId, localColetaId, enderecoColeta, enderecoEntrega, bairroColetaValor, bairroEntregaValor) {
+    // Função para calcular valor base baseado na cidade (CORRIGIDA)
+    function calcularValorBase(cidadeId, localColetaId, bairroColetaValor, bairroEntregaValor) {
         let valorBase = TABELA_PRECOS[cidadeId].min;
         let adicionalBairro = 0;
         let isBairroEspecial = false;
         let tipoBairroEspecial = '';
-        
-        // Verificar se é entrega em Itajaí em bairro especial
+
+        // LÓGICA CORRIGIDA: Itajaí e Camboriú têm bairros especiais
         if (cidadeId === 'itajai' && bairroEntregaValor > 0) {
+            // Entrega em bairro especial de Itajaí
             adicionalBairro = bairroEntregaValor;
             isBairroEspecial = true;
             tipoBairroEspecial = 'itajai';
+            valorBase = 30; // Valor base para bairros especiais de Itajaí
         }
-        // Verificar se é entrega em Camboriú em bairro especial
         else if (cidadeId === 'camboriu' && bairroEntregaValor > 0) {
+            // Entrega em bairro especial de Camboriú
             adicionalBairro = bairroEntregaValor;
             isBairroEspecial = true;
             tipoBairroEspecial = 'camboriu';
-            
-            // Ajustar valor base se a coleta também for em bairro especial
-            if (localColetaId === 'itajai' && bairroColetaValor > 0) {
-                valorBase = 30; // Coleta em bairro especial de Itajaí
-            } else if (localColetaId === 'camboriu' && bairroColetaValor > 0) {
-                valorBase = 15; // Coleta em bairro especial de Camboriú
-            } else if (localColetaId === 'balneario-camboriu') {
+
+            // Ajustar valor base conforme a cidade de coleta
+            if (localColetaId === 'balneario-camboriu') {
                 valorBase = 20; // Coleta em Balneário Camboriú
+            } else if (localColetaId === 'camboriu') {
+                valorBase = 15; // Coleta em Camboriú
+            } else if (localColetaId === 'itajai') {
+                valorBase = 30; // Coleta em Itajaí
             }
         }
-        
+
         return { valorBase, adicionalBairro, isBairroEspecial, tipoBairroEspecial };
     }
 
@@ -612,9 +619,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const bairroColetaValor = obterValorBairroSelecionado('bairro-coleta', localColetaId);
         const bairroEntregaValor = obterValorBairroSelecionado('bairro-entrega', cidadeDestinoId);
 
-        // Calcular valores base e adicionais
-        const { valorBase, adicionalBairro, isBairroEspecial, tipoBairroEspecial } = 
-            calcularValorBase(cidadeDestinoId, localColetaId, enderecoColeta, enderecoEntrega, bairroColetaValor, bairroEntregaValor);
+        // Calcular valores base e adicionais (CORRIGIDO)
+        const { valorBase, adicionalBairro, isBairroEspecial, tipoBairroEspecial } =
+            calcularValorBase(cidadeDestinoId, localColetaId, bairroColetaValor, bairroEntregaValor);
 
         // Adicional por tamanho (somente se não for bairro especial)
         let adicionalTamanho = 0;
@@ -661,17 +668,17 @@ document.addEventListener('DOMContentLoaded', function () {
             timestamp: Date.now()
         };
 
-        // CORREÇÃO DO ERRO: Verificar se o elemento existe antes de usar appendChild
+        // Mostrar resultado do orçamento
         const valoresDetalhes = document.querySelector('.valores-detalhes');
-        
+
         if (valoresDetalhes) {
             // Mostrar resultado
             document.getElementById('base-valor').textContent = formatarMoeda(valorBase);
-            
+
             if (isBairroEspecial) {
                 document.getElementById('tamanho-valor').textContent = formatarMoeda(0);
                 document.getElementById('peso-valor').textContent = formatarMoeda(0);
-                
+
                 // Criar elemento para mostrar adicional de bairro se não existir
                 let adicionalBairroElement = document.getElementById('bairro-valor');
                 if (!adicionalBairroElement) {
@@ -694,14 +701,14 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 document.getElementById('tamanho-valor').textContent = formatarMoeda(adicionalTamanho);
                 document.getElementById('peso-valor').textContent = formatarMoeda(adicionalPeso);
-                
+
                 // Remover elemento de adicional de bairro se existir
                 const adicionalBairroElement = document.getElementById('bairro-valor');
                 if (adicionalBairroElement && adicionalBairroElement.parentNode) {
                     adicionalBairroElement.remove();
                 }
             }
-            
+
             document.getElementById('total-valor').textContent = formatarMoeda(totalFinal);
         } else {
             console.error('Elemento .valores-detalhes não encontrado');
@@ -712,7 +719,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 'peso-valor': document.getElementById('peso-valor'),
                 'total-valor': document.getElementById('total-valor')
             };
-            
+
             for (const [id, element] of Object.entries(elementos)) {
                 if (element) {
                     if (id === 'base-valor') element.textContent = formatarMoeda(valorBase);
@@ -727,7 +734,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('btn-confirmar').style.display = 'block';
 
         document.getElementById('orcamento-resultado').scrollIntoView({ behavior: 'smooth' });
-        
+
         if (isBairroEspecial) {
             let mensagem = '';
             if (tipoBairroEspecial === 'itajai') {
@@ -798,32 +805,32 @@ document.addEventListener('DOMContentLoaded', function () {
         // Atualizar o comprovante com os dados
         const comprovanteContent = document.getElementById('comprovante-content');
         if (comprovanteContent) {
-            let bairroColetaHtml = orcamentoAtual.bairroColeta ? 
+            let bairroColetaHtml = orcamentoAtual.bairroColeta ?
                 `<div class="comprovante-item">
                     <span class="comprovante-label">Bairro:</span>
                     <span class="comprovante-value">${orcamentoAtual.bairroColeta}</span>
                 </div>` : '';
-            
-            let bairroEntregaHtml = orcamentoAtual.bairroEntrega ? 
+
+            let bairroEntregaHtml = orcamentoAtual.bairroEntrega ?
                 `<div class="comprovante-item">
                     <span class="comprovante-label">Bairro:</span>
                     <span class="comprovante-value">${orcamentoAtual.bairroEntrega}</span>
                 </div>` : '';
-            
+
             let adicionalBairroHtml = '';
             let bairroInfoHtml = '';
-            
+
             if (orcamentoAtual.isBairroEspecial) {
                 const bairroTipo = orcamentoAtual.tipoBairroEspecial === 'itajai' ? 'Itajaí' : 'Camboriú';
                 const bairroValor = orcamentoAtual.tipoBairroEspecial === 'itajai' ? 'R$ 20,00' : 'R$ 35,00';
-                
+
                 adicionalBairroHtml = `
                     <div class="comprovante-item">
                         <span class="comprovante-label">Adicional bairro (${bairroTipo}):</span>
                         <span class="comprovante-value">${formatarMoeda(orcamentoAtual.valores.bairro)}</span>
                     </div>
                 `;
-                
+
                 if (orcamentoAtual.tipoBairroEspecial === 'camboriu') {
                     let origemInfo = '';
                     if (orcamentoAtual.localColetaId === 'camboriu') {
@@ -936,7 +943,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Criar nova janela para impressão
         const printWindow = window.open('', '_blank', 'width=800,height=600');
-        
+
         // HTML otimizado para impressão de recibo
         printWindow.document.write(`
             <!DOCTYPE html>
@@ -1122,13 +1129,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div class="info-item"><span class="info-label">Cidade:</span> ${orcamentoAtual.cidadeDestino}</div>
                         ${orcamentoAtual.bairroEntrega ? `<div class="info-item"><span class="info-label">Bairro:</span> ${orcamentoAtual.bairroEntrega}</div>` : ''}
                         <div class="info-item"><span class="info-label">Endereço:</span> ${orcamentoAtual.enderecoEntrega}</div>
-                        ${orcamentoAtual.isBairroEspecial ? 
-                            `<div style="font-size: 12px; color: #666; margin-top: 5px; font-style: italic;">
-                                ${orcamentoAtual.tipoBairroEspecial === 'itajai' ? 
-                                    '(Bairro especial de Itajaí - R$ 30,00 + R$ 20,00)' : 
-                                    '(Bairro distante de Camboriú - Valor ajustado conforme origem)'}
-                            </div>` : 
-                            ''}
+                        ${orcamentoAtual.isBairroEspecial ?
+                `<div style="font-size: 12px; color: #666; margin-top: 5px; font-style: italic;">
+                                ${orcamentoAtual.tipoBairroEspecial === 'itajai' ?
+                    '(Bairro especial de Itajaí - R$ 30,00 + R$ 20,00)' :
+                    '(Bairro distante de Camboriú - Valor ajustado conforme origem)'}
+                            </div>` :
+                ''}
                     </div>
                     
                     <div class="separator"></div>
@@ -1147,12 +1154,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div class="info-item"><span class="info-label">Base:</span> ${formatarMoeda(orcamentoAtual.valores.base)}</div>
                         ${orcamentoAtual.valores.tamanho > 0 ? `<div class="info-item"><span class="info-label">Adicional tamanho:</span> ${formatarMoeda(orcamentoAtual.valores.tamanho)}</div>` : ''}
                         ${orcamentoAtual.valores.peso > 0 ? `<div class="info-item"><span class="info-label">Adicional peso:</span> ${formatarMoeda(orcamentoAtual.valores.peso)}</div>` : ''}
-                        ${orcamentoAtual.valores.bairro > 0 ? 
-                            `<div class="info-item">
+                        ${orcamentoAtual.valores.bairro > 0 ?
+                `<div class="info-item">
                                 <span class="info-label">Adicional bairro (${orcamentoAtual.tipoBairroEspecial === 'itajai' ? 'Itajaí' : 'Camboriú'}):</span> 
                                 ${formatarMoeda(orcamentoAtual.valores.bairro)}
-                            </div>` : 
-                            ''}
+                            </div>` :
+                ''}
                     </div>
                     
                     <div class="total-box">
@@ -1207,7 +1214,7 @@ document.addEventListener('DOMContentLoaded', function () {
             </body>
             </html>
         `);
-        
+
         printWindow.document.close();
         printWindow.focus();
     }
@@ -1218,35 +1225,69 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Mensagem com quebras de linha CORRETAS para WhatsApp
-        const mensagem = `*NOVO PEDIDO - N&G EXPRESS*` +
-            `*Pedido:* ${orcamentoAtual.numeroPedido}` +
-            `*Data:* ${orcamentoAtual.data}` +
-            `*Cliente:*${orcamentoAtual.nome} ${orcamentoAtual.telefone}` +
-            `*Coleta:*${orcamentoAtual.localColeta} ${orcamentoAtual.bairroColeta ? orcamentoAtual.bairroColeta + '' : ''} ${orcamentoAtual.enderecoColeta}` +
-            `*Entrega:*${orcamentoAtual.cidadeDestino} ${orcamentoAtual.bairroEntrega ? orcamentoAtual.bairroEntrega + '' : ''} ${orcamentoAtual.enderecoEntrega}` +
-            `${orcamentoAtual.isBairroEspecial ? 
-                (orcamentoAtual.tipoBairroEspecial === 'itajai' ? 
-                    '(Bairro especial de Itajaí)' : 
-                    '(Bairro distante de Camboriú)') : 
-                ''}` +
-            `*Encomenda:*${orcamentoAtual.dimensoes} ${orcamentoAtual.peso}kg ${orcamentoAtual.descricao}` +
-            `*Valores:*` +
-            `Base: ${formatarMoeda(orcamentoAtual.valores.base)}` +
-            `${orcamentoAtual.valores.tamanho > 0 ? `Adicional tamanho: ${formatarMoeda(orcamentoAtual.valores.tamanho)}` : ''}` +
-            `${orcamentoAtual.valores.peso > 0 ? `Adicional peso: ${formatarMoeda(orcamentoAtual.valores.peso)}` : ''}` +
-            `${orcamentoAtual.valores.bairro > 0 ? `Adicional bairro: ${formatarMoeda(orcamentoAtual.valores.bairro)}` : ''}` +
-            `*TOTAL: ${formatarMoeda(orcamentoAtual.valores.total)}*` +
-            `Confirme este pedido para iniciar a coleta.`;
+        // Mensagem formatada para WhatsApp
+        let mensagem = `*NOVO PEDIDO - N&G EXPRESS*\n\n`;
+        mensagem += `*Pedido:* ${orcamentoAtual.numeroPedido}\n`;
+        mensagem += `*Data:* ${orcamentoAtual.data}\n\n`;
+        mensagem += `*Cliente:*\n`;
+        mensagem += `Nome: ${orcamentoAtual.nome}\n`;
+        mensagem += `Telefone: ${orcamentoAtual.telefone}\n\n`;
+        mensagem += `*COLETA:*\n`;
+        mensagem += `Local: ${orcamentoAtual.localColeta}\n`;
+        if (orcamentoAtual.bairroColeta) {
+            mensagem += `Bairro: ${orcamentoAtual.bairroColeta}\n`;
+        }
+        mensagem += `Endereço: ${orcamentoAtual.enderecoColeta}\n\n`;
+        mensagem += `*ENTREGA:*\n`;
+        mensagem += `Cidade: ${orcamentoAtual.cidadeDestino}\n`;
+        if (orcamentoAtual.bairroEntrega) {
+            mensagem += `Bairro: ${orcamentoAtual.bairroEntrega}\n`;
+        }
+        mensagem += `Endereço: ${orcamentoAtual.enderecoEntrega}\n`;
+
+        // Adicionar tipo de bairro especial se houver
+        if (orcamentoAtual.isBairroEspecial) {
+            if (orcamentoAtual.tipoBairroEspecial === 'itajai') {
+                mensagem += `*Tipo:* Bairro Especial de Itajaí\n`;
+            } else if (orcamentoAtual.tipoBairroEspecial === 'camboriu') {
+                mensagem += `*Tipo:* Bairro Distante de Camboriú\n`;
+            }
+        }
+
+        mensagem += `\n*ENCOMENDA:*\n`;
+        mensagem += `Dimensões: ${orcamentoAtual.dimensoes}\n`;
+        mensagem += `Peso: ${orcamentoAtual.peso}kg\n`;
+        mensagem += `Descrição: ${orcamentoAtual.descricao}\n\n`;
+        mensagem += `*VALORES:*\n`;
+        mensagem += `Base: ${formatarMoeda(orcamentoAtual.valores.base)}\n`;
+
+        if (orcamentoAtual.valores.tamanho > 0) {
+            mensagem += `Adicional tamanho: ${formatarMoeda(orcamentoAtual.valores.tamanho)}\n`;
+        }
+
+        if (orcamentoAtual.valores.peso > 0) {
+            mensagem += `Adicional peso: ${formatarMoeda(orcamentoAtual.valores.peso)}\n`;
+        }
+
+        if (orcamentoAtual.valores.bairro > 0) {
+            if (orcamentoAtual.tipoBairroEspecial === 'itajai') {
+                mensagem += `Adicional bairro (Itajaí): ${formatarMoeda(orcamentoAtual.valores.bairro)}\n`;
+            } else if (orcamentoAtual.tipoBairroEspecial === 'camboriu') {
+                mensagem += `Adicional bairro (Camboriú): ${formatarMoeda(orcamentoAtual.valores.bairro)}\n`;
+            }
+        }
+
+        mensagem += `\n*TOTAL: ${formatarMoeda(orcamentoAtual.valores.total)}*\n\n`;
+        mensagem += `Confirme este pedido para iniciar a coleta.`;
 
         const telefoneWhatsApp = '5547999123260';
-        const whatsappUrl = `https://wa.me/${telefoneWhatsApp}?text=${mensagem}`;
-        
+        const whatsappUrl = `https://wa.me/${telefoneWhatsApp}?text=${encodeURIComponent(mensagem)}`;
+
         // Abrir WhatsApp em nova aba
         window.open(whatsappUrl, '_blank');
-        
+
         mostrarToast('Abrindo WhatsApp para confirmação...', 'success');
-        
+
         // Fechar modal
         setTimeout(() => {
             fecharModal();
