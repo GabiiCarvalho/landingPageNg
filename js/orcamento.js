@@ -1,7 +1,7 @@
 // Sistema de orçamento - CORRIGIDO COM CIDADES E BAIRROS
 document.addEventListener('DOMContentLoaded', function () {
     console.log('Script de orçamento carregado com sucesso!');
-    
+
     // Tabela de preços baseada nas imagens
     const TABELA_PRECOS = {
         'balneario-camboriu': { min: 15, max: 30, descricao: 'Balneário Camboriú' },
@@ -52,14 +52,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Bairros normais de Itajaí (sem adicional)
     const BAIRROS_ITAJAI_NORMAIS = [
-        'Centro', 'Fazenda', 'Fazendinha', 'Murta', 'Barra do Rio', 
-        'Cabeçudas', 'Atalaia', 'São João', 'São Vicente', 'Cordeiros', 
+        'Centro', 'Fazenda', 'Fazendinha', 'Murta', 'Barra do Rio',
+        'Cabeçudas', 'Atalaia', 'São João', 'São Vicente', 'Cordeiros',
         'Cidade Nova', 'Canhanduba', 'Ressacada', 'Beira Rio', 'Praia Brava'
     ];
 
     // Bairros normais de Camboriú (sem adicional)
     const BAIRROS_CAMBORIU_NORMAIS = [
-        'Centro', 'Lídia Duarte', 'Santa Regina', 'Areias', 'Cedros', 
+        'Centro', 'Lídia Duarte', 'Santa Regina', 'Areias', 'Cedros',
         'Monte Alegre', 'Tabuleiro', 'São Francisco', 'Barranco', 'Jardim Europa'
     ];
 
@@ -254,7 +254,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     const bairroNome = this.options[this.selectedIndex].text;
                     const adicional = this.options[this.selectedIndex].dataset.valor;
                     const tipo = this.options[this.selectedIndex].dataset.tipo;
-                    
+
                     if (tipo === 'especial') {
                         mostrarToast(`Bairro ${bairroNome} selecionado (adicional: R$ ${adicional},00)`, 'info');
                     } else {
@@ -263,7 +263,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else if (this.value) {
                     const bairroNome = this.options[this.selectedIndex].text;
                     const tipo = this.options[this.selectedIndex].dataset.tipo;
-                    
+
                     if (tipo === 'normal') {
                         mostrarToast(`Bairro ${bairroNome} selecionado (sem adicional)`, 'info');
                     }
@@ -436,14 +436,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     const bairroNome = this.options[this.selectedIndex].text;
                     const adicional = this.options[this.selectedIndex].dataset.valor;
                     const tipo = this.options[this.selectedIndex].dataset.tipo;
-                    
+
                     if (tipo === 'especial') {
                         mostrarToast(`Bairro ${bairroNome} selecionado (adicional: R$ ${adicional},00)`, 'info');
                     }
                 } else if (this.value) {
                     const bairroNome = this.options[this.selectedIndex].text;
                     const tipo = this.options[this.selectedIndex].dataset.tipo;
-                    
+
                     if (tipo === 'normal') {
                         mostrarToast(`Bairro ${bairroNome} selecionado (sem adicional)`, 'info');
                     }
@@ -477,19 +477,19 @@ document.addEventListener('DOMContentLoaded', function () {
     // Função para verificar se o bairro é especial
     function verificarBairroEspecial(bairroNome, cidadeId) {
         if (!bairroNome) return false;
-        
+
         const bairroLower = bairroNome.toLowerCase().trim();
-        
+
         if (cidadeId === 'itajai') {
-            return BAIRROS_ITAJAI_ADICIONAL.some(bairro => 
+            return BAIRROS_ITAJAI_ADICIONAL.some(bairro =>
                 bairro.nome.toLowerCase() === bairroLower
             );
         } else if (cidadeId === 'camboriu') {
-            return BAIRROS_CAMBORIU_ADICIONAL.some(bairro => 
+            return BAIRROS_CAMBORIU_ADICIONAL.some(bairro =>
                 bairro.nome.toLowerCase() === bairroLower
             );
         }
-        
+
         return false;
     }
 
@@ -505,7 +505,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const selectedOption = select.options[select.selectedIndex];
         const valorAdicional = parseInt(selectedOption.dataset.valor) || 0;
         const tipoBairro = selectedOption.dataset.tipo || 'normal';
-        
+
         return {
             valorAdicional: valorAdicional,
             tipoBairro: tipoBairro,
@@ -537,7 +537,7 @@ document.addEventListener('DOMContentLoaded', function () {
             } else if (localColetaId === 'itajai') {
                 valorBase = 30; // Coleta em Itajaí
             }
-            
+
             // Se for bairro especial de Camboriú, adiciona R$ 35,00
             if (bairroEntregaInfo.tipoBairro === 'especial') {
                 adicionalBairro = bairroEntregaInfo.valorAdicional; // R$ 35,00
@@ -545,7 +545,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 tipoBairroEspecial = 'camboriu';
             }
         }
-        
+
         return { valorBase, adicionalBairro, isBairroEspecial, tipoBairroEspecial };
     }
 
@@ -560,7 +560,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Adicionar CSS para o comprovante
     function adicionarEstiloComprovante() {
         if (document.getElementById('comprovante-styles')) return;
-        
+
         const style = document.createElement('style');
         style.id = 'comprovante-styles';
         style.textContent = `
@@ -787,7 +787,7 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('Modal de orçamento não encontrado!');
             return;
         }
-        
+
         modalOrcamento.style.display = 'block';
         document.body.style.overflow = 'hidden';
 
@@ -821,22 +821,22 @@ document.addEventListener('DOMContentLoaded', function () {
         // Resetar selects principais
         const selectColeta = document.getElementById('local-coleta');
         if (selectColeta) selectColeta.selectedIndex = 0;
-        
+
         const selectDestino = document.getElementById('cidade-destino');
         if (selectDestino) selectDestino.selectedIndex = 0;
-        
+
         const enderecoDetalhado = document.getElementById('endereco-detalhado');
         if (enderecoDetalhado) enderecoDetalhado.value = '';
-        
+
         const enderecoEntrega = document.getElementById('entrega-endereco');
         if (enderecoEntrega) enderecoEntrega.value = '';
-        
+
         const clienteNome = document.getElementById('cliente-nome');
         if (clienteNome) clienteNome.value = '';
-        
+
         const clienteTelefone = document.getElementById('cliente-telefone');
         if (clienteTelefone) clienteTelefone.value = '';
-        
+
         // Atualizar os selects para garantir que estão corretos
         configurarLocaisColeta();
         atualizarSelectCidades();
@@ -874,11 +874,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const enderecoColeta = enderecoDetalhado.value;
         const cidadeDestinoId = cidadeDestinoSelect.value;
         const cidadeDestinoNome = cidadeDestinoSelect.options[cidadeDestinoSelect.selectedIndex].text;
-        
+
         // Obter informações dos bairros
         const bairroColetaInfo = obterValorBairroSelecionado('bairro-coleta', localColetaId);
         const bairroEntregaInfo = obterValorBairroSelecionado('bairro-entrega', cidadeDestinoId);
-        
+
         const bairroColeta = bairroColetaInfo.nomeBairro;
         const bairroEntrega = bairroEntregaInfo.nomeBairro;
 
@@ -1023,7 +1023,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const orcamentoResultado = document.getElementById('orcamento-resultado');
         const btnConfirmar = document.getElementById('btn-confirmar');
-        
+
         if (orcamentoResultado) orcamentoResultado.style.display = 'block';
         if (btnConfirmar) btnConfirmar.style.display = 'block';
 
@@ -1259,279 +1259,297 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Criar nova janela para impressão
-        const printWindow = window.open('', '_blank', 'width=800,height=600');
+        // Criar nova janela para impressão com tamanho menor
+        const printWindow = window.open('', '_blank', 'width=600,height=800');
 
-        // HTML otimizado para impressão de recibo
+        // HTML otimizado para impressão de recibo COMPACTO
         printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Recibo N&G EXPRESS - ${orcamentoAtual.numeroPedido}</title>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <style>
-                    @media print {
-                        @page {
-                            size: A4 portrait;
-                            margin: 15mm;
-                        }
-                        body {
-                            font-family: 'Courier New', monospace;
-                            font-size: 14px;
-                            line-height: 1.4;
-                            color: #000;
-                            background: white;
-                            margin: 0;
-                            padding: 0;
-                        }
-                        .no-print {
-                            display: none !important;
-                        }
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Recibo N&G EXPRESS - ${orcamentoAtual.numeroPedido}</title>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=0.8">
+            <style>
+                /* Tamanhos REDUZIDOS para caber em UMA PÁGINA */
+                @media print {
+                    @page {
+                        size: A4;
+                        margin: 5mm !important;
                     }
-                    
-                    @media screen {
-                        body {
-                            font-family: 'Courier New', monospace;
-                            font-size: 16px;
-                            line-height: 1.5;
-                            color: #000;
-                            background: #f5f5f5;
-                            padding: 20px;
-                            margin: 0;
-                        }
-                        .recibo-container {
-                            background: white;
-                            max-width: 600px;
-                            margin: 0 auto;
-                            padding: 30px;
-                            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-                            border-radius: 5px;
-                        }
-                        .print-buttons {
-                            text-align: center;
-                            margin-top: 30px;
-                        }
-                        .print-btn {
-                            padding: 12px 24px;
-                            margin: 0 10px;
-                            background: #007bff;
-                            color: white;
-                            border: none;
-                            border-radius: 5px;
-                            font-size: 16px;
-                            cursor: pointer;
-                            display: inline-flex;
-                            align-items: center;
-                            gap: 8px;
-                        }
-                        .print-btn:hover {
-                            background: #0056b3;
-                        }
-                        .close-btn {
-                            background: #6c757d;
-                        }
-                        .close-btn:hover {
-                            background: #545b62;
-                        }
+                    body {
+                        font-family: 'Courier New', monospace, sans-serif;
+                        font-size: 10px !important; /* REDUZIDO de 14px */
+                        line-height: 1.1 !important; /* REDUZIDO de 1.4 */
+                        color: #000;
+                        background: white;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        width: 100%;
                     }
-                    
-                    .header {
+                    .no-print {
+                        display: none !important;
+                    }
+                    * {
+                        box-sizing: border-box;
+                        max-width: 100%;
+                    }
+                }
+                
+                @media screen {
+                    body {
+                        font-family: 'Courier New', monospace, sans-serif;
+                        font-size: 12px !important;
+                        line-height: 1.2 !important;
+                        color: #000;
+                        background: #f5f5f5;
+                        padding: 15px !important;
+                        margin: 0 !important;
+                    }
+                    .recibo-container {
+                        background: white;
+                        max-width: 500px !important; /* REDUZIDO de 600px */
+                        margin: 0 auto;
+                        padding: 20px !important; /* REDUZIDO de 30px */
+                        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                        border-radius: 3px;
+                    }
+                    .print-buttons {
                         text-align: center;
-                        margin-bottom: 20px;
-                        line-height: 1.2;
+                        margin-top: 20px;
                     }
-                    
-                    .separator {
-                        border-top: 2px dashed #000;
-                        margin: 15px 0;
+                    .print-btn {
+                        padding: 10px 20px;
+                        margin: 0 5px;
+                        background: #007bff;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        font-size: 14px;
+                        cursor: pointer;
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 6px;
                     }
-                    
-                    .total-box {
-                        text-align: center;
-                        margin: 25px 0;
-                        padding: 15px;
-                        border: 3px solid #28a745;
-                        background: #f8fff9;
+                    .print-btn:hover {
+                        background: #0056b3;
                     }
-                    
+                    .close-btn {
+                        background: #6c757d;
+                    }
+                    .close-btn:hover {
+                        background: #545b62;
+                    }
+                }
+                
+                .header {
+                    text-align: center;
+                    margin-bottom: 15px !important; /* REDUZIDO */
+                    line-height: 1.1;
+                }
+                
+                .separator {
+                    border-top: 1px dashed #000; /* REDUZIDO de 2px */
+                    margin: 10px 0 !important; /* REDUZIDO de 15px */
+                }
+                
+                .total-box {
+                    text-align: center;
+                    margin: 15px 0 !important; /* REDUZIDO de 25px */
+                    padding: 10px !important; /* REDUZIDO de 15px */
+                    border: 2px solid #28a745; /* REDUZIDO de 3px */
+                    background: #f8fff9;
+                }
+                
+                .total-amount {
+                    font-size: 20px !important; /* REDUZIDO de 28px */
+                    font-weight: bold;
+                    color: #28a745;
+                    margin: 8px 0 !important; /* REDUZIDO de 10px */
+                }
+                
+                .footer {
+                    text-align: center;
+                    margin-top: 20px !important; /* REDUZIDO de 30px */
+                    padding-top: 10px !important; /* REDUZIDO de 15px */
+                    border-top: 1px solid #ccc;
+                    font-size: 11px !important; /* REDUZIDO de 13px */
+                    color: #666;
+                }
+                
+                .contact-info {
+                    font-size: 11px !important; /* REDUZIDO de 13px */
+                    color: #444;
+                    text-align: center;
+                    margin: 15px 0 !important; /* REDUZIDO de 20px */
+                }
+                
+                .info-item {
+                    margin-bottom: 5px !important; /* REDUZIDO de 8px */
+                }
+                
+                .info-label {
+                    font-weight: bold;
+                }
+                
+                /* REMOVER ESPAÇOS DESNECESSÁRIOS */
+                h1, h2, h3, p {
+                    margin-top: 5px !important;
+                    margin-bottom: 5px !important;
+                }
+                
+                div {
+                    margin-bottom: 8px !important;
+                }
+                
+                /* Mobile */
+                @media (max-width: 768px) {
+                    body {
+                        font-size: 11px !important;
+                        padding: 10px !important;
+                    }
+                    .recibo-container {
+                        padding: 10px !important;
+                    }
                     .total-amount {
-                        font-size: 28px;
-                        font-weight: bold;
-                        color: #28a745;
-                        margin: 10px 0;
+                        font-size: 18px !important;
                     }
-                    
-                    .footer {
-                        text-align: center;
-                        margin-top: 30px;
-                        padding-top: 15px;
-                        border-top: 1px solid #ccc;
+                    .print-buttons {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                    }
+                    .print-btn {
+                        width: 100%;
+                        margin: 3px 0;
                         font-size: 13px;
-                        color: #666;
+                        padding: 8px 16px;
                     }
-                    
-                    .contact-info {
-                        font-size: 13px;
-                        color: #444;
-                        text-align: center;
-                        margin: 20px 0;
-                    }
-                    
-                    .info-item {
-                        margin-bottom: 8px;
-                    }
-                    
-                    .info-label {
-                        font-weight: bold;
-                    }
-                    
-                    /* Mobile */
-                    @media (max-width: 768px) {
-                        body {
-                            font-size: 14px;
-                            padding: 10px;
-                        }
-                        .recibo-container {
-                            padding: 20px;
-                        }
-                        .total-amount {
-                            font-size: 24px;
-                        }
-                        .print-buttons {
-                            display: flex;
-                            flex-direction: column;
-                            gap: 10px;
-                        }
-                        .print-btn {
-                            width: 100%;
-                            margin: 5px 0;
-                        }
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="recibo-container">
-                    <div class="header">
-                        <h2 style="margin: 0 0 10px 0; font-size: 24px;">🚚 N&G EXPRESS 🚚</h2>
-                        <div style="font-size: 16px; margin-bottom: 5px;">TRANSPORTE E ENTREGAS RÁPIDAS</div>
-                        <div style="font-size: 14px; color: #666;">-------------------------------------------</div>
-                    </div>
-                    
-                    <div style="margin-bottom: 10px;">
-                        <div class="info-item"><span class="info-label">🔢 PEDIDO:</span> ${orcamentoAtual.numeroPedido}</div>
-                        <div class="info-item"><span class="info-label">📅 DATA/HORA:</span> ${orcamentoAtual.data}</div>
-                    </div>
-                    
-                    <div class="separator"></div>
-                    
-                    <div style="margin-bottom: 10px;">
-                        <div style="font-weight: bold; margin-bottom: 10px; font-size: 18px;">👤 CLIENTE</div>
-                        <div class="info-item"><span class="info-label">Nome:</span> ${orcamentoAtual.nome}</div>
-                        <div class="info-item"><span class="info-label">Telefone:</span> ${orcamentoAtual.telefone}</div>
-                    </div>
-                    
-                    <div class="separator"></div>
-                    
-                    <div style="margin-bottom: 10px;">
-                        <div style="font-weight: bold; margin-bottom: 10px; font-size: 18px;">📍 COLETA</div>
-                        <div class="info-item"><span class="info-label">Local:</span> ${orcamentoAtual.localColeta}</div>
-                        ${orcamentoAtual.bairroColeta ? `<div class="info-item"><span class="info-label">Bairro:</span> ${orcamentoAtual.bairroColeta}</div>` : ''}
-                        <div class="info-item"><span class="info-label">Endereço:</span> ${orcamentoAtual.enderecoColeta}</div>
-                    </div>
-                    
-                    <div class="separator"></div>
-                    
-                    <div style="margin-bottom: 10px;">
-                        <div style="font-weight: bold; margin-bottom: 10px; font-size: 18px;">🎯 ENTREGA</div>
-                        <div class="info-item"><span class="info-label">Cidade:</span> ${orcamentoAtual.cidadeDestino}</div>
-                        ${orcamentoAtual.bairroEntrega ? `<div class="info-item"><span class="info-label">Bairro:</span> ${orcamentoAtual.bairroEntrega}</div>` : ''}
-                        <div class="info-item"><span class="info-label">Endereço:</span> ${orcamentoAtual.enderecoEntrega}</div>
-                        ${orcamentoAtual.isBairroEspecial ?
-                `<div style="font-size: 12px; color: #666; margin-top: 5px; font-style: italic;">
-                                ${orcamentoAtual.tipoBairroEspecial === 'itajai' ?
+                }
+            </style>
+        </head>
+        <body>
+            <div class="recibo-container">
+                <div class="header">
+                    <h2 style="margin: 0 0 8px 0; font-size: 20px;">🚚 N&G EXPRESS 🚚</h2>
+                    <div style="font-size: 14px; margin-bottom: 5px;">TRANSPORTE E ENTREGAS RÁPIDAS</div>
+                    <div style="font-size: 12px; color: #666;">-----------------------------------</div>
+                </div>
+                
+                <div style="margin-bottom: 8px;">
+                    <div class="info-item"><span class="info-label">🔢 PEDIDO:</span> ${orcamentoAtual.numeroPedido}</div>
+                    <div class="info-item"><span class="info-label">📅 DATA/HORA:</span> ${orcamentoAtual.data}</div>
+                </div>
+                
+                <div class="separator"></div>
+                
+                <div style="margin-bottom: 8px;">
+                    <div style="font-weight: bold; margin-bottom: 8px; font-size: 16px;">👤 CLIENTE</div>
+                    <div class="info-item"><span class="info-label">Nome:</span> ${orcamentoAtual.nome}</div>
+                    <div class="info-item"><span class="info-label">Telefone:</span> ${orcamentoAtual.telefone}</div>
+                </div>
+                
+                <div class="separator"></div>
+                
+                <div style="margin-bottom: 8px;">
+                    <div style="font-weight: bold; margin-bottom: 8px; font-size: 16px;">📍 COLETA</div>
+                    <div class="info-item"><span class="info-label">Local:</span> ${orcamentoAtual.localColeta}</div>
+                    ${orcamentoAtual.bairroColeta ? `<div class="info-item"><span class="info-label">Bairro:</span> ${orcamentoAtual.bairroColeta}</div>` : ''}
+                    <div class="info-item"><span class="info-label">Endereço:</span> ${orcamentoAtual.enderecoColeta}</div>
+                </div>
+                
+                <div class="separator"></div>
+                
+                <div style="margin-bottom: 8px;">
+                    <div style="font-weight: bold; margin-bottom: 8px; font-size: 16px;">🎯 ENTREGA</div>
+                    <div class="info-item"><span class="info-label">Cidade:</span> ${orcamentoAtual.cidadeDestino}</div>
+                    ${orcamentoAtual.bairroEntrega ? `<div class="info-item"><span class="info-label">Bairro:</span> ${orcamentoAtual.bairroEntrega}</div>` : ''}
+                    <div class="info-item"><span class="info-label">Endereço:</span> ${orcamentoAtual.enderecoEntrega}</div>
+                    ${orcamentoAtual.isBairroEspecial ?
+                `<div style="font-size: 10px; color: #666; margin-top: 3px; font-style: italic;">
+                            ${orcamentoAtual.tipoBairroEspecial === 'itajai' ?
                     '(Bairro especial de Itajaí - R$ 30,00 + R$ 20,00)' :
                     '(Bairro distante de Camboriú - Valor ajustado conforme origem)'}
-                            </div>` :
+                        </div>` :
                 ''}
-                    </div>
-                    
-                    <div class="separator"></div>
-                    
-                    <div style="margin-bottom: 10px;">
-                        <div style="font-weight: bold; margin-bottom: 10px; font-size: 18px;">📦 ENCOMENDA</div>
-                        <div class="info-item"><span class="info-label">Dimensões:</span> ${orcamentoAtual.dimensoes}</div>
-                        <div class="info-item"><span class="info-label">Peso:</span> ${orcamentoAtual.peso}kg</div>
-                        <div class="info-item"><span class="info-label">Descrição:</span> ${orcamentoAtual.descricao}</div>
-                    </div>
-                    
-                    <div class="separator"></div>
-                    
-                    <div style="margin-bottom: 20px;">
-                        <div style="font-weight: bold; margin-bottom: 10px; font-size: 18px;">💰 VALORES</div>
-                        <div class="info-item"><span class="info-label">Base:</span> ${formatarMoeda(orcamentoAtual.valores.base)}</div>
-                        ${orcamentoAtual.valores.tamanho > 0 ? `<div class="info-item"><span class="info-label">Adicional tamanho:</span> ${formatarMoeda(orcamentoAtual.valores.tamanho)}</div>` : ''}
-                        ${orcamentoAtual.valores.peso > 0 ? `<div class="info-item"><span class="info-label">Adicional peso:</span> ${formatarMoeda(orcamentoAtual.valores.peso)}</div>` : ''}
-                        ${orcamentoAtual.valores.bairro > 0 ?
+                </div>
+                
+                <div class="separator"></div>
+                
+                <div style="margin-bottom: 8px;">
+                    <div style="font-weight: bold; margin-bottom: 8px; font-size: 16px;">📦 ENCOMENDA</div>
+                    <div class="info-item"><span class="info-label">Dimensões:</span> ${orcamentoAtual.dimensoes}</div>
+                    <div class="info-item"><span class="info-label">Peso:</span> ${orcamentoAtual.peso}kg</div>
+                    <div class="info-item"><span class="info-label">Descrição:</span> ${orcamentoAtual.descricao}</div>
+                </div>
+                
+                <div class="separator"></div>
+                
+                <div style="margin-bottom: 15px;">
+                    <div style="font-weight: bold; margin-bottom: 8px; font-size: 16px;">💰 VALORES</div>
+                    <div class="info-item"><span class="info-label">Base:</span> ${formatarMoeda(orcamentoAtual.valores.base)}</div>
+                    ${orcamentoAtual.valores.tamanho > 0 ? `<div class="info-item"><span class="info-label">Adicional tamanho:</span> ${formatarMoeda(orcamentoAtual.valores.tamanho)}</div>` : ''}
+                    ${orcamentoAtual.valores.peso > 0 ? `<div class="info-item"><span class="info-label">Adicional peso:</span> ${formatarMoeda(orcamentoAtual.valores.peso)}</div>` : ''}
+                    ${orcamentoAtual.valores.bairro > 0 ?
                 `<div class="info-item">
-                                <span class="info-label">Adicional bairro (${orcamentoAtual.tipoBairroEspecial === 'itajai' ? 'Itajaí' : 'Camboriú'}):</span> 
-                                ${formatarMoeda(orcamentoAtual.valores.bairro)}
-                            </div>` :
+                            <span class="info-label">Adicional bairro (${orcamentoAtual.tipoBairroEspecial === 'itajai' ? 'Itajaí' : 'Camboriú'}):</span> 
+                            ${formatarMoeda(orcamentoAtual.valores.bairro)}
+                        </div>` :
                 ''}
-                    </div>
-                    
-                    <div class="total-box">
-                        <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">💵 TOTAL A PAGAR</div>
-                        <div class="total-amount">${formatarMoeda(orcamentoAtual.valores.total)}</div>
-                    </div>
-                    
-                    <div class="separator"></div>
-                    
-                    <div style="margin-bottom: 15px; font-size: 13px;">
-                        <div style="font-weight: bold; margin-bottom: 10px;">📋 OBSERVAÇÕES</div>
-                        <div>• Este é um orçamento/autorização de coleta</div>
-                        <div>• Valor sujeito a confirmação após análise</div>
-                        <div>• Aguarde contato para agendamento</div>
-                        <div>• Pagamento na entrega</div>
-                    </div>
-                    
-                    <div style="text-align: center; margin: 10px 0; padding: 10px; border: 2px solid #000; font-weight: bold; font-size: 16px;">
-                        ✅ RECIBO AUTORIZADO ✅
-                    </div>
-                    
-                    <div class="contact-info">
-                        <div><strong>📞 CONTATO:</strong> (47) 99912-3260</div>
-                        <div><strong>📧 E-MAIL:</strong> contato@ngexpress.com.br</div>
-                        <div><strong>🌐 SITE:</strong> www.ngexpress.com.br</div>
-                    </div>
-                    
-                    <div class="footer">
-                        <div>===========================================</div>
-                        <div style="font-weight: bold; margin: 5px 0;">OBRIGADO PELA PREFERÊNCIA!</div>
-                        <div>===========================================</div>
-                    </div>
                 </div>
                 
-                <div class="print-buttons no-print">
-                    <button class="print-btn" onclick="window.print()">
-                        🖨️ Imprimir Recibo
-                    </button>
-                    <button class="print-btn close-btn" onclick="window.close()">
-                        ✖️ Fechar Janela
-                    </button>
+                <div class="total-box">
+                    <div style="font-size: 16px; font-weight: bold; margin-bottom: 8px;">💵 TOTAL A PAGAR</div>
+                    <div class="total-amount">${formatarMoeda(orcamentoAtual.valores.total)}</div>
                 </div>
                 
-                <script>
-                    // Auto-print após carregar a página
-                    window.onload = function() {
-                        setTimeout(function() {
-                            window.print();
-                        }, 500);
-                    };
-                </script>
-            </body>
-            </html>
-        `);
+                <div class="separator"></div>
+                
+                <div style="margin-bottom: 10px; font-size: 11px;">
+                    <div style="font-weight: bold; margin-bottom: 8px;">📋 OBSERVAÇÕES</div>
+                    <div>• Este é um orçamento/autorização de coleta</div>
+                    <div>• Valor sujeito a confirmação após análise</div>
+                    <div>• Aguarde contato para agendamento</div>
+                    <div>• Pagamento na entrega</div>
+                </div>
+                
+                <div style="text-align: center; margin: 8px 0; padding: 8px; border: 1px solid #000; font-weight: bold; font-size: 14px;">
+                    ✅ RECIBO AUTORIZADO ✅
+                </div>
+                
+                <div class="contact-info">
+                    <div><strong>📞 CONTATO:</strong> (47) 99912-3260</div>
+                    <div><strong>📧 E-MAIL:</strong> contato@ngexpress.com.br</div>
+                    <div><strong>🌐 SITE:</strong> www.ngexpress.com.br</div>
+                </div>
+                
+                <div class="footer">
+                    <div>=======================================</div>
+                    <div style="font-weight: bold; margin: 3px 0;">OBRIGADO PELA PREFERÊNCIA!</div>
+                    <div>=======================================</div>
+                </div>
+            </div>
+            
+            <div class="print-buttons no-print">
+                <button class="print-btn" onclick="window.print()">
+                    🖨️ Imprimir Recibo
+                </button>
+                <button class="print-btn close-btn" onclick="window.close()">
+                    ✖️ Fechar Janela
+                </button>
+            </div>
+            
+            <script>
+                // Auto-print após carregar a página
+                window.onload = function() {
+                    setTimeout(function() {
+                        window.print();
+                    }, 500);
+                };
+            </script>
+        </body>
+        </html>
+    `);
 
         printWindow.document.close();
         printWindow.focus();
@@ -1615,7 +1633,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Função para mostrar toast
     window.mostrarToast = function (mensagem, tipo = 'success') {
         let toastContainer = document.getElementById('toast-container');
-        
+
         // Criar container se não existir
         if (!toastContainer) {
             toastContainer = document.createElement('div');
