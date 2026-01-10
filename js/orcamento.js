@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('btn-confirmar').addEventListener('click', gerarComprovante);
 
     document.getElementById('btn-imprimir').addEventListener('click', function () {
-        imprimirComprovante();
+        imprimirRecibo();
     });
 
     document.getElementById('btn-whatsapp').addEventListener('click', confirmarWhatsApp);
@@ -170,127 +170,109 @@ document.addEventListener('DOMContentLoaded', function () {
                 max-width: 500px;
                 margin: 0 auto;
                 background: white;
-                border-radius: 15px;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-                padding: 25px;
-                font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+                border-radius: 10px;
+                padding: 20px;
+                font-family: 'Courier New', monospace;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
             }
             
             .comprovante-header {
                 text-align: center;
-                margin-bottom: 25px;
-                padding-bottom: 15px;
-                border-bottom: 3px solid #007bff;
+                margin-bottom: 20px;
+                padding-bottom: 10px;
+                border-bottom: 2px dashed #000;
             }
             
             .comprovante-header h2 {
                 color: #007bff;
-                margin: 0 0 10px 0;
-                font-size: 24px;
-                font-weight: 700;
+                margin: 0 0 5px 0;
+                font-size: 22px;
+                font-weight: bold;
             }
             
             .comprovante-section {
-                margin-bottom: 20px;
-                padding: 15px;
-                background: #f8f9fa;
-                border-radius: 10px;
-                border-left: 4px solid #007bff;
+                margin-bottom: 15px;
+                padding: 10px 0;
+                border-bottom: 1px solid #eee;
             }
             
             .comprovante-section h3 {
-                color: #007bff;
-                margin: 0 0 10px 0;
+                color: #333;
+                margin: 0 0 8px 0;
                 font-size: 16px;
-                font-weight: 600;
-                display: flex;
-                align-items: center;
-                gap: 8px;
+                font-weight: bold;
             }
             
             .comprovante-item {
+                margin-bottom: 5px;
                 display: flex;
                 justify-content: space-between;
-                margin-bottom: 8px;
-                padding-bottom: 8px;
-                border-bottom: 1px dashed #dee2e6;
-            }
-            
-            .comprovante-item:last-child {
-                border-bottom: none;
-                margin-bottom: 0;
-                padding-bottom: 0;
             }
             
             .comprovante-label {
                 font-weight: 500;
-                color: #495057;
+                color: #666;
             }
             
             .comprovante-value {
                 font-weight: 600;
-                color: #212529;
+                color: #000;
                 text-align: right;
                 max-width: 60%;
                 word-break: break-word;
             }
             
             .valor-total-section {
-                background: #e8f4ff;
-                border-left: 4px solid #28a745;
-                padding: 20px;
                 text-align: center;
-                margin: 25px 0;
+                margin: 20px 0;
+                padding: 15px;
+                background: #f8f9fa;
+                border-radius: 8px;
+                border: 2px solid #28a745;
             }
             
             .valor-total {
-                font-size: 28px;
-                font-weight: 800;
+                font-size: 24px;
+                font-weight: bold;
                 color: #28a745;
                 margin: 10px 0;
             }
             
             .comprovante-footer {
                 text-align: center;
-                margin-top: 25px;
+                margin-top: 20px;
                 padding-top: 15px;
-                border-top: 2px dashed #007bff;
-                color: #6c757d;
-                font-size: 14px;
+                border-top: 2px dashed #000;
+                color: #666;
+                font-size: 13px;
             }
             
             .comprovante-buttons {
                 display: flex;
-                gap: 15px;
-                margin-top: 25px;
+                gap: 10px;
+                margin-top: 20px;
             }
             
             .comprovante-buttons button {
                 flex: 1;
-                padding: 15px;
-                font-size: 16px;
+                padding: 12px;
+                font-size: 14px;
                 font-weight: 600;
-                border-radius: 10px;
+                border-radius: 8px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                gap: 10px;
-                transition: all 0.3s ease;
-            }
-            
-            .comprovante-buttons button:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                gap: 8px;
             }
             
             #btn-imprimir {
-                background: linear-gradient(135deg, #007bff, #0056b3);
+                background: #007bff;
                 color: white;
                 border: none;
             }
             
             #btn-whatsapp {
-                background: linear-gradient(135deg, #25D366, #128C7E);
+                background: #25D366;
                 color: white;
                 border: none;
             }
@@ -308,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 
                 .valor-total {
-                    font-size: 24px;
+                    font-size: 22px;
                 }
             }
             
@@ -317,10 +299,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 .comprovante-content {
                     padding: 15px;
                     margin: 10px;
-                }
-                
-                .comprovante-section {
-                    padding: 12px;
                 }
                 
                 .comprovante-buttons {
@@ -334,11 +312,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 .comprovante-value {
                     text-align: left;
                     max-width: 100%;
-                    margin-top: 5px;
-                }
-                
-                .valor-total {
-                    font-size: 24px;
+                    margin-top: 3px;
                 }
             }
         `;
@@ -529,15 +503,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const numeroPedido = 'NG' + Date.now().toString().slice(-6);
         orcamentoAtual.numeroPedido = numeroPedido;
 
-        // Atualizar o comprovante com os dados e emojis
+        // Atualizar o comprovante com os dados
         const comprovanteContent = document.getElementById('comprovante-content');
         if (comprovanteContent) {
             comprovanteContent.innerHTML = `
                 <div class="comprovante-header">
                     <h2>🚚 N&G EXPRESS 🚚</h2>
-                    <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-                        <span><strong>🔢 Pedido:</strong> ${numeroPedido}</span>
-                        <span><strong>📅 Data:</strong> ${orcamentoAtual.data}</span>
+                    <div style="font-size: 14px; margin-top: 5px;">
+                        <strong>Pedido:</strong> ${numeroPedido} | 
+                        <strong>Data:</strong> ${orcamentoAtual.data}
                     </div>
                 </div>
 
@@ -580,19 +554,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="comprovante-section">
                     <h3>📦 ENCOMENDA</h3>
                     <div class="comprovante-item">
-                        <span class="comprovante-label">📏 Dimensões:</span>
+                        <span class="comprovante-label">Dimensões:</span>
                         <span class="comprovante-value">${orcamentoAtual.dimensoes}</span>
                     </div>
                     <div class="comprovante-item">
-                        <span class="comprovante-label">📦 Volume:</span>
-                        <span class="comprovante-value">${orcamentoAtual.volume}L</span>
-                    </div>
-                    <div class="comprovante-item">
-                        <span class="comprovante-label">⚖️ Peso:</span>
+                        <span class="comprovante-label">Peso:</span>
                         <span class="comprovante-value">${orcamentoAtual.peso}kg</span>
                     </div>
                     <div class="comprovante-item">
-                        <span class="comprovante-label">📝 Descrição:</span>
+                        <span class="comprovante-label">Descrição:</span>
                         <span class="comprovante-value">${orcamentoAtual.descricao}</span>
                     </div>
                 </div>
@@ -600,7 +570,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="valor-total-section">
                     <h3>💰 VALOR TOTAL</h3>
                     <div class="valor-total">${formatarMoeda(orcamentoAtual.valores.total)}</div>
-                    <div style="font-size: 14px; color: #6c757d; margin-top: 10px;">
+                    <div style="font-size: 13px; margin-top: 5px;">
                         <div>Base: ${formatarMoeda(orcamentoAtual.valores.base)}</div>
                         ${orcamentoAtual.valores.tamanho > 0 ? `<div>Adicional tamanho: ${formatarMoeda(orcamentoAtual.valores.tamanho)}</div>` : ''}
                         ${orcamentoAtual.valores.peso > 0 ? `<div>Adicional peso: ${formatarMoeda(orcamentoAtual.valores.peso)}</div>` : ''}
@@ -608,8 +578,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
 
                 <div class="comprovante-footer">
-                    <p>✅ OBRIGADO PELA PREFERÊNCIA!</p>
-                    <p>📞 Aguarde nosso contato para confirmação da coleta</p>
+                    <p>Obrigado pela preferência!</p>
+                    <p>Aguarde nosso contato para confirmação da coleta</p>
                 </div>
             `;
         }
@@ -621,14 +591,81 @@ document.addEventListener('DOMContentLoaded', function () {
         mostrarToast('Comprovante gerado! Imprima e confirme no WhatsApp.', 'success');
     }
 
-    function imprimirComprovante() {
+    function imprimirRecibo() {
         if (!orcamentoAtual) {
             mostrarToast('Gere o comprovante primeiro!', 'error');
             return;
         }
 
-        // Conteúdo do recibo para impressão (sem botões)
-        const receiptContent = `
+        // Gerar conteúdo do recibo no formato tradicional
+        const reciboContent = `
+===========================================
+            🚚 N&G EXPRESS 🚚
+        TRANSPORTE E ENTREGAS RÁPIDAS
+===========================================
+
+🔢 PEDIDO: ${orcamentoAtual.numeroPedido}
+📅 DATA: ${orcamentoAtual.data}
+-------------------------------------------
+
+👤 **CLIENTE**
+-------------------------------------------
+Nome: ${orcamentoAtual.nome}
+Telefone: ${orcamentoAtual.telefone}
+
+📍 **COLETA**
+-------------------------------------------
+Local: ${orcamentoAtual.localColeta}
+Endereço: ${orcamentoAtual.enderecoColeta}
+
+🎯 **ENTREGA**
+-------------------------------------------
+Cidade: ${orcamentoAtual.cidadeDestino}
+Endereço: ${orcamentoAtual.enderecoEntrega}
+
+📦 **ENCOMENDA**
+-------------------------------------------
+Dimensões: ${orcamentoAtual.dimensoes}
+Volume: ${orcamentoAtual.volume}L
+Peso: ${orcamentoAtual.peso}kg
+Descrição: ${orcamentoAtual.descricao}
+
+💰 **VALORES**
+-------------------------------------------
+Base: ${formatarMoeda(orcamentoAtual.valores.base)}
+${orcamentoAtual.valores.tamanho > 0 ? `Adicional tamanho: ${formatarMoeda(orcamentoAtual.valores.tamanho)}` : ''}
+${orcamentoAtual.valores.peso > 0 ? `Adicional peso: ${formatarMoeda(orcamentoAtual.valores.peso)}` : ''}
+-------------------------------------------
+
+💵 **TOTAL A PAGAR**
+         ${formatarMoeda(orcamentoAtual.valores.total)}
+-------------------------------------------
+
+📋 **OBSERVAÇÕES**
+-------------------------------------------
+• Este é um orçamento/autorização de coleta
+• Valor sujeito a confirmação após análise
+• Aguarde contato para agendamento
+• Pagamento na entrega
+
+===========================================
+         ✅ RECIBO AUTORIZADO ✅
+===========================================
+
+📞 CONTATO: (47) 99912-3260
+📧 E-MAIL: contato@ngexpress.com.br
+🌐 SITE: www.ngexpress.com.br
+
+===========================================
+          OBRIGADO PELA PREFERÊNCIA!
+===========================================
+        `;
+
+        // Criar nova janela para impressão
+        const printWindow = window.open('', '_blank', 'width=800,height=600');
+        
+        // HTML otimizado para impressão de recibo
+        printWindow.document.write(`
             <!DOCTYPE html>
             <html>
             <head>
@@ -638,113 +675,93 @@ document.addEventListener('DOMContentLoaded', function () {
                 <style>
                     @media print {
                         @page {
-                            size: A4;
-                            margin: 20mm;
+                            size: A4 portrait;
+                            margin: 15mm;
                         }
                         body {
-                            font-family: 'Segoe UI', system-ui, sans-serif;
+                            font-family: 'Courier New', monospace;
                             font-size: 14px;
-                            line-height: 1.5;
-                            color: #333;
-                            max-width: 100mm;
-                            margin: 0 auto;
-                            padding: 15px;
+                            line-height: 1.4;
+                            color: #000;
                             background: white;
+                            margin: 0;
+                            padding: 0;
+                        }
+                        .no-print {
+                            display: none !important;
                         }
                     }
+                    
                     @media screen {
                         body {
-                            font-family: 'Segoe UI', system-ui, sans-serif;
+                            font-family: 'Courier New', monospace;
                             font-size: 16px;
-                            line-height: 1.6;
-                            color: #333;
-                            max-width: 100mm;
-                            margin: 20px auto;
-                            padding: 20px;
+                            line-height: 1.5;
+                            color: #000;
                             background: #f5f5f5;
+                            padding: 20px;
+                            margin: 0;
                         }
-                        .recibo-content {
+                        .recibo-container {
                             background: white;
-                            border-radius: 10px;
-                            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-                            padding: 25px;
+                            max-width: 600px;
+                            margin: 0 auto;
+                            padding: 30px;
+                            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+                            border-radius: 5px;
+                            white-space: pre-wrap;
+                            word-wrap: break-word;
                         }
-                        .print-button {
-                            display: block;
-                            width: 100%;
-                            margin: 20px 0;
-                            padding: 15px;
+                        .print-buttons {
+                            text-align: center;
+                            margin-top: 30px;
+                        }
+                        .print-btn {
+                            padding: 12px 24px;
+                            margin: 0 10px;
                             background: #007bff;
                             color: white;
                             border: none;
-                            border-radius: 8px;
+                            border-radius: 5px;
                             font-size: 16px;
-                            font-weight: 600;
                             cursor: pointer;
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 8px;
+                        }
+                        .print-btn:hover {
+                            background: #0056b3;
+                        }
+                        .close-btn {
+                            background: #6c757d;
+                        }
+                        .close-btn:hover {
+                            background: #545b62;
                         }
                     }
                     
                     .header {
                         text-align: center;
-                        margin-bottom: 25px;
-                        padding-bottom: 15px;
-                        border-bottom: 3px solid #007bff;
+                        margin-bottom: 20px;
+                        line-height: 1.2;
                     }
                     
-                    .header h1 {
-                        color: #007bff;
-                        margin: 0 0 10px 0;
-                        font-size: 24px;
+                    .separator {
+                        border-top: 2px dashed #000;
+                        margin: 15px 0;
                     }
                     
-                    .info-line {
-                        display: flex;
-                        justify-content: space-between;
-                        margin-bottom: 8px;
-                        font-size: 14px;
-                    }
-                    
-                    .section {
-                        margin: 20px 0;
-                        padding: 15px;
-                        background: #f8f9fa;
-                        border-radius: 8px;
-                        border-left: 4px solid #007bff;
-                    }
-                    
-                    .section-title {
-                        color: #007bff;
-                        margin: 0 0 15px 0;
-                        font-size: 16px;
-                        font-weight: 600;
-                        display: flex;
-                        align-items: center;
-                        gap: 8px;
-                    }
-                    
-                    .item {
-                        display: flex;
-                        justify-content: space-between;
-                        margin-bottom: 10px;
-                        padding-bottom: 10px;
-                        border-bottom: 1px dashed #ddd;
-                    }
-                    
-                    .item:last-child {
-                        border-bottom: none;
-                    }
-                    
-                    .total {
-                        background: #e8f4ff;
-                        border-left: 4px solid #28a745;
-                        padding: 20px;
+                    .total-box {
                         text-align: center;
-                        margin: 30px 0;
+                        margin: 25px 0;
+                        padding: 15px;
+                        border: 3px solid #28a745;
+                        background: #f8fff9;
                     }
                     
-                    .total-value {
+                    .total-amount {
                         font-size: 28px;
-                        font-weight: 800;
+                        font-weight: bold;
                         color: #28a745;
                         margin: 10px 0;
                     }
@@ -753,118 +770,154 @@ document.addEventListener('DOMContentLoaded', function () {
                         text-align: center;
                         margin-top: 30px;
                         padding-top: 15px;
-                        border-top: 2px dashed #007bff;
+                        border-top: 1px solid #ccc;
+                        font-size: 13px;
                         color: #666;
-                        font-size: 14px;
+                    }
+                    
+                    .contact-info {
+                        font-size: 13px;
+                        color: #444;
+                        text-align: center;
+                        margin: 20px 0;
+                    }
+                    
+                    /* Mobile */
+                    @media (max-width: 768px) {
+                        body {
+                            font-size: 14px;
+                            padding: 10px;
+                        }
+                        .recibo-container {
+                            padding: 20px;
+                        }
+                        .total-amount {
+                            font-size: 24px;
+                        }
+                        .print-buttons {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 10px;
+                        }
+                        .print-btn {
+                            width: 100%;
+                            margin: 5px 0;
+                        }
                     }
                 </style>
             </head>
             <body>
-                <div class="recibo-content">
+                <div class="recibo-container">
                     <div class="header">
-                        <h1>🚚 N&G EXPRESS 🚚</h1>
-                        <div class="info-line">
-                            <span><strong>🔢 Pedido:</strong> ${orcamentoAtual.numeroPedido}</span>
-                            <span><strong>📅 Data:</strong> ${orcamentoAtual.data}</span>
-                        </div>
+                        <h2 style="margin: 0 0 10px 0; font-size: 24px;">🚚 N&G EXPRESS 🚚</h2>
+                        <div style="font-size: 16px; margin-bottom: 5px;">TRANSPORTE E ENTREGAS RÁPIDAS</div>
+                        <div style="font-size: 14px; color: #666;">-------------------------------------------</div>
                     </div>
-
-                    <div class="section">
-                        <div class="section-title">👤 CLIENTE</div>
-                        <div class="item">
-                            <span><strong>Nome:</strong></span>
-                            <span>${orcamentoAtual.nome}</span>
-                        </div>
-                        <div class="item">
-                            <span><strong>Telefone:</strong></span>
-                            <span>${orcamentoAtual.telefone}</span>
-                        </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <div><strong>🔢 PEDIDO:</strong> ${orcamentoAtual.numeroPedido}</div>
+                        <div><strong>📅 DATA/HORA:</strong> ${orcamentoAtual.data}</div>
                     </div>
-
-                    <div class="section">
-                        <div class="section-title">📍 COLETA</div>
-                        <div class="item">
-                            <span><strong>Local:</strong></span>
-                            <span>${orcamentoAtual.localColeta}</span>
-                        </div>
-                        <div class="item">
-                            <span><strong>Endereço:</strong></span>
-                            <span>${orcamentoAtual.enderecoColeta}</span>
-                        </div>
+                    
+                    <div class="separator"></div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-weight: bold; margin-bottom: 10px;">👤 CLIENTE</div>
+                        <div><strong>Nome:</strong> ${orcamentoAtual.nome}</div>
+                        <div><strong>Telefone:</strong> ${orcamentoAtual.telefone}</div>
                     </div>
-
-                    <div class="section">
-                        <div class="section-title">🎯 ENTREGA</div>
-                        <div class="item">
-                            <span><strong>Cidade:</strong></span>
-                            <span>${orcamentoAtual.cidadeDestino}</span>
-                        </div>
-                        <div class="item">
-                            <span><strong>Endereço:</strong></span>
-                            <span>${orcamentoAtual.enderecoEntrega}</span>
-                        </div>
+                    
+                    <div class="separator"></div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-weight: bold; margin-bottom: 10px;">📍 COLETA</div>
+                        <div><strong>Local:</strong> ${orcamentoAtual.localColeta}</div>
+                        <div><strong>Endereço:</strong> ${orcamentoAtual.enderecoColeta}</div>
                     </div>
-
-                    <div class="section">
-                        <div class="section-title">📦 ENCOMENDA</div>
-                        <div class="item">
-                            <span><strong>Dimensões:</strong></span>
-                            <span>${orcamentoAtual.dimensoes}</span>
-                        </div>
-                        <div class="item">
-                            <span><strong>Volume:</strong></span>
-                            <span>${orcamentoAtual.volume}L</span>
-                        </div>
-                        <div class="item">
-                            <span><strong>Peso:</strong></span>
-                            <span>${orcamentoAtual.peso}kg</span>
-                        </div>
-                        <div class="item">
-                            <span><strong>Descrição:</strong></span>
-                            <span>${orcamentoAtual.descricao}</span>
-                        </div>
+                    
+                    <div class="separator"></div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-weight: bold; margin-bottom: 10px;">🎯 ENTREGA</div>
+                        <div><strong>Cidade:</strong> ${orcamentoAtual.cidadeDestino}</div>
+                        <div><strong>Endereço:</strong> ${orcamentoAtual.enderecoEntrega}</div>
                     </div>
-
-                    <div class="total">
-                        <div class="section-title">💰 VALOR TOTAL</div>
-                        <div class="total-value">${formatarMoeda(orcamentoAtual.valores.total)}</div>
-                        <div style="font-size: 14px; margin-top: 10px;">
-                            <div>Base: ${formatarMoeda(orcamentoAtual.valores.base)}</div>
-                            ${orcamentoAtual.valores.tamanho > 0 ? `<div>Adicional tamanho: ${formatarMoeda(orcamentoAtual.valores.tamanho)}</div>` : ''}
-                            ${orcamentoAtual.valores.peso > 0 ? `<div>Adicional peso: ${formatarMoeda(orcamentoAtual.valores.peso)}</div>` : ''}
-                        </div>
+                    
+                    <div class="separator"></div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-weight: bold; margin-bottom: 10px;">📦 ENCOMENDA</div>
+                        <div><strong>Dimensões:</strong> ${orcamentoAtual.dimensoes}</div>
+                        <div><strong>Volume:</strong> ${orcamentoAtual.volume}L</div>
+                        <div><strong>Peso:</strong> ${orcamentoAtual.peso}kg</div>
+                        <div><strong>Descrição:</strong> ${orcamentoAtual.descricao}</div>
                     </div>
-
+                    
+                    <div class="separator"></div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-weight: bold; margin-bottom: 10px;">💰 VALORES</div>
+                        <div>Base: ${formatarMoeda(orcamentoAtual.valores.base)}</div>
+                        ${orcamentoAtual.valores.tamanho > 0 ? `<div>Adicional tamanho: ${formatarMoeda(orcamentoAtual.valores.tamanho)}</div>` : ''}
+                        ${orcamentoAtual.valores.peso > 0 ? `<div>Adicional peso: ${formatarMoeda(orcamentoAtual.valores.peso)}</div>` : ''}
+                    </div>
+                    
+                    <div class="total-box">
+                        <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">💵 TOTAL A PAGAR</div>
+                        <div class="total-amount">${formatarMoeda(orcamentoAtual.valores.total)}</div>
+                    </div>
+                    
+                    <div class="separator"></div>
+                    
+                    <div style="margin-bottom: 20px; font-size: 13px;">
+                        <div style="font-weight: bold; margin-bottom: 10px;">📋 OBSERVAÇÕES</div>
+                        <div>• Este é um orçamento/autorização de coleta</div>
+                        <div>• Valor sujeito a confirmação após análise</div>
+                        <div>• Aguarde contato para agendamento</div>
+                        <div>• Pagamento na entrega</div>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 25px 0; padding: 10px; border: 2px solid #000; font-weight: bold; font-size: 16px;">
+                        ✅ RECIBO AUTORIZADO ✅
+                    </div>
+                    
+                    <div class="contact-info">
+                        <div><strong>📞 CONTATO:</strong> (47) 99912-3260</div>
+                        <div><strong>📧 E-MAIL:</strong> contato@ngexpress.com.br</div>
+                        <div><strong>🌐 SITE:</strong> www.ngexpress.com.br</div>
+                    </div>
+                    
                     <div class="footer">
-                        <p>✅ OBRIGADO PELA PREFERÊNCIA!</p>
-                        <p>📞 Aguarde nosso contato para confirmação da coleta</p>
+                        <div>===========================================</div>
+                        <div style="font-weight: bold; margin: 10px 0;">OBRIGADO PELA PREFERÊNCIA!</div>
+                        <div>===========================================</div>
                     </div>
                 </div>
-
-                <button class="print-button" onclick="window.print()">🖨️ Imprimir Recibo</button>
-                <button class="print-button" onclick="window.close()" style="background: #6c757d;">✖️ Fechar</button>
-
+                
+                <div class="print-buttons no-print">
+                    <button class="print-btn" onclick="window.print()">
+                        🖨️ Imprimir Recibo
+                    </button>
+                    <button class="print-btn close-btn" onclick="window.close()">
+                        ✖️ Fechar Janela
+                    </button>
+                </div>
+                
                 <script>
-                    // Imprimir automaticamente em dispositivos móveis
-                    if (window.innerWidth <= 768) {
-                        setTimeout(() => {
+                    // Auto-print após carregar a página
+                    window.onload = function() {
+                        // Dar um pequeno delay para garantir que tudo carregou
+                        setTimeout(function() {
                             window.print();
-                        }, 1000);
-                    }
+                        }, 500);
+                    };
                 </script>
             </body>
             </html>
-        `;
-
-        // Abrir nova janela para impressão
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(receiptContent);
-        printWindow.document.close();
+        `);
         
-        // Focar na nova janela
-        setTimeout(() => {
-            printWindow.focus();
-        }, 500);
+        printWindow.document.close();
+        printWindow.focus();
     }
 
     function confirmarWhatsApp() {
@@ -873,39 +926,32 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Mensagem simplificada para WhatsApp (automática)
-        const mensagem = `*🚚 NOVO PEDIDO - N&G EXPRESS*%0A%0A` +
-            `*👤 CLIENTE*%0A${orcamentoAtual.nome}%0A${orcamentoAtual.telefone}%0A%0A` +
-            `*📍 COLETA*%0A${orcamentoAtual.localColeta}%0A${orcamentoAtual.enderecoColeta}%0A%0A` +
-            `*🎯 ENTREGA*%0A${orcamentoAtual.cidadeDestino}%0A${orcamentoAtual.enderecoEntrega}%0A%0A` +
-            `*📦 ENCOMENDA*%0A` +
-            `Dimensões: ${orcamentoAtual.dimensoes}%0A` +
-            `Peso: ${orcamentoAtual.peso}kg%0A` +
-            `Descrição: ${orcamentoAtual.descricao}%0A%0A` +
-            `*💰 VALOR TOTAL: ${formatarMoeda(orcamentoAtual.valores.total).replace('R$ ', 'R$')}*%0A%0A` +
-            `🔢 Pedido: ${orcamentoAtual.numeroPedido}%0A` +
-            `📅 ${orcamentoAtual.data}%0A%0A` +
-            `_Confirme este pedido para iniciar a coleta._`;
+        // Mensagem simplificada para WhatsApp
+        const mensagem = `*NOVO PEDIDO - N&G EXPRESS*` +
+            `*Pedido:* ${orcamentoAtual.numeroPedido}` +
+            `*Data:* ${orcamentoAtual.data}` +
+            `*Cliente:*${orcamentoAtual.nome} ${orcamentoAtual.telefone}` +
+            `*Coleta:*${orcamentoAtual.localColeta} ${orcamentoAtual.enderecoColeta}` +
+            `*Entrega:*${orcamentoAtual.cidadeDestino} ${orcamentoAtual.enderecoEntrega}` +
+            `*Encomenda:*${orcamentoAtual.dimensoes} ${orcamentoAtual.peso}kg ${orcamentoAtual.descricao}` +
+            `*Valor Total:* ${formatarMoeda(orcamentoAtual.valores.total)}` +
+            `Confirme este pedido para iniciar a coleta.`;
 
-        // Número da N&G EXPRESS
         const telefoneWhatsApp = '5547999123260';
+        const whatsappUrl = `https://wa.me/${telefoneWhatsApp}?text=${mensagem}`;
         
-        // Abrir WhatsApp com a mensagem pré-preenchida
-        const whatsappUrl = `https://wa.me/${telefoneWhatsApp}?text=${encodeURIComponent(mensagem)}`;
-        
-        // Tentar abrir em nova aba
+        // Abrir WhatsApp em nova aba
         window.open(whatsappUrl, '_blank');
         
-        // Mostrar mensagem de sucesso
         mostrarToast('Abrindo WhatsApp para confirmação...', 'success');
         
-        // Fechar modal após 1 segundo
+        // Fechar modal
         setTimeout(() => {
             fecharModal();
         }, 1000);
     }
 
-    // Função para mostrar toast (deve estar no escopo global)
+    // Função para mostrar toast
     window.mostrarToast = function (mensagem, tipo = 'success') {
         const toastContainer = document.getElementById('toast-container');
         if (!toastContainer) return;
