@@ -161,6 +161,193 @@ document.addEventListener('DOMContentLoaded', function () {
     atualizarSelectCidades();
     aplicarMascaraTelefone();
 
+    // Adicionar CSS para o comprovante
+    function adicionarEstiloComprovante() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .comprovante-content {
+                width: 100%;
+                max-width: 500px;
+                margin: 0 auto;
+                background: white;
+                border-radius: 15px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                padding: 25px;
+                font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            }
+            
+            .comprovante-header {
+                text-align: center;
+                margin-bottom: 25px;
+                padding-bottom: 15px;
+                border-bottom: 3px solid #007bff;
+            }
+            
+            .comprovante-header h2 {
+                color: #007bff;
+                margin: 0 0 10px 0;
+                font-size: 24px;
+                font-weight: 700;
+            }
+            
+            .comprovante-section {
+                margin-bottom: 20px;
+                padding: 15px;
+                background: #f8f9fa;
+                border-radius: 10px;
+                border-left: 4px solid #007bff;
+            }
+            
+            .comprovante-section h3 {
+                color: #007bff;
+                margin: 0 0 10px 0;
+                font-size: 16px;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .comprovante-item {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 8px;
+                padding-bottom: 8px;
+                border-bottom: 1px dashed #dee2e6;
+            }
+            
+            .comprovante-item:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+                padding-bottom: 0;
+            }
+            
+            .comprovante-label {
+                font-weight: 500;
+                color: #495057;
+            }
+            
+            .comprovante-value {
+                font-weight: 600;
+                color: #212529;
+                text-align: right;
+                max-width: 60%;
+                word-break: break-word;
+            }
+            
+            .valor-total-section {
+                background: #e8f4ff;
+                border-left: 4px solid #28a745;
+                padding: 20px;
+                text-align: center;
+                margin: 25px 0;
+            }
+            
+            .valor-total {
+                font-size: 28px;
+                font-weight: 800;
+                color: #28a745;
+                margin: 10px 0;
+            }
+            
+            .comprovante-footer {
+                text-align: center;
+                margin-top: 25px;
+                padding-top: 15px;
+                border-top: 2px dashed #007bff;
+                color: #6c757d;
+                font-size: 14px;
+            }
+            
+            .comprovante-buttons {
+                display: flex;
+                gap: 15px;
+                margin-top: 25px;
+            }
+            
+            .comprovante-buttons button {
+                flex: 1;
+                padding: 15px;
+                font-size: 16px;
+                font-weight: 600;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                transition: all 0.3s ease;
+            }
+            
+            .comprovante-buttons button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            }
+            
+            #btn-imprimir {
+                background: linear-gradient(135deg, #007bff, #0056b3);
+                color: white;
+                border: none;
+            }
+            
+            #btn-whatsapp {
+                background: linear-gradient(135deg, #25D366, #128C7E);
+                color: white;
+                border: none;
+            }
+            
+            /* Para impressão */
+            @media print {
+                .no-print, .comprovante-buttons, .close-comprovante {
+                    display: none !important;
+                }
+                
+                .comprovante-content {
+                    box-shadow: none;
+                    padding: 0;
+                    max-width: 100%;
+                }
+                
+                .valor-total {
+                    font-size: 24px;
+                }
+            }
+            
+            /* Mobile */
+            @media (max-width: 768px) {
+                .comprovante-content {
+                    padding: 15px;
+                    margin: 10px;
+                }
+                
+                .comprovante-section {
+                    padding: 12px;
+                }
+                
+                .comprovante-buttons {
+                    flex-direction: column;
+                }
+                
+                .comprovante-item {
+                    flex-direction: column;
+                }
+                
+                .comprovante-value {
+                    text-align: left;
+                    max-width: 100%;
+                    margin-top: 5px;
+                }
+                
+                .valor-total {
+                    font-size: 24px;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // Chamar a função para adicionar estilos
+    adicionarEstiloComprovante();
+
     // Funções principais
     function abrirModalOrcamento() {
         document.getElementById('orcamento-modal').style.display = 'block';
@@ -207,14 +394,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const enderecoColeta = enderecoDetalhado.value;
         const cidadeDestinoId = cidadeDestinoSelect.value;
         const cidadeDestinoNome = cidadeDestinoSelect.options[cidadeDestinoSelect.selectedIndex].text;
-
-        console.log('Dados coletados:', {
-            localColetaId,
-            localColetaNome,
-            enderecoColeta,
-            cidadeDestinoId,
-            cidadeDestinoNome
-        });
 
         const comprimento = parseFloat(document.getElementById('comprimento').value) || 0;
         const largura = parseFloat(document.getElementById('largura').value) || 0;
@@ -348,22 +527,92 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Gerar número de pedido
         const numeroPedido = 'NG' + Date.now().toString().slice(-6);
-
-        // Preencher comprovante corretamente
-        document.getElementById('pedido-numero').textContent = numeroPedido;
-        document.getElementById('pedido-data').textContent = orcamentoAtual.data;
-        document.getElementById('comprovante-nome').textContent = orcamentoAtual.nome;
-        document.getElementById('comprovante-telefone').textContent = orcamentoAtual.telefone;
-        document.getElementById('comprovante-coleta').textContent = `${orcamentoAtual.localColeta} - ${orcamentoAtual.enderecoColeta}`;
-        document.getElementById('comprovante-cidade').textContent = orcamentoAtual.cidadeDestino;
-        document.getElementById('comprovante-entrega').textContent = orcamentoAtual.enderecoEntrega;
-        document.getElementById('comprovante-dimensoes').textContent = orcamentoAtual.dimensoes;
-        document.getElementById('comprovante-peso').textContent = `${orcamentoAtual.peso}kg`;
-        document.getElementById('comprovante-descricao').textContent = orcamentoAtual.descricao;
-        document.getElementById('comprovante-valor').textContent = formatarMoeda(orcamentoAtual.valores.total);
-
-        // Adicionar número ao objeto
         orcamentoAtual.numeroPedido = numeroPedido;
+
+        // Atualizar o comprovante com os dados e emojis
+        const comprovanteContent = document.getElementById('comprovante-content');
+        if (comprovanteContent) {
+            comprovanteContent.innerHTML = `
+                <div class="comprovante-header">
+                    <h2>🚚 N&G EXPRESS 🚚</h2>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                        <span><strong>🔢 Pedido:</strong> ${numeroPedido}</span>
+                        <span><strong>📅 Data:</strong> ${orcamentoAtual.data}</span>
+                    </div>
+                </div>
+
+                <div class="comprovante-section">
+                    <h3>👤 CLIENTE</h3>
+                    <div class="comprovante-item">
+                        <span class="comprovante-label">Nome:</span>
+                        <span class="comprovante-value">${orcamentoAtual.nome}</span>
+                    </div>
+                    <div class="comprovante-item">
+                        <span class="comprovante-label">Telefone:</span>
+                        <span class="comprovante-value">${orcamentoAtual.telefone}</span>
+                    </div>
+                </div>
+
+                <div class="comprovante-section">
+                    <h3>📍 COLETA</h3>
+                    <div class="comprovante-item">
+                        <span class="comprovante-label">Local:</span>
+                        <span class="comprovante-value">${orcamentoAtual.localColeta}</span>
+                    </div>
+                    <div class="comprovante-item">
+                        <span class="comprovante-label">Endereço:</span>
+                        <span class="comprovante-value">${orcamentoAtual.enderecoColeta}</span>
+                    </div>
+                </div>
+
+                <div class="comprovante-section">
+                    <h3>🎯 ENTREGA</h3>
+                    <div class="comprovante-item">
+                        <span class="comprovante-label">Cidade:</span>
+                        <span class="comprovante-value">${orcamentoAtual.cidadeDestino}</span>
+                    </div>
+                    <div class="comprovante-item">
+                        <span class="comprovante-label">Endereço:</span>
+                        <span class="comprovante-value">${orcamentoAtual.enderecoEntrega}</span>
+                    </div>
+                </div>
+
+                <div class="comprovante-section">
+                    <h3>📦 ENCOMENDA</h3>
+                    <div class="comprovante-item">
+                        <span class="comprovante-label">📏 Dimensões:</span>
+                        <span class="comprovante-value">${orcamentoAtual.dimensoes}</span>
+                    </div>
+                    <div class="comprovante-item">
+                        <span class="comprovante-label">📦 Volume:</span>
+                        <span class="comprovante-value">${orcamentoAtual.volume}L</span>
+                    </div>
+                    <div class="comprovante-item">
+                        <span class="comprovante-label">⚖️ Peso:</span>
+                        <span class="comprovante-value">${orcamentoAtual.peso}kg</span>
+                    </div>
+                    <div class="comprovante-item">
+                        <span class="comprovante-label">📝 Descrição:</span>
+                        <span class="comprovante-value">${orcamentoAtual.descricao}</span>
+                    </div>
+                </div>
+
+                <div class="valor-total-section">
+                    <h3>💰 VALOR TOTAL</h3>
+                    <div class="valor-total">${formatarMoeda(orcamentoAtual.valores.total)}</div>
+                    <div style="font-size: 14px; color: #6c757d; margin-top: 10px;">
+                        <div>Base: ${formatarMoeda(orcamentoAtual.valores.base)}</div>
+                        ${orcamentoAtual.valores.tamanho > 0 ? `<div>Adicional tamanho: ${formatarMoeda(orcamentoAtual.valores.tamanho)}</div>` : ''}
+                        ${orcamentoAtual.valores.peso > 0 ? `<div>Adicional peso: ${formatarMoeda(orcamentoAtual.valores.peso)}</div>` : ''}
+                    </div>
+                </div>
+
+                <div class="comprovante-footer">
+                    <p>✅ OBRIGADO PELA PREFERÊNCIA!</p>
+                    <p>📞 Aguarde nosso contato para confirmação da coleta</p>
+                </div>
+            `;
+        }
 
         // Fechar modal de orçamento e abrir comprovante
         fecharModal();
@@ -372,169 +621,288 @@ document.addEventListener('DOMContentLoaded', function () {
         mostrarToast('Comprovante gerado! Imprima e confirme no WhatsApp.', 'success');
     }
 
-    function gerarConteudoRecibo() {
-        if (!orcamentoAtual) return '';
-        
-        return `
-=========================
-       N&G EXPRESS
-=========================
-
-CLIENTE
-Nome: ${orcamentoAtual.nome}
-Telefone: ${orcamentoAtual.telefone}
-Data: ${orcamentoAtual.data}
-Pedido: ${orcamentoAtual.numeroPedido}
--------------------------
-COLETA
-${orcamentoAtual.localColeta}
-${orcamentoAtual.enderecoColeta}
--------------------------
-ENTREGA
-${orcamentoAtual.cidadeDestino}
-${orcamentoAtual.enderecoEntrega}
--------------------------
-ENCOMENDA
-Dimensões: ${orcamentoAtual.dimensoes}
-Volume: ${orcamentoAtual.volume}L
-Peso: ${orcamentoAtual.peso}kg
-Descrição: ${orcamentoAtual.descricao}
--------------------------
-VALORES
-Base: R$ ${orcamentoAtual.valores.base.toFixed(2)}
-Adicional tamanho: R$ ${orcamentoAtual.valores.tamanho.toFixed(2)}
-Adicional peso: R$ ${orcamentoAtual.valores.peso.toFixed(2)}
--------------------------
-TOTAL: R$ ${orcamentoAtual.valores.total.toFixed(2)}
-=========================
-Obrigado pela preferência!
-Aguarde nosso contato para
-confirmação da coleta.
-=========================
-`;
-    }
-
     function imprimirComprovante() {
         if (!orcamentoAtual) {
             mostrarToast('Gere o comprovante primeiro!', 'error');
             return;
         }
 
-        // Gerar o conteúdo do recibo
-        const receiptContent = gerarConteudoRecibo();
-        
-        // Criar uma nova janela para impressão
-        const janelaImpressao = window.open('', '_blank');
-        
-        // HTML otimizado para impressão
-        janelaImpressao.document.write(`
+        // Conteúdo do recibo para impressão (sem botões)
+        const receiptContent = `
             <!DOCTYPE html>
             <html>
             <head>
-                <title>Recibo N&G EXPRESS</title>
+                <title>Recibo N&G EXPRESS - ${orcamentoAtual.numeroPedido}</title>
                 <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <style>
                     @media print {
                         @page {
-                            size: 80mm 297mm;
-                            margin: 0;
-                            padding: 0;
+                            size: A4;
+                            margin: 20mm;
                         }
                         body {
-                            font-family: 'Courier New', monospace;
-                            font-size: 11px;
-                            line-height: 1.3;
-                            width: 76mm;
+                            font-family: 'Segoe UI', system-ui, sans-serif;
+                            font-size: 14px;
+                            line-height: 1.5;
+                            color: #333;
+                            max-width: 100mm;
                             margin: 0 auto;
-                            padding: 2mm;
-                            white-space: pre-wrap;
-                            word-wrap: break-word;
-                        }
-                        .no-print {
-                            display: none !important;
+                            padding: 15px;
+                            background: white;
                         }
                     }
                     @media screen {
                         body {
-                            font-family: 'Courier New', monospace;
-                            font-size: 11px;
+                            font-family: 'Segoe UI', system-ui, sans-serif;
+                            font-size: 16px;
+                            line-height: 1.6;
+                            color: #333;
+                            max-width: 100mm;
+                            margin: 20px auto;
+                            padding: 20px;
                             background: #f5f5f5;
-                            padding: 20px;
-                            display: flex;
-                            justify-content: center;
-                            align-items: center;
-                            min-height: 100vh;
                         }
-                        pre {
+                        .recibo-content {
                             background: white;
-                            padding: 20px;
-                            border: 1px solid #ddd;
-                            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-                            width: 76mm;
-                            margin: 0 auto;
-                            white-space: pre-wrap;
-                            word-wrap: break-word;
+                            border-radius: 10px;
+                            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                            padding: 25px;
                         }
                         .print-button {
                             display: block;
-                            margin: 20px auto;
-                            padding: 10px 20px;
+                            width: 100%;
+                            margin: 20px 0;
+                            padding: 15px;
                             background: #007bff;
                             color: white;
                             border: none;
-                            border-radius: 5px;
+                            border-radius: 8px;
+                            font-size: 16px;
+                            font-weight: 600;
                             cursor: pointer;
-                            font-size: 14px;
                         }
-                        .print-button:hover {
-                            background: #0056b3;
-                        }
+                    }
+                    
+                    .header {
+                        text-align: center;
+                        margin-bottom: 25px;
+                        padding-bottom: 15px;
+                        border-bottom: 3px solid #007bff;
+                    }
+                    
+                    .header h1 {
+                        color: #007bff;
+                        margin: 0 0 10px 0;
+                        font-size: 24px;
+                    }
+                    
+                    .info-line {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 8px;
+                        font-size: 14px;
+                    }
+                    
+                    .section {
+                        margin: 20px 0;
+                        padding: 15px;
+                        background: #f8f9fa;
+                        border-radius: 8px;
+                        border-left: 4px solid #007bff;
+                    }
+                    
+                    .section-title {
+                        color: #007bff;
+                        margin: 0 0 15px 0;
+                        font-size: 16px;
+                        font-weight: 600;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    }
+                    
+                    .item {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 10px;
+                        padding-bottom: 10px;
+                        border-bottom: 1px dashed #ddd;
+                    }
+                    
+                    .item:last-child {
+                        border-bottom: none;
+                    }
+                    
+                    .total {
+                        background: #e8f4ff;
+                        border-left: 4px solid #28a745;
+                        padding: 20px;
+                        text-align: center;
+                        margin: 30px 0;
+                    }
+                    
+                    .total-value {
+                        font-size: 28px;
+                        font-weight: 800;
+                        color: #28a745;
+                        margin: 10px 0;
+                    }
+                    
+                    .footer {
+                        text-align: center;
+                        margin-top: 30px;
+                        padding-top: 15px;
+                        border-top: 2px dashed #007bff;
+                        color: #666;
+                        font-size: 14px;
                     }
                 </style>
             </head>
             <body>
-                <pre>${receiptContent}</pre>
-                <div style="text-align: center; margin-top: 20px;" class="no-print">
-                    <button class="print-button" onclick="window.print()">🖨️ Imprimir Recibo</button>
-                    <button class="print-button" onclick="window.close()" style="background: #6c757d; margin-left: 10px;">✖️ Fechar</button>
+                <div class="recibo-content">
+                    <div class="header">
+                        <h1>🚚 N&G EXPRESS 🚚</h1>
+                        <div class="info-line">
+                            <span><strong>🔢 Pedido:</strong> ${orcamentoAtual.numeroPedido}</span>
+                            <span><strong>📅 Data:</strong> ${orcamentoAtual.data}</span>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">👤 CLIENTE</div>
+                        <div class="item">
+                            <span><strong>Nome:</strong></span>
+                            <span>${orcamentoAtual.nome}</span>
+                        </div>
+                        <div class="item">
+                            <span><strong>Telefone:</strong></span>
+                            <span>${orcamentoAtual.telefone}</span>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">📍 COLETA</div>
+                        <div class="item">
+                            <span><strong>Local:</strong></span>
+                            <span>${orcamentoAtual.localColeta}</span>
+                        </div>
+                        <div class="item">
+                            <span><strong>Endereço:</strong></span>
+                            <span>${orcamentoAtual.enderecoColeta}</span>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">🎯 ENTREGA</div>
+                        <div class="item">
+                            <span><strong>Cidade:</strong></span>
+                            <span>${orcamentoAtual.cidadeDestino}</span>
+                        </div>
+                        <div class="item">
+                            <span><strong>Endereço:</strong></span>
+                            <span>${orcamentoAtual.enderecoEntrega}</span>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">📦 ENCOMENDA</div>
+                        <div class="item">
+                            <span><strong>Dimensões:</strong></span>
+                            <span>${orcamentoAtual.dimensoes}</span>
+                        </div>
+                        <div class="item">
+                            <span><strong>Volume:</strong></span>
+                            <span>${orcamentoAtual.volume}L</span>
+                        </div>
+                        <div class="item">
+                            <span><strong>Peso:</strong></span>
+                            <span>${orcamentoAtual.peso}kg</span>
+                        </div>
+                        <div class="item">
+                            <span><strong>Descrição:</strong></span>
+                            <span>${orcamentoAtual.descricao}</span>
+                        </div>
+                    </div>
+
+                    <div class="total">
+                        <div class="section-title">💰 VALOR TOTAL</div>
+                        <div class="total-value">${formatarMoeda(orcamentoAtual.valores.total)}</div>
+                        <div style="font-size: 14px; margin-top: 10px;">
+                            <div>Base: ${formatarMoeda(orcamentoAtual.valores.base)}</div>
+                            ${orcamentoAtual.valores.tamanho > 0 ? `<div>Adicional tamanho: ${formatarMoeda(orcamentoAtual.valores.tamanho)}</div>` : ''}
+                            ${orcamentoAtual.valores.peso > 0 ? `<div>Adicional peso: ${formatarMoeda(orcamentoAtual.valores.peso)}</div>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="footer">
+                        <p>✅ OBRIGADO PELA PREFERÊNCIA!</p>
+                        <p>📞 Aguarde nosso contato para confirmação da coleta</p>
+                    </div>
                 </div>
+
+                <button class="print-button" onclick="window.print()">🖨️ Imprimir Recibo</button>
+                <button class="print-button" onclick="window.close()" style="background: #6c757d;">✖️ Fechar</button>
+
                 <script>
-                    // Imprimir automaticamente após carregar
-                    window.onload = function() {
+                    // Imprimir automaticamente em dispositivos móveis
+                    if (window.innerWidth <= 768) {
                         setTimeout(() => {
                             window.print();
-                        }, 500);
-                    };
+                        }, 1000);
+                    }
                 </script>
             </body>
             </html>
-        `);
+        `;
+
+        // Abrir nova janela para impressão
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(receiptContent);
+        printWindow.document.close();
         
-        janelaImpressao.document.close();
+        // Focar na nova janela
+        setTimeout(() => {
+            printWindow.focus();
+        }, 500);
     }
 
     function confirmarWhatsApp() {
-        if (!orcamentoAtual) return;
+        if (!orcamentoAtual) {
+            mostrarToast('Gere o comprovante primeiro!', 'error');
+            return;
+        }
 
-        // Formatar mensagem para WhatsApp
-        const mensagem = `🚚 *NOVO PEDIDO - N&G EXPRESS* 🚚%0A%0A` +
-            `👤 *CLIENTE:*%0A${orcamentoAtual.nome}%0A${orcamentoAtual.telefone}%0A%0A` +
-            `📍 *COLETA:*%0A${orcamentoAtual.localColeta}%0A${orcamentoAtual.enderecoColeta}%0A%0A` +
-            `🎯 *ENTREGA:*%0A${orcamentoAtual.cidadeDestino}%0A${orcamentoAtual.enderecoEntrega}%0A%0A` +
-            `📦 *ENCOMENDA:*%0A` +
-            `📏 ${orcamentoAtual.dimensoes}%0A` +
-            `⚖️ ${orcamentoAtual.peso}kg%0A` +
-            `📝 ${orcamentoAtual.descricao}%0A%0A` +
-            `💰 *TOTAL:* R$ ${orcamentoAtual.valores.total.toFixed(2)}%0A%0A` +
-            `🔢 *PEDIDO:* ${orcamentoAtual.numeroPedido}%0A` +
+        // Mensagem simplificada para WhatsApp (automática)
+        const mensagem = `*🚚 NOVO PEDIDO - N&G EXPRESS*%0A%0A` +
+            `*👤 CLIENTE*%0A${orcamentoAtual.nome}%0A${orcamentoAtual.telefone}%0A%0A` +
+            `*📍 COLETA*%0A${orcamentoAtual.localColeta}%0A${orcamentoAtual.enderecoColeta}%0A%0A` +
+            `*🎯 ENTREGA*%0A${orcamentoAtual.cidadeDestino}%0A${orcamentoAtual.enderecoEntrega}%0A%0A` +
+            `*📦 ENCOMENDA*%0A` +
+            `Dimensões: ${orcamentoAtual.dimensoes}%0A` +
+            `Peso: ${orcamentoAtual.peso}kg%0A` +
+            `Descrição: ${orcamentoAtual.descricao}%0A%0A` +
+            `*💰 VALOR TOTAL: ${formatarMoeda(orcamentoAtual.valores.total).replace('R$ ', 'R$')}*%0A%0A` +
+            `🔢 Pedido: ${orcamentoAtual.numeroPedido}%0A` +
             `📅 ${orcamentoAtual.data}%0A%0A` +
-            `_Gerado via site N&G EXPRESS_`;
+            `_Confirme este pedido para iniciar a coleta._`;
 
+        // Número da N&G EXPRESS
         const telefoneWhatsApp = '5547999123260';
-        window.open(`https://wa.me/${telefoneWhatsApp}?text=${mensagem}`, '_blank');
-
-        fecharModal();
-        mostrarToast('Redirecionando para WhatsApp...', 'success');
+        
+        // Abrir WhatsApp com a mensagem pré-preenchida
+        const whatsappUrl = `https://wa.me/${telefoneWhatsApp}?text=${encodeURIComponent(mensagem)}`;
+        
+        // Tentar abrir em nova aba
+        window.open(whatsappUrl, '_blank');
+        
+        // Mostrar mensagem de sucesso
+        mostrarToast('Abrindo WhatsApp para confirmação...', 'success');
+        
+        // Fechar modal após 1 segundo
+        setTimeout(() => {
+            fecharModal();
+        }, 1000);
     }
 
     // Função para mostrar toast (deve estar no escopo global)
