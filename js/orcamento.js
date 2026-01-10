@@ -65,6 +65,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Variáveis globais
     let orcamentoAtual = null;
+    let numeroPedidoGerado = null;
 
     // Função para inicializar todos os componentes
     function inicializarSistema() {
@@ -445,7 +446,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
     }
 
-    // Calcular valor base com as novas regras
+    // CORREÇÃO: Calcular valor base com as novas regras (Camboriú → Camboriú: 15 + 30)
     function calcularValorBase(localColetaId, cidadeDestinoId, bairroColetaInfo, bairroEntregaInfo) {
         let valorBase = 0;
         let adicionalBairro = 0;
@@ -460,7 +461,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (localColetaId === 'balneario-camboriu' && cidadeDestinoId === 'camboriu') {
             valorBase = 20;
             if (bairroEntregaInfo.tipoBairro === 'especial') {
-                adicionalBairro = 30;
+                adicionalBairro = 35; // CORRIGIDO: 30 para 35
                 isBairroEspecial = true;
                 tipoBairroEspecial = 'camboriu';
             }
@@ -474,20 +475,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 tipoBairroEspecial = 'itajai';
             }
         }
-        // 3. Camboriú para Camboriú
+        // 3. Camboriú para Camboriú - CORREÇÃO AQUI
         else if (localColetaId === 'camboriu' && cidadeDestinoId === 'camboriu') {
-            valorBase = 15;
+            valorBase = 15; // Base sempre 15 para Camboriú → Camboriú
 
-            if (bairroColetaInfo.tipoBairro === 'especial') {
-                valorBase = 20;
-            }
-
+            // Se o bairro de entrega é especial, adiciona R$ 30
             if (bairroEntregaInfo.tipoBairro === 'especial') {
-                if (bairroColetaInfo.tipoBairro === 'especial') {
-                    adicionalBairro = 20;
-                } else {
-                    adicionalBairro = 20;
-                }
+                adicionalBairro = 30; // CORREÇÃO: 20 para 30
                 isBairroEspecial = true;
                 tipoBairroEspecial = 'camboriu';
             }
@@ -930,8 +924,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Gerar número de pedido
-        const numeroPedido = 'NG' + Date.now().toString().slice(-6);
-        orcamentoAtual.numeroPedido = numeroPedido;
+        numeroPedidoGerado = 'NG' + Date.now().toString().slice(-6);
+        orcamentoAtual.numeroPedido = numeroPedidoGerado;
+
+        // CORREÇÃO: Preencher os dados do comprovante antes de abrir o modal
+        preencherComprovanteModal();
 
         // Fechar modal de orçamento e abrir comprovante
         fecharModal();
@@ -943,11 +940,68 @@ document.addEventListener('DOMContentLoaded', function () {
         mostrarToast('Comprovante gerado! Imprima e confirme no WhatsApp.', 'success');
     }
 
+    // NOVA FUNÇÃO: Preencher modal do comprovante
+    function preencherComprovanteModal() {
+        if (!orcamentoAtual || !orcamentoAtual.numeroPedido) return;
+
+        const comprovanteContent = document.getElementById('comprovante-content');
+        if (!comprovanteContent) return;
+
+        // Criar conteúdo do comprovante
+        const content = `
+            <div class="comprovante-preview">
+                <div class="header">
+                    <h3>🚚 N&G EXPRESS 🚚</h3>
+                    <div><strong>Pedido:</strong> ${orcamentoAtual.numeroPedido}</div>
+                    <div><strong>Data:</strong> ${orcamentoAtual.data}</div>
+                </div>
+                
+                <div class="section">
+                    <h4>Cliente</h4>
+                    <div><strong>Nome:</strong> ${orcamentoAtual.nome}</div>
+                    <div><strong>Telefone:</strong> ${orcamentoAtual.telefone}</div>
+                </div>
+                
+                <div class="section">
+                    <h4>Coleta</h4>
+                    <div><strong>Local:</strong> ${orcamentoAtual.localColeta}</div>
+                    ${orcamentoAtual.bairroColeta ? `<div><strong>Bairro:</strong> ${orcamentoAtual.bairroColeta}</div>` : ''}
+                    <div><strong>Endereço:</strong> ${orcamentoAtual.enderecoColeta}</div>
+                </div>
+                
+                <div class="section">
+                    <h4>Entrega</h4>
+                    <div><strong>Cidade:</strong> ${orcamentoAtual.cidadeDestino}</div>
+                    ${orcamentoAtual.bairroEntrega ? `<div><strong>Bairro:</strong> ${orcamentoAtual.bairroEntrega}</div>` : ''}
+                    <div><strong>Endereço:</strong> ${orcamentoAtual.enderecoEntrega}</div>
+                </div>
+                
+                <div class="section">
+                    <h4>Encomenda</h4>
+                    <div><strong>Dimensões:</strong> ${orcamentoAtual.dimensoes}</div>
+                    <div><strong>Peso:</strong> ${orcamentoAtual.peso}kg</div>
+                    <div><strong>Descrição:</strong> ${orcamentoAtual.descricao}</div>
+                </div>
+                
+                <div class="total-section">
+                    <h4>Valor Total</h4>
+                    <div class="total-amount">${formatarMoeda(orcamentoAtual.valores.total)}</div>
+                </div>
+            </div>
+        `;
+
+        comprovanteContent.innerHTML = content;
+    }
+
+    // CORREÇÃO: Função imprimirRecibo
     function imprimirRecibo() {
-        if (!orcamentoAtual) {
+        if (!orcamentoAtual || !orcamentoAtual.numeroPedido) {
             mostrarToast('Gere o comprovante primeiro!', 'error');
             return;
         }
+
+        // Usar a variável global numeroPedidoGerado
+        const numeroPedido = numeroPedidoGerado || orcamentoAtual.numeroPedido;
 
         // Criar nova janela para impressão
         const printWindow = window.open('', '_blank', 'width=600,height=800');
@@ -955,7 +1009,7 @@ document.addEventListener('DOMContentLoaded', function () {
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Recibo N&G EXPRESS - ${orcamentoAtual.numeroPedido}</title>
+            <title>Recibo N&G EXPRESS - ${numeroPedido}</title>
             <meta charset="UTF-8">
             <style>
                 @media print {
@@ -968,21 +1022,78 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                     .no-print { display: none !important; }
                 }
-                body { font-family: Arial, sans-serif; padding: 20px; }
-                .recibo-container { max-width: 500px; margin: 0 auto; }
-                .header { text-align: center; margin-bottom: 20px; }
+                body { 
+                    font-family: Arial, sans-serif; 
+                    padding: 20px;
+                    font-size: 14px;
+                    line-height: 1.4;
+                }
+                .recibo-container { 
+                    max-width: 500px; 
+                    margin: 0 auto;
+                    border: 1px solid #ddd;
+                    padding: 20px;
+                    border-radius: 8px;
+                }
+                .header { 
+                    text-align: center; 
+                    margin-bottom: 20px;
+                    padding-bottom: 15px;
+                    border-bottom: 2px solid #007bff;
+                }
+                .header h2 { 
+                    margin: 0 0 10px 0;
+                    color: #007bff;
+                }
+                .section { 
+                    margin: 15px 0;
+                    padding: 10px;
+                    border-left: 3px solid #28a745;
+                    background: #f8fff9;
+                }
+                .section h4 {
+                    margin: 0 0 10px 0;
+                    color: #28a745;
+                }
                 .total-box { 
                     text-align: center; 
                     margin: 20px 0; 
-                    padding: 15px; 
-                    border: 2px solid #28a745; 
-                    background: #f8fff9; 
+                    padding: 20px; 
+                    border: 2px solid #ffc107; 
+                    background: #fff9e6; 
+                    border-radius: 8px;
                 }
                 .total-amount { 
-                    font-size: 24px; 
+                    font-size: 28px; 
                     font-weight: bold; 
                     color: #28a745; 
                     margin: 10px 0; 
+                }
+                .no-print { 
+                    text-align: center; 
+                    margin-top: 20px;
+                    padding-top: 20px;
+                    border-top: 1px solid #ddd;
+                }
+                .no-print button {
+                    padding: 10px 20px; 
+                    background: #007bff; 
+                    color: white; 
+                    border: none; 
+                    border-radius: 4px; 
+                    cursor: pointer;
+                    margin: 5px;
+                    font-size: 14px;
+                }
+                .no-print button:hover {
+                    background: #0056b3;
+                }
+                .separator {
+                    border-top: 1px dashed #ccc;
+                    margin: 15px 0;
+                }
+                strong {
+                    color: #333;
                 }
             </style>
         </head>
@@ -992,25 +1103,32 @@ document.addEventListener('DOMContentLoaded', function () {
                     <h2>🚚 N&G EXPRESS 🚚</h2>
                     <div><strong>Pedido:</strong> ${numeroPedido}</div>
                     <div><strong>Data:</strong> ${orcamentoAtual.data}</div>
+                    <div class="separator"></div>
                 </div>
                 
-                <div><strong>Cliente:</strong> ${orcamentoAtual.nome}</div>
-                <div><strong>Telefone:</strong> ${orcamentoAtual.telefone}</div>
+                <div class="section">
+                    <h4>Cliente</h4>
+                    <div><strong>Nome:</strong> ${orcamentoAtual.nome}</div>
+                    <div><strong>Telefone:</strong> ${orcamentoAtual.telefone}</div>
+                </div>
                 
-                <div style="margin: 15px 0;">
-                    <div><strong>COLETA:</strong> ${orcamentoAtual.localColeta}</div>
+                <div class="section">
+                    <h4>COLETA</h4>
+                    <div><strong>Local:</strong> ${orcamentoAtual.localColeta}</div>
                     ${orcamentoAtual.bairroColeta ? `<div><strong>Bairro:</strong> ${orcamentoAtual.bairroColeta}</div>` : ''}
                     <div><strong>Endereço:</strong> ${orcamentoAtual.enderecoColeta}</div>
                 </div>
                 
-                <div style="margin: 15px 0;">
-                    <div><strong>ENTREGA:</strong> ${orcamentoAtual.cidadeDestino}</div>
+                <div class="section">
+                    <h4>ENTREGA</h4>
+                    <div><strong>Cidade:</strong> ${orcamentoAtual.cidadeDestino}</div>
                     ${orcamentoAtual.bairroEntrega ? `<div><strong>Bairro:</strong> ${orcamentoAtual.bairroEntrega}</div>` : ''}
                     <div><strong>Endereço:</strong> ${orcamentoAtual.enderecoEntrega}</div>
                 </div>
                 
-                <div style="margin: 15px 0;">
-                    <div><strong>Encomenda:</strong> ${orcamentoAtual.dimensoes}</div>
+                <div class="section">
+                    <h4>ENCOMENDA</h4>
+                    <div><strong>Dimensões:</strong> ${orcamentoAtual.dimensoes}</div>
                     <div><strong>Peso:</strong> ${orcamentoAtual.peso}kg</div>
                     <div><strong>Descrição:</strong> ${orcamentoAtual.descricao}</div>
                 </div>
@@ -1018,13 +1136,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="total-box">
                     <h3>💰 VALOR TOTAL</h3>
                     <div class="total-amount">${formatarMoeda(orcamentoAtual.valores.total)}</div>
+                    <div>Valor base: ${formatarMoeda(orcamentoAtual.valores.base)}</div>
+                    ${orcamentoAtual.valores.tamanho > 0 ? `<div>Adicional tamanho: ${formatarMoeda(orcamentoAtual.valores.tamanho)}</div>` : ''}
+                    ${orcamentoAtual.valores.peso > 0 ? `<div>Adicional peso: ${formatarMoeda(orcamentoAtual.valores.peso)}</div>` : ''}
+                    ${orcamentoAtual.valores.bairro > 0 ? `<div>Adicional bairro: ${formatarMoeda(orcamentoAtual.valores.bairro)}</div>` : ''}
                 </div>
                 
-                <div class="no-print" style="text-align: center; margin-top: 20px;">
-                    <button onclick="window.print()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                <div class="no-print">
+                    <button onclick="window.print()">
                         🖨️ Imprimir Recibo
                     </button>
-                    <button onclick="window.close()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">
+                    <button onclick="window.close()" style="background: #6c757d;">
                         ✖️ Fechar
                     </button>
                 </div>
@@ -1044,7 +1166,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function confirmarWhatsApp() {
-        if (!orcamentoAtual) {
+        if (!orcamentoAtual || !orcamentoAtual.numeroPedido) {
             mostrarToast('Gere o comprovante primeiro!', 'error');
             return;
         }
@@ -1105,6 +1227,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const bairroEntrega = document.getElementById('bairro-entrega');
         if (bairroColeta) bairroColeta.innerHTML = '<option value="" disabled selected>Selecione o bairro</option>';
         if (bairroEntrega) bairroEntrega.innerHTML = '<option value="" disabled selected>Selecione o bairro</option>';
+
+        // Limpar variáveis globais
+        orcamentoAtual = null;
+        numeroPedidoGerado = null;
 
         // Inicializar sistema
         inicializarSistema();
