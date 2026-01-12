@@ -770,6 +770,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // Exibir APENAS o valor total
         exibirResultadoOrcamentoAPENASValorTotal(totalFinal);
 
+        // OCULTAR BOTÃO CALCULAR após cálculo
+        const btnCalcular = document.getElementById('btn-calcular');
+        if (btnCalcular) {
+            btnCalcular.style.display = 'none';
+        }
+
         // Mostrar flecha de voltar
         toggleBackArrow(true);
         
@@ -1379,6 +1385,14 @@ Confirme este pedido para iniciar a coleta.`;
         
         // Habilitar campos
         habilitarCampos(true);
+        
+        // Mostrar botão calcular
+        const btnCalcular = document.getElementById('btn-calcular');
+        if (btnCalcular) {
+            btnCalcular.style.display = 'block';
+            btnCalcular.innerHTML = '<i class="bi bi-calculator"></i> Calcular Orçamento';
+            btnCalcular.onclick = calcularOrcamento;
+        }
 
         inicializarSistema();
     }
@@ -1391,6 +1405,61 @@ Confirme este pedido para iniciar a coleta.`;
         
         // Esconder flecha de voltar ao fechar modal
         toggleBackArrow(false);
+        
+        // Limpar formulário ao fechar modal
+        limparFormulario();
+    }
+
+    // NOVA FUNÇÃO: Limpar formulário completamente
+    function limparFormulario() {
+        console.log('Limpando formulário...');
+        
+        // Limpar todos os campos
+        const form = document.getElementById('form-orcamento');
+        if (form) {
+            form.reset();
+        }
+        
+        // Limpar selects especiais
+        const bairroColeta = document.getElementById('bairro-coleta');
+        const bairroEntrega = document.getElementById('bairro-entrega');
+        if (bairroColeta) bairroColeta.innerHTML = '<option value="" disabled selected>Selecione o bairro</option>';
+        if (bairroEntrega) bairroEntrega.innerHTML = '<option value="" disabled selected>Selecione o bairro</option>';
+        
+        // Ocultar containers
+        const bairroColetaContainer = document.getElementById('bairro-coleta-container');
+        const bairroEntregaContainer = document.getElementById('bairro-entrega-container');
+        const enderecoDetalhadoContainer = document.getElementById('endereco-detalhado-container');
+        
+        if (bairroColetaContainer) bairroColetaContainer.style.display = 'none';
+        if (bairroEntregaContainer) bairroEntregaContainer.style.display = 'none';
+        if (enderecoDetalhadoContainer) enderecoDetalhadoContainer.style.display = 'none';
+        
+        // Limpar resultado
+        const orcamentoResultado = document.getElementById('orcamento-resultado');
+        if (orcamentoResultado) {
+            orcamentoResultado.style.display = 'none';
+            orcamentoResultado.innerHTML = '';
+        }
+        
+        // Esconder botão confirmar
+        const btnConfirmar = document.getElementById('btn-confirmar');
+        if (btnConfirmar) btnConfirmar.style.display = 'none';
+        
+        // Mostrar botão calcular
+        const btnCalcular = document.getElementById('btn-calcular');
+        if (btnCalcular) {
+            btnCalcular.style.display = 'block';
+            btnCalcular.innerHTML = '<i class="bi bi-calculator"></i> Calcular Orçamento';
+            btnCalcular.onclick = calcularOrcamento;
+        }
+        
+        // Habilitar campos
+        habilitarCampos(true);
+        
+        // Resetar variáveis
+        orcamentoAtual = null;
+        numeroPedidoGerado = null;
     }
 
     // Event Listeners
@@ -1430,6 +1499,21 @@ Confirme este pedido para iniciar a coleta.`;
     if (btnWhatsapp) {
         btnWhatsapp.addEventListener('click', confirmarWhatsApp);
     }
+
+    // Detectar F5 ou refresh da página
+    window.addEventListener('beforeunload', function() {
+        console.log('Página será recarregada - limpando dados do orçamento');
+        orcamentoAtual = null;
+        numeroPedidoGerado = null;
+    });
+
+    // Detectar F5 (keydown F5)
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+            console.log('F5 pressionado - limpando dados do orçamento');
+            limparFormulario();
+        }
+    });
 
     // Inicializar o sistema
     setTimeout(() => {
