@@ -101,8 +101,10 @@
     font-size: 0.95rem;
 }
 
+/* REGRA CORRIGIDA - INCLUINDO type="email" */
 .form-group input[type="text"],
 .form-group input[type="tel"],
+.form-group input[type="email"],
 .form-group input[type="number"],
 .form-group select,
 .form-group textarea {
@@ -116,8 +118,10 @@
     color: #333;
 }
 
+/* REGRA CORRIGIDA - INCLUINDO type="email" no focus */
 .form-group input[type="text"]:focus,
 .form-group input[type="tel"]:focus,
+.form-group input[type="email"]:focus,
 .form-group input[type="number"]:focus,
 .form-group select:focus,
 .form-group textarea:focus {
@@ -931,4 +935,86 @@ select option[data-tipo="especial"] {
 .comprovante-preview .section:contains("adicional"),
 .comprovante-preview .section:contains("bairro especial") {
     display: none !important;
+}
+
+/* ESTILOS ESPECÍFICOS PARA GARANTIR UNIFORMIDADE DO CAMPO DE EMAIL */
+#cliente-email {
+    font-family: inherit;
+    line-height: inherit;
+    box-sizing: border-box;
+}
+
+/* CSS DE EMERGÊNCIA PARA GARANTIR QUE O CAMPO DE EMAIL TENHA EXATAMENTE O MESMO ESTILO */
+#cliente-email {
+    width: 100% !important;
+    padding: 14px 16px !important;
+    border: 2px solid #e0e0e0 !important;
+    border-radius: 10px !important;
+    font-size: 1rem !important;
+    background: white !important;
+    color: #333 !important;
+    font-family: inherit !important;
+    box-sizing: border-box !important;
+    transition: all 0.3s ease !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+}
+
+#cliente-email:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15) !important;
+    outline: none !important;
+    transform: translateY(-1px) !important;
+}
+
+#cliente-email::placeholder {
+    color: #999 !important;
+    opacity: 1 !important;
+}
+
+/* Garantir que todos os campos de entrada tenham a mesma aparência */
+#cliente-nome,
+#cliente-telefone,
+#cliente-email {
+    width: 100% !important;
+    padding: 14px 16px !important;
+    border: 2px solid #e0e0e0 !important;
+    border-radius: 10px !important;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+    color: #333 !important;
+    background-color: #fff !important;
+    background-clip: padding-box !important;
+    font-family: inherit !important;
+    box-sizing: border-box !important;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+}
+
+#cliente-nome:focus,
+#cliente-telefone:focus,
+#cliente-email:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15) !important;
+    outline: 0 !important;
+}
+
+/* Estilo uniforme para todos os placeholders */
+#cliente-nome::placeholder,
+#cliente-telefone::placeholder,
+#cliente-email::placeholder {
+    color: #999 !important;
+    font-style: normal !important;
+}
+
+/* Animações */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

@@ -1460,7 +1460,7 @@ Descrição: ${orcamentoAtual.descricao || 'Não informada'}
 
 Por favor, confirme este pedido para iniciar a coleta.
 
-_*Este é um pedido gerado automaticamente pelo sistema N&G EXPRESS*_`;
+*Este é um pedido gerado automaticamente pelo sistema N&G EXPRESS*`;
 
     const mensagemCodificada = encodeURIComponent(mensagem);
     const telefoneWhatsApp = '5547999123260';
