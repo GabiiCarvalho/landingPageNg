@@ -1,4 +1,4 @@
-// Sistema de orçamento - VERSÃO CORRIGIDA (APENAS VALOR TOTAL)
+// Sistema de orçamento - VERSÃO COM FLECHA DE VOLTAR
 document.addEventListener('DOMContentLoaded', function () {
     console.log('Script de orçamento carregado com sucesso!');
 
@@ -66,6 +66,94 @@ document.addEventListener('DOMContentLoaded', function () {
     // Variáveis globais
     let orcamentoAtual = null;
     let numeroPedidoGerado = null;
+
+    // FUNÇÃO PARA FLECHA DE VOLTAR
+    function toggleBackArrow(show) {
+        const backArrow = document.getElementById('back-arrow');
+        if (backArrow) {
+            if (show) {
+                backArrow.classList.add('show');
+                backArrow.onclick = resetarOrcamento;
+            } else {
+                backArrow.classList.remove('show');
+                backArrow.onclick = null;
+            }
+        }
+    }
+
+    // FUNÇÃO PARA RESETAR ORÇAMENTO
+    function resetarOrcamento() {
+        console.log('Resetando orçamento...');
+        
+        // Limpar resultado do orçamento
+        const orcamentoResultado = document.getElementById('orcamento-resultado');
+        if (orcamentoResultado) {
+            orcamentoResultado.style.display = 'none';
+            orcamentoResultado.innerHTML = '';
+        }
+        
+        // Esconder botão de confirmar
+        const btnConfirmar = document.getElementById('btn-confirmar');
+        if (btnConfirmar) {
+            btnConfirmar.style.display = 'none';
+        }
+        
+        // Mostrar botão de calcular
+        const btnCalcular = document.getElementById('btn-calcular');
+        if (btnCalcular) {
+            btnCalcular.style.display = 'block';
+            btnCalcular.innerHTML = '<i class="bi bi-calculator"></i> Calcular Orçamento';
+            btnCalcular.onclick = calcularOrcamento;
+        }
+        
+        // Esconder flecha de voltar
+        toggleBackArrow(false);
+        
+        // Habilitar campos para edição
+        habilitarCampos(true);
+        
+        // Resetar variáveis
+        orcamentoAtual = null;
+        numeroPedidoGerado = null;
+        
+        // Scroll para o botão de calcular
+        if (btnCalcular) {
+            btnCalcular.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }
+        
+        mostrarToast('Orçamento resetado. Você pode editar os dados e recalcular.', 'info');
+    }
+
+    // FUNÇÃO PARA HABILITAR/DESABILITAR CAMPOS
+    function habilitarCampos(habilitar) {
+        const campos = [
+            'cliente-nome',
+            'cliente-telefone',
+            'local-coleta',
+            'bairro-coleta',
+            'endereco-detalhado',
+            'cidade-destino',
+            'bairro-entrega',
+            'entrega-endereco',
+            'comprimento',
+            'largura',
+            'altura',
+            'peso',
+            'descricao'
+        ];
+        
+        campos.forEach(campoId => {
+            const campo = document.getElementById(campoId);
+            if (campo) {
+                campo.disabled = !habilitar;
+                campo.style.backgroundColor = habilitar ? '#fff' : '#f8f9fa';
+                campo.style.cursor = habilitar ? 'text' : 'not-allowed';
+            }
+        });
+    }
 
     // Função para inicializar todos os componentes
     function inicializarSistema() {
@@ -682,11 +770,17 @@ document.addEventListener('DOMContentLoaded', function () {
         // Exibir APENAS o valor total
         exibirResultadoOrcamentoAPENASValorTotal(totalFinal);
 
+        // Mostrar flecha de voltar
+        toggleBackArrow(true);
+        
+        // Desabilitar campos após cálculo
+        habilitarCampos(false);
+
         // Mostrar toast sem mencionar adicionais
         mostrarToast('Orçamento calculado com sucesso!', 'success');
     }
 
-    // NOVA FUNÇÃO: Exibir APENAS o valor total
+    // NOVA FUNÇÃO: Exibir APENAS o valor total (VERSÃO ATUALIZADA)
     function exibirResultadoOrcamentoAPENASValorTotal(totalFinal) {
         console.log('Exibindo APENAS valor total:', totalFinal);
 
@@ -707,7 +801,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 border: 3px solid #28a745;
                 box-shadow: 0 10px 30px rgba(40, 167, 69, 0.15);
                 animation: fadeIn 0.5s ease-out;
+                position: relative;
             ">
+                <!-- Botão de editar no canto superior direito -->
+                <div style="
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                    cursor: pointer;
+                    color: #6c757d;
+                    font-size: 14px;
+                    background: #f8f9fa;
+                    border-radius: 50%;
+                    width: 30px;
+                    height: 30px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.3s;
+                " onclick="resetarOrcamento()" title="Editar dados">
+                    <i class="bi bi-pencil"></i>
+                </div>
+                
                 <div style="margin-bottom: 20px;">
                     <i class="bi bi-check-circle-fill" style="font-size: 48px; color: #28a745;"></i>
                 </div>
@@ -752,6 +867,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 ">
                     <i class="bi bi-info-circle"></i> Valor final para o cliente
                 </div>
+                
+                <!-- Botão para editar dados -->
+                <button onclick="resetarOrcamento()" style="
+                    margin-top: 20px;
+                    padding: 10px 20px;
+                    background: #6c757d;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    margin-left: auto;
+                    margin-right: auto;
+                    transition: background 0.3s;
+                ">
+                    <i class="bi bi-pencil-square"></i> Editar Dados
+                </button>
             </div>
             
             <style>
@@ -764,6 +900,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         opacity: 1;
                         transform: translateY(0);
                     }
+                }
+                
+                button:hover {
+                    background: #5a6268;
                 }
             </style>
         `;
@@ -1234,6 +1374,12 @@ Confirme este pedido para iniciar a coleta.`;
         orcamentoAtual = null;
         numeroPedidoGerado = null;
 
+        // Esconder flecha de voltar ao abrir modal
+        toggleBackArrow(false);
+        
+        // Habilitar campos
+        habilitarCampos(true);
+
         inicializarSistema();
     }
 
@@ -1242,6 +1388,9 @@ Confirme este pedido para iniciar a coleta.`;
             modal.style.display = 'none';
         });
         document.body.style.overflow = 'auto';
+        
+        // Esconder flecha de voltar ao fechar modal
+        toggleBackArrow(false);
     }
 
     // Event Listeners
