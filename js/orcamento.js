@@ -1,10 +1,10 @@
-// Sistema de orçamento - VERSÃO COM FLECHA DE VOLTAR
+// Sistema de orçamento - VERSÃO ATUALIZADA
 document.addEventListener('DOMContentLoaded', function () {
     console.log('Script de orçamento carregado com sucesso!');
 
     // Tabela de preços baseada nas imagens - ATUALIZADA
     const TABELA_PRECOS = {
-        'balneario-camboriu': { min: 20, max: 30, descricao: 'Balneário Camboriú' }, // CORREÇÃO: 15 para 20
+        'balneario-camboriu': { min: 20, max: 30, descricao: 'Balneário Camboriú' },
         'camboriu': { min: 20, max: 30, descricao: 'Camboriú' },
         'itapema': { min: 50, max: 50, descricao: 'Itapema' },
         'porto-belo': { min: 70, max: 70, descricao: 'Porto Belo' },
@@ -67,7 +67,6 @@ document.addEventListener('DOMContentLoaded', function () {
     let orcamentoAtual = null;
     let numeroPedidoGerado = null;
 
-
     // FUNÇÃO PARA RESETAR ORÇAMENTO
     function resetarOrcamento() {
         console.log('Resetando orçamento...');
@@ -116,6 +115,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const campos = [
             'cliente-nome',
             'cliente-telefone',
+            'cliente-email',
             'local-coleta',
             'bairro-coleta',
             'endereco-detalhado',
@@ -727,6 +727,7 @@ document.addEventListener('DOMContentLoaded', function () {
         orcamentoAtual = {
             nome: document.getElementById('cliente-nome').value,
             telefone: document.getElementById('cliente-telefone').value,
+            email: document.getElementById('cliente-email').value || '', // NOVO CAMPO: email
             localColeta: localColetaNome,
             localColetaId: localColetaId,
             enderecoColeta: document.getElementById('endereco-detalhado').value,
@@ -759,9 +760,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (btnCalcular) {
             btnCalcular.style.display = 'none';
         }
-
-        // Mostrar flecha de voltar
-        toggleBackArrow(true);
 
         // Desabilitar campos após cálculo
         habilitarCampos(false);
@@ -922,6 +920,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const campos = [
             'cliente-nome',
             'cliente-telefone',
+            'cliente-email', // NOVO CAMPO: email
             'local-coleta',
             'endereco-detalhado',
             'cidade-destino',
@@ -948,6 +947,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 return false;
             } else {
                 campo.style.borderColor = '';
+            }
+        }
+
+        // Validar email (opcional, mas se preenchido, deve ser válido)
+        const emailInput = document.getElementById('cliente-email');
+        if (emailInput && emailInput.value.trim()) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(emailInput.value.trim())) {
+                mostrarToast('Por favor, insira um email válido!', 'error');
+                emailInput.style.borderColor = '#dc3545';
+                emailInput.focus();
+                return false;
             }
         }
 
@@ -1137,6 +1148,7 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('Dados do comprovante:', {
             numeroPedido: orcamentoAtual.numeroPedido,
             nome: orcamentoAtual.nome,
+            email: orcamentoAtual.email,
             valor: orcamentoAtual.valores?.total
         });
     }
@@ -1161,6 +1173,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const pedidoData = document.getElementById('pedido-data');
         const comprovanteNome = document.getElementById('comprovante-nome');
         const comprovanteTelefone = document.getElementById('comprovante-telefone');
+        const comprovanteEmail = document.getElementById('comprovante-email'); // NOVO CAMPO: email
         const comprovanteCidade = document.getElementById('comprovante-cidade');
         const comprovanteEntrega = document.getElementById('comprovante-entrega');
         const comprovanteColetaCidade = document.getElementById('comprovante-coleta-cidade');
@@ -1174,6 +1187,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (pedidoData) pedidoData.textContent = orcamentoAtual.data;
         if (comprovanteNome) comprovanteNome.textContent = orcamentoAtual.nome || 'Não informado';
         if (comprovanteTelefone) comprovanteTelefone.textContent = orcamentoAtual.telefone || 'Não informado';
+        if (comprovanteEmail) comprovanteEmail.textContent = orcamentoAtual.email || 'Não informado'; // NOVO CAMPO: email
         if (comprovanteCidade) comprovanteCidade.textContent = orcamentoAtual.cidadeDestino || 'Não informado';
         if (comprovanteEntrega) comprovanteEntrega.textContent = orcamentoAtual.enderecoEntrega || 'Não informado';
         if (comprovanteColetaCidade) comprovanteColetaCidade.textContent = orcamentoAtual.localColeta || 'Não informado';
@@ -1325,6 +1339,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <h4>Cliente</h4>
             <div><strong>Nome:</strong> ${orcamentoAtual.nome || 'Não informado'}</div>
             <div><strong>Telefone:</strong> ${orcamentoAtual.telefone || 'Não informado'}</div>
+            <div><strong>Email:</strong> ${orcamentoAtual.email || 'Não informado'}</div>
         </div>
         
         <div class="section">
@@ -1427,7 +1442,7 @@ function confirmarWhatsApp() {
 *👤 CLIENTE:*
 Nome: ${orcamentoAtual.nome}
 Telefone: ${orcamentoAtual.telefone}
-
+${orcamentoAtual.email ? `Email: ${orcamentoAtual.email}\n` : ''}
 *📍 COLETA:*
 Local: ${orcamentoAtual.localColeta}
 ${orcamentoAtual.bairroColeta ? `Bairro: ${orcamentoAtual.bairroColeta}\n` : ''}Endereço: ${orcamentoAtual.enderecoColeta}
@@ -1486,9 +1501,6 @@ _*Este é um pedido gerado automaticamente pelo sistema N&G EXPRESS*_`;
         orcamentoAtual = null;
         numeroPedidoGerado = null;
 
-        // Esconder flecha de voltar ao abrir modal
-        toggleBackArrow(false);
-
         // Habilitar campos
         habilitarCampos(true);
 
@@ -1508,12 +1520,6 @@ _*Este é um pedido gerado automaticamente pelo sistema N&G EXPRESS*_`;
             modal.style.display = 'none';
         });
         document.body.style.overflow = 'auto';
-
-        // Esconder flecha de voltar ao fechar modal
-        toggleBackArrow(false);
-
-        // NÃO limpar formulário ao fechar modal
-        // Isso corrige o problema do comprovante pedir novamente
     }
 
     // NOVA FUNÇÃO: Limpar formulário completamente
