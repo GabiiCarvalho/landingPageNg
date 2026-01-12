@@ -67,19 +67,6 @@ document.addEventListener('DOMContentLoaded', function () {
     let orcamentoAtual = null;
     let numeroPedidoGerado = null;
 
-    // FUNÇÃO PARA FLECHA DE VOLTAR
-    function toggleBackArrow(show) {
-        const backArrow = document.getElementById('back-arrow');
-        if (backArrow) {
-            if (show) {
-                backArrow.classList.add('show');
-                backArrow.onclick = resetarOrcamento;
-            } else {
-                backArrow.classList.remove('show');
-                backArrow.onclick = null;
-            }
-        }
-    }
 
     // FUNÇÃO PARA RESETAR ORÇAMENTO
     function resetarOrcamento() {
@@ -105,9 +92,6 @@ document.addEventListener('DOMContentLoaded', function () {
             btnCalcular.innerHTML = '<i class="bi bi-calculator"></i> Calcular Orçamento';
             btnCalcular.onclick = calcularOrcamento;
         }
-
-        // Esconder flecha de voltar
-        toggleBackArrow(false);
 
         // Habilitar campos para edição
         habilitarCampos(true);
@@ -1106,6 +1090,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function gerarComprovante() {
+        console.log('Gerando comprovante...');
+        
         if (!orcamentoAtual) {
             mostrarToast('Calcule o orçamento primeiro!', 'error');
             return;
@@ -1118,50 +1104,122 @@ document.addEventListener('DOMContentLoaded', function () {
         // Preencher o modal do comprovante
         preencherComprovanteModal();
 
+        // Fechar o modal do orçamento
+        const orcamentoModal = document.getElementById('orcamento-modal');
+        if (orcamentoModal) {
+            orcamentoModal.style.display = 'none';
+            console.log('Modal de orçamento fechado');
+        }
+
         // Mostrar o modal do comprovante
         const comprovanteModal = document.getElementById('comprovante-modal');
         if (comprovanteModal) {
             comprovanteModal.style.display = 'block';
-        }
-
-        // Fechar o modal do orçamento (opcional)
-        const orcamentoModal = document.getElementById('orcamento-modal');
-        if (orcamentoModal) {
-            orcamentoModal.style.display = 'none';
+            document.body.style.overflow = 'hidden';
+            console.log('Modal do comprovante aberto');
+            
+            // Focar no modal do comprovante
+            setTimeout(() => {
+                comprovanteModal.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }, 100);
+        } else {
+            console.error('Modal do comprovante não encontrado!');
+            mostrarToast('Erro: modal do comprovante não encontrado!', 'error');
+            return;
         }
 
         mostrarToast('Comprovante gerado! Imprima e confirme no WhatsApp.', 'success');
+        
+        // Verificar se os dados foram preenchidos
+        console.log('Dados do comprovante:', {
+            numeroPedido: orcamentoAtual.numeroPedido,
+            nome: orcamentoAtual.nome,
+            valor: orcamentoAtual.valores?.total
+        });
+    }
+
+    // FUNÇÃO CORRIGIDA: Preencher modal do comprovante
+    function preencherComprovanteModal() {
+        console.log('Preenchendo modal do comprovante...');
+        
+        if (!orcamentoAtual) {
+            console.error('Nenhum orçamento atual!');
+            return;
+        }
+
+        // Garantir que temos um número de pedido
+        if (!orcamentoAtual.numeroPedido) {
+            orcamentoAtual.numeroPedido = 'NG' + Date.now().toString().slice(-6);
+            numeroPedidoGerado = orcamentoAtual.numeroPedido;
+        }
+
+        // Preencher os campos do modal
+        const pedidoNumero = document.getElementById('pedido-numero');
+        const pedidoData = document.getElementById('pedido-data');
+        const comprovanteNome = document.getElementById('comprovante-nome');
+        const comprovanteTelefone = document.getElementById('comprovante-telefone');
+        const comprovanteCidade = document.getElementById('comprovante-cidade');
+        const comprovanteEntrega = document.getElementById('comprovante-entrega');
+        const comprovanteColetaCidade = document.getElementById('comprovante-coleta-cidade');
+        const comprovanteColeta = document.getElementById('comprovante-coleta');
+        const comprovanteDimensoes = document.getElementById('comprovante-dimensoes');
+        const comprovantePeso = document.getElementById('comprovante-peso');
+        const comprovanteDescricao = document.getElementById('comprovante-descricao');
+        const comprovanteValor = document.getElementById('comprovante-valor');
+
+        if (pedidoNumero) pedidoNumero.textContent = orcamentoAtual.numeroPedido;
+        if (pedidoData) pedidoData.textContent = orcamentoAtual.data;
+        if (comprovanteNome) comprovanteNome.textContent = orcamentoAtual.nome || 'Não informado';
+        if (comprovanteTelefone) comprovanteTelefone.textContent = orcamentoAtual.telefone || 'Não informado';
+        if (comprovanteCidade) comprovanteCidade.textContent = orcamentoAtual.cidadeDestino || 'Não informado';
+        if (comprovanteEntrega) comprovanteEntrega.textContent = orcamentoAtual.enderecoEntrega || 'Não informado';
+        if (comprovanteColetaCidade) comprovanteColetaCidade.textContent = orcamentoAtual.localColeta || 'Não informado';
+        if (comprovanteColeta) comprovanteColeta.textContent = orcamentoAtual.enderecoColeta || 'Não informado';
+        if (comprovanteDimensoes) comprovanteDimensoes.textContent = orcamentoAtual.dimensoes || 'Não informado';
+        if (comprovantePeso) comprovantePeso.textContent = (orcamentoAtual.peso || '0') + 'kg';
+        if (comprovanteDescricao) comprovanteDescricao.textContent = orcamentoAtual.descricao || 'Não informada';
+        if (comprovanteValor) comprovanteValor.textContent = formatarMoeda(orcamentoAtual.valores?.total || 0);
+
+        console.log('Modal do comprovante preenchido com sucesso!');
     }
 
     function imprimirRecibo() {
-        // Verificar se temos um orçamento válido
+        console.log('Tentando imprimir recibo...');
+        
         if (!orcamentoAtual) {
             mostrarToast('Calcule o orçamento primeiro!', 'error');
             return;
         }
 
-        // Se não tem número de pedido, verificar se temos dados suficientes
-        if (!orcamentoAtual.numeroPedido && !numeroPedidoGerado) {
-            // Se não tem número mas tem dados do orçamento, gerar um número
-            if (orcamentoAtual.nome && orcamentoAtual.cidadeDestino) {
-                numeroPedidoGerado = 'NG' + Date.now().toString().slice(-6);
-                orcamentoAtual.numeroPedido = numeroPedidoGerado;
-                preencherComprovanteModal(); // Atualizar o comprovante
-            } else {
-                mostrarToast('Gere o comprovante primeiro!', 'error');
-                return;
-            }
-        }
-
-        const numeroPedido = orcamentoAtual.numeroPedido || numeroPedidoGerado;
-
-        if (!numeroPedido) {
-            mostrarToast('Erro: número de pedido não encontrado!', 'error');
+        // Verificar se temos dados mínimos
+        if (!orcamentoAtual.nome || !orcamentoAtual.cidadeDestino || !orcamentoAtual.valores || !orcamentoAtual.valores.total) {
+            mostrarToast('Dados incompletos para impressão!', 'error');
             return;
         }
 
-        // Resto do código de impressão...
-        const printWindow = window.open('', '_blank', 'width=600,height=800');
+        // Se não tem número de pedido, gerar um
+        if (!orcamentoAtual.numeroPedido) {
+            orcamentoAtual.numeroPedido = 'NG' + Date.now().toString().slice(-6);
+            numeroPedidoGerado = orcamentoAtual.numeroPedido;
+            console.log('Número de pedido gerado:', orcamentoAtual.numeroPedido);
+        }
+
+        const numeroPedido = orcamentoAtual.numeroPedido;
+        const dataAtual = orcamentoAtual.data || new Date().toLocaleString('pt-BR');
+
+        console.log('Imprimindo recibo para pedido:', numeroPedido);
+
+        // Criar janela de impressão
+        const printWindow = window.open('', '_blank', 'width=600,height=800,scrollbars=yes');
+        
+        if (!printWindow) {
+            mostrarToast('Permita popups para imprimir o recibo!', 'error');
+            return;
+        }
+
         printWindow.document.write(`
 <!DOCTYPE html>
 <html>
@@ -1259,35 +1317,35 @@ document.addEventListener('DOMContentLoaded', function () {
         <div class="header">
             <h2>🚚 N&G EXPRESS 🚚</h2>
             <div><strong>Pedido:</strong> ${numeroPedido}</div>
-            <div><strong>Data:</strong> ${orcamentoAtual.data}</div>
+            <div><strong>Data:</strong> ${dataAtual}</div>
             <div class="separator"></div>
         </div>
         
         <div class="section">
             <h4>Cliente</h4>
-            <div><strong>Nome:</strong> ${orcamentoAtual.nome}</div>
-            <div><strong>Telefone:</strong> ${orcamentoAtual.telefone}</div>
+            <div><strong>Nome:</strong> ${orcamentoAtual.nome || 'Não informado'}</div>
+            <div><strong>Telefone:</strong> ${orcamentoAtual.telefone || 'Não informado'}</div>
         </div>
         
         <div class="section">
             <h4>COLETA</h4>
-            <div><strong>Local:</strong> ${orcamentoAtual.localColeta}</div>
+            <div><strong>Local:</strong> ${orcamentoAtual.localColeta || 'Não informado'}</div>
             ${orcamentoAtual.bairroColeta ? `<div><strong>Bairro:</strong> ${orcamentoAtual.bairroColeta}</div>` : ''}
-            <div><strong>Endereço:</strong> ${orcamentoAtual.enderecoColeta}</div>
+            <div><strong>Endereço:</strong> ${orcamentoAtual.enderecoColeta || 'Não informado'}</div>
         </div>
         
         <div class="section">
             <h4>ENTREGA</h4>
-            <div><strong>Cidade:</strong> ${orcamentoAtual.cidadeDestino}</div>
+            <div><strong>Cidade:</strong> ${orcamentoAtual.cidadeDestino || 'Não informado'}</div>
             ${orcamentoAtual.bairroEntrega ? `<div><strong>Bairro:</strong> ${orcamentoAtual.bairroEntrega}</div>` : ''}
-            <div><strong>Endereço:</strong> ${orcamentoAtual.enderecoEntrega}</div>
+            <div><strong>Endereço:</strong> ${orcamentoAtual.enderecoEntrega || 'Não informado'}</div>
         </div>
         
         <div class="section">
             <h4>ENCOMENDA</h4>
-            <div><strong>Dimensões:</strong> ${orcamentoAtual.dimensoes}</div>
-            <div><strong>Peso:</strong> ${orcamentoAtual.peso}kg</div>
-            <div><strong>Descrição:</strong> ${orcamentoAtual.descricao}</div>
+            <div><strong>Dimensões:</strong> ${orcamentoAtual.dimensoes || 'Não informado'}</div>
+            <div><strong>Peso:</strong> ${orcamentoAtual.peso || '0'}kg</div>
+            <div><strong>Descrição:</strong> ${orcamentoAtual.descricao || 'Não informada'}</div>
         </div>
         
         <div class="total-box">
@@ -1318,71 +1376,86 @@ document.addEventListener('DOMContentLoaded', function () {
 </body>
 </html>
     `);
-        printWindow.document.close();
+    
+    printWindow.document.close();
+    
+    // Garantir que a janela foi carregada
+    printWindow.onload = function() {
+        setTimeout(function() {
+            try {
+                printWindow.print();
+            } catch (error) {
+                console.error('Erro ao imprimir:', error);
+                mostrarToast('Erro ao abrir impressão. Tente novamente.', 'error');
+            }
+        }, 500);
+    };
+    
+    mostrarToast('Recibo gerado com sucesso!', 'success');
+}
 
-        mostrarToast('Recibo aberto para impressão!', 'success');
+function confirmarWhatsApp() {
+    console.log('Confirmando via WhatsApp...');
+    
+    if (!orcamentoAtual) {
+        mostrarToast('Calcule o orçamento primeiro!', 'error');
+        return;
     }
 
-    function confirmarWhatsApp() {
-        // Verificar se temos um orçamento válido
-        if (!orcamentoAtual) {
-            mostrarToast('Calcule o orçamento primeiro!', 'error');
-            return;
-        }
+    // Verificar se temos dados mínimos
+    if (!orcamentoAtual.nome || !orcamentoAtual.telefone || !orcamentoAtual.cidadeDestino || !orcamentoAtual.valores || !orcamentoAtual.valores.total) {
+        mostrarToast('Dados incompletos para WhatsApp!', 'error');
+        return;
+    }
 
-        // Se não tem número de pedido, verificar se temos dados suficientes
-        if (!orcamentoAtual.numeroPedido && !numeroPedidoGerado) {
-            // Se não tem número mas tem dados do orçamento, gerar um número
-            if (orcamentoAtual.nome && orcamentoAtual.cidadeDestino) {
-                numeroPedidoGerado = 'NG' + Date.now().toString().slice(-6);
-                orcamentoAtual.numeroPedido = numeroPedidoGerado;
-                preencherComprovanteModal(); // Atualizar o comprovante
-            } else {
-                mostrarToast('Gere o comprovante primeiro!', 'error');
-                return;
-            }
-        }
+    // Se não tem número de pedido, gerar um
+    if (!orcamentoAtual.numeroPedido) {
+        orcamentoAtual.numeroPedido = 'NG' + Date.now().toString().slice(-6);
+        numeroPedidoGerado = orcamentoAtual.numeroPedido;
+        console.log('Número de pedido gerado:', orcamentoAtual.numeroPedido);
+    }
 
-        const numeroPedido = orcamentoAtual.numeroPedido || numeroPedidoGerado;
+    const numeroPedido = orcamentoAtual.numeroPedido;
+    const dataAtual = orcamentoAtual.data || new Date().toLocaleString('pt-BR');
 
-        if (!numeroPedido) {
-            mostrarToast('Erro: número de pedido não encontrado!', 'error');
-            return;
-        }
+    // Criar mensagem do WhatsApp
+    const mensagem = `*NOVO PEDIDO - N&G EXPRESS*
 
-        const mensagem = `*NOVO PEDIDO - N&G EXPRESS*
+*📋 PEDIDO:* ${numeroPedido}
+*📅 DATA:* ${dataAtual}
 
-*Pedido:* ${numeroPedido}
-*Data:* ${orcamentoAtual.data}
-
-*Cliente:*
+*👤 CLIENTE:*
 Nome: ${orcamentoAtual.nome}
 Telefone: ${orcamentoAtual.telefone}
 
-*COLETA:*
+*📍 COLETA:*
 Local: ${orcamentoAtual.localColeta}
 ${orcamentoAtual.bairroColeta ? `Bairro: ${orcamentoAtual.bairroColeta}\n` : ''}Endereço: ${orcamentoAtual.enderecoColeta}
 
-*ENTREGA:*
+*🏠 ENTREGA:*
 Cidade: ${orcamentoAtual.cidadeDestino}
 ${orcamentoAtual.bairroEntrega ? `Bairro: ${orcamentoAtual.bairroEntrega}\n` : ''}Endereço: ${orcamentoAtual.enderecoEntrega}
 
-*ENCOMENDA:*
+*📦 ENCOMENDA:*
 Dimensões: ${orcamentoAtual.dimensoes}
 Peso: ${orcamentoAtual.peso}kg
-Descrição: ${orcamentoAtual.descricao}
+Descrição: ${orcamentoAtual.descricao || 'Não informada'}
 
-*VALOR TOTAL: ${formatarMoeda(orcamentoAtual.valores.total)}*
+*💰 VALOR TOTAL: ${formatarMoeda(orcamentoAtual.valores.total)}*
 
-Confirme este pedido para iniciar a coleta.`;
+Por favor, confirme este pedido para iniciar a coleta.
 
-        const mensagemCodificada = encodeURIComponent(mensagem);
-        const telefoneWhatsApp = '5547999123260';
-        const whatsappUrl = `https://wa.me/${telefoneWhatsApp}?text=${mensagemCodificada}`;
+_*Este é um pedido gerado automaticamente pelo sistema N&G EXPRESS*_`;
 
-        window.open(whatsappUrl, '_blank');
-        mostrarToast('Abrindo WhatsApp para confirmação...', 'success');
-    }
+    const mensagemCodificada = encodeURIComponent(mensagem);
+    const telefoneWhatsApp = '5547999123260';
+    const whatsappUrl = `https://wa.me/${telefoneWhatsApp}?text=${mensagemCodificada}`;
+
+    // Abrir WhatsApp em nova aba
+    window.open(whatsappUrl, '_blank');
+    
+    mostrarToast('Abrindo WhatsApp para confirmação...', 'success');
+}
 
     // Funções principais
     function abrirModalOrcamento() {
