@@ -1116,7 +1116,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         preencherComprovanteModal();
 
-        fecharModal();
+        // CORREÇÃO: Não fechar o modal ao gerar comprovante
         const comprovanteModal = document.getElementById('comprovante-modal');
         if (comprovanteModal) {
             comprovanteModal.style.display = 'block';
@@ -1406,8 +1406,8 @@ Confirme este pedido para iniciar a coleta.`;
         // Esconder flecha de voltar ao fechar modal
         toggleBackArrow(false);
         
-        // Limpar formulário ao fechar modal
-        limparFormulario();
+        // NÃO limpar formulário ao fechar modal
+        // Isso corrige o problema do comprovante pedir novamente
     }
 
     // NOVA FUNÇÃO: Limpar formulário completamente
