@@ -1436,27 +1436,27 @@ function confirmarWhatsApp() {
     // Criar mensagem do WhatsApp
     const mensagem = `*NOVO PEDIDO - N&G EXPRESS*
 
-*📋 PEDIDO:* ${numeroPedido}
-*📅 DATA:* ${dataAtual}
+* PEDIDO:* ${numeroPedido}
+* DATA:* ${dataAtual}
 
-*👤 CLIENTE:*
+* CLIENTE:*
 Nome: ${orcamentoAtual.nome}
 Telefone: ${orcamentoAtual.telefone}
 ${orcamentoAtual.email ? `Email: ${orcamentoAtual.email}\n` : ''}
-*📍 COLETA:*
+* COLETA:*
 Local: ${orcamentoAtual.localColeta}
 ${orcamentoAtual.bairroColeta ? `Bairro: ${orcamentoAtual.bairroColeta}\n` : ''}Endereço: ${orcamentoAtual.enderecoColeta}
 
-*🏠 ENTREGA:*
+* ENTREGA:*
 Cidade: ${orcamentoAtual.cidadeDestino}
 ${orcamentoAtual.bairroEntrega ? `Bairro: ${orcamentoAtual.bairroEntrega}\n` : ''}Endereço: ${orcamentoAtual.enderecoEntrega}
 
-*📦 ENCOMENDA:*
+* ENCOMENDA:*
 Dimensões: ${orcamentoAtual.dimensoes}
 Peso: ${orcamentoAtual.peso}kg
 Descrição: ${orcamentoAtual.descricao || 'Não informada'}
 
-*💰 VALOR TOTAL: ${formatarMoeda(orcamentoAtual.valores.total)}*
+* VALOR TOTAL: ${formatarMoeda(orcamentoAtual.valores.total)}*
 
 Por favor, confirme este pedido para iniciar a coleta.
 
