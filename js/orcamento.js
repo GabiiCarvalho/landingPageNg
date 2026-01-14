@@ -1,4 +1,4 @@
-// Sistema de orçamento - VERSÃO ATUALIZADA
+// Sistema de orçamento
 document.addEventListener('DOMContentLoaded', function () {
     console.log('Script de orçamento carregado com sucesso!');
 
@@ -671,7 +671,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
     }
 
-    // FUNÇÃO CORRIGIDA: calcularOrcamento
+    // FUNÇÃO: calcularOrcamento
     function calcularOrcamento() {
         console.log('Iniciando cálculo do orçamento...');
 
@@ -1016,7 +1016,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return true;
     }
 
-    // FUNÇÃO CORRIGIDA: mostrarToast
+    // mostrarToast
     window.mostrarToast = function (mensagem, tipo = 'success') {
         console.log(`Toast [${tipo}]: ${mensagem}`);
 
@@ -1153,7 +1153,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // FUNÇÃO CORRIGIDA: Preencher modal do comprovante
+    // Preencher modal do comprovante
     function preencherComprovanteModal() {
         console.log('Preenchendo modal do comprovante...');
         
@@ -1436,27 +1436,29 @@ function confirmarWhatsApp() {
     // Criar mensagem do WhatsApp
     const mensagem = `*NOVO PEDIDO - N&G EXPRESS*
 
-* PEDIDO:* ${numeroPedido}
-* DATA:* ${dataAtual}
+* PEDIDO: ${numeroPedido}
 
-* CLIENTE:*
+* DATA: ${dataAtual}
+
+* CLIENTE:
 Nome: ${orcamentoAtual.nome}
 Telefone: ${orcamentoAtual.telefone}
 ${orcamentoAtual.email ? `Email: ${orcamentoAtual.email}\n` : ''}
-* COLETA:*
+
+* COLETA:
 Local: ${orcamentoAtual.localColeta}
 ${orcamentoAtual.bairroColeta ? `Bairro: ${orcamentoAtual.bairroColeta}\n` : ''}Endereço: ${orcamentoAtual.enderecoColeta}
 
-* ENTREGA:*
+* ENTREGA:
 Cidade: ${orcamentoAtual.cidadeDestino}
 ${orcamentoAtual.bairroEntrega ? `Bairro: ${orcamentoAtual.bairroEntrega}\n` : ''}Endereço: ${orcamentoAtual.enderecoEntrega}
 
-* ENCOMENDA:*
+* ENCOMENDA:
 Dimensões: ${orcamentoAtual.dimensoes}
 Peso: ${orcamentoAtual.peso}kg
 Descrição: ${orcamentoAtual.descricao || 'Não informada'}
 
-* VALOR TOTAL: ${formatarMoeda(orcamentoAtual.valores.total)}*
+* VALOR TOTAL: ${formatarMoeda(orcamentoAtual.valores.total)}
 
 Por favor, confirme este pedido para iniciar a coleta.
 
