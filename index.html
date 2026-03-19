@@ -1,36 +1,45 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>N&G EXPRESS - Entregas Rápidas</title>
     <link rel="icon" href="img/logoAba.png" type="image/x-icon">
-    <link rel="shortcut icon" href="img/logoAba.png" type="image/x-icon">
-    <link rel="apple-touch-icon" sizes="180x180" href="img/logo-favicon-180x180.png">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="css/swiper-bundle.min.css">
-    <link rel="stylesheet" href="./css/styles.css">
-    <link rel="stylesheet" href="./css/orcamento.css">
-    <script src="./js/script.js" defer></script>
-    <script src="./js/orcamento.js" defer></script>
+    <link rel="stylesheet" href="https://unpkg.com/swiper@8/swiper-bundle.min.css">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- HERE Maps API -->
+    <link rel="stylesheet" href="https://js.api.here.com/v3/3.1/mapsjs-ui.css" />
+    <!-- Adicione esta linha para o Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-
 <body>
     <!-- Header -->
     <header>
         <div class="container">
             <nav class="navbar">
-                <a href="#" class="logo">N&G <span>EXPRESS</span></a>
-                <button class="mobile-menu-btn">
-                    <i class="bi bi-list"></i>
-                </button>
+                <a href="index.html" class="logo">
+                        <div class="logo-icon">
+                        <i class="bi bi-rocket-takeoff-fill"></i>
+                        </div>
+                        <div class="logo-text">
+                        <div class="logo-text-main">N&G <span>EXPRESS</span></div>
+                    <div class="logo-text-sub">ENTREGAS RÁPIDAS</div>
+                </div>
+            </a>
                 <ul class="nav-links">
-                    <li><a href="#home">Início</a></li>
+                    <li><a href="index.html">Início</a></li>
                     <li><a href="#services">Serviços</a></li>
                     <li><a href="#about">Sobre</a></li>
                     <li><a href="#contact">Contato</a></li>
-                    <li><a href="#" class="btn" id="quote-btn">Solicitar Orçamento</a></li>
+                    <li class="perfil-item" style="display: none;">
+                        <a href="dashboard.html"><i class="bi bi-person-circle"></i> <span id="menu-perfil-nome">Perfil</span></a>
+                    </li>
+                    <li class="login-item">
+                        <a href="#" onclick="abrirModalLogin(); return false;">Entrar</a>
+                    </li>
+                    <li><a href="novo-pedido.html" class="btn">Solicitar Orçamento</a></li>
                 </ul>
             </nav>
         </div>
@@ -38,35 +47,28 @@
 
     <!-- Hero Section -->
     <section class="hero" id="home">
-        <!-- Swiper Container -->
         <div class="swiper hero-swiper">
             <div class="swiper-wrapper">
-                <!-- Slide 1 -->
                 <div class="swiper-slide">
                     <img src="img/slide1.jpeg" alt="Motoboy fazendo entrega" class="hero-bg-image">
                     <div class="container slide-content">
                         <h1 class="fade-in">Entregas Rápidas e Seguras</h1>
-                        <p class="fade-in delay-1">Nossa equipe de motoboys e motoristas profissionais está pronta para
-                            levar seu pedido com agilidade e segurança para qualquer lugar da cidade.</p>
+                        <p class="fade-in delay-1">Equipe de motoboys e motoristas profissionais pronta para levar seu pedido com agilidade e segurança.</p>
                         <div class="hero-btns fade-in delay-2">
-                            <a href="#services" class="btn btn-secondary" id="contact-btn">Fale Conosco</a>
+                            <a href="novo-pedido.html" class="btn btn-secondary">Solicitar Agora</a>
                         </div>
                     </div>
                 </div>
-
-                <!-- Slide 2 -->
                 <div class="swiper-slide">
                     <img src="img/slide2.jpeg" alt="Carro de entrega" class="hero-bg-image">
                     <div class="container slide-content">
                         <h1>Entregas Express</h1>
                         <p>Serviço prioritário para quando você não pode esperar. Sua encomenda com máxima urgência!</p>
                         <div class="hero-btns">
-                            <a href="#" class="btn btn-secondary open-orcamento">Solicitar Orçamento</a>
+                            <a href="novo-pedido.html" class="btn btn-secondary">Solicitar Orçamento</a>
                         </div>
                     </div>
                 </div>
-
-                <!-- Slide 3 -->
                 <div class="swiper-slide">
                     <img src="img/slide3.jpeg" alt="Equipe de entregadores" class="hero-bg-image">
                     <div class="container slide-content">
@@ -77,22 +79,7 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Slide 4 -->
-                <div class="swiper-slide">
-                    <img src="img/slide4.jpeg" alt="Equipe de entregadores" class="hero-bg-image">
-                    <div class="container slide-content">
-                        <h1 class="fade-in">Profissionais Certificados</h1>
-                        <p class="fade-in delay-1">Nossa equipe passa por treinamento constante para garantir qualidade
-                            e segurança.</p>
-                        <div class="hero-btns fade-in delay-2">
-                            <a href="#about" class="btn btn-secondary">Conheça Nossa Equipe</a>
-                        </div>
-                    </div>
-                </div>
             </div>
-
-            <!-- Paginação -->
             <div class="swiper-pagination"></div>
         </div>
     </section>
@@ -101,42 +88,33 @@
     <section class="services" id="services">
         <div class="container">
             <h2 class="section-title">Nossos Serviços</h2>
+            <p class="section-subtitle">Soluções completas em entregas para sua empresa ou necessidade pessoal</p>
             <div class="services-grid">
-                <div class="service-card fade-in" id="servico-motoboy">
+                <div class="service-card fade-in">
                     <div class="service-img">
                         <img src="img/slide3.jpeg" alt="Serviço de motoboy">
                     </div>
                     <div class="service-content">
+                        <span class="service-badge"><i class="bi bi-bicycle"></i> Moto</span>
                         <h3>Entregas de Motoboy</h3>
-                        <p>Entregas rápidas e ágeis de documentos, pequenos pacotes e encomendas urgentes em toda a
-                            cidade.</p>
-                        <a href="#" class="btn saiba-mais-btn open-orcamento">Solicitar Orçamento</a>
+                        <p>Entregas rápidas e ágeis de documentos, pequenos pacotes e encomendas urgentes em toda a cidade.</p>
+                        <a href="novo-pedido.html" class="btn saiba-mais-btn">Solicitar Orçamento</a>
                     </div>
                 </div>
 
-                <div class="service-card fade-in delay-1" id="servico-carro">
+                <div class="service-card fade-in delay-1">
                     <div class="service-img">
                         <img src="img/entregaDeCarro.jpeg" alt="Serviço de Carro">
                     </div>
                     <div class="service-content">
+                        <span class="service-badge"><i class="bi bi-car-front"></i> Carro</span>
                         <h3>Entregas de Carro</h3>
-                        <p>Transporte seguro para pacotes maiores, móveis, equipamentos e cargas que necessitam de mais
-                            espaço.</p>
-                        <a href="#" class="btn saiba-mais-btn open-orcamento">Solicitar Orçamento</a>
+                        <p>Transporte seguro para pacotes maiores, móveis, equipamentos e cargas que necessitam de mais espaço.</p>
+                        <a href="novo-pedido.html" class="btn saiba-mais-btn">Solicitar Orçamento</a>
                     </div>
                 </div>
 
-                <div class="service-card fade-in delay-2" id="servico-express">
-                    <div class="service-img">
-                        <img src="img/tresMotos.jpeg" alt="Entrega Express">
-                    </div>
-                    <div class="service-content">
-                        <h3>Entrega Express</h3>
-                        <p>Serviço prioritário para quando você precisa que sua encomenda chegue o mais rápido possível.
-                        </p>
-                        <a href="#" class="btn saiba-mais-btn open-orcamento">Solicitar Orçamento</a>
-                    </div>
-                </div>
+
             </div>
         </div>
     </section>
@@ -151,11 +129,8 @@
                 </div>
                 <div class="about-text fade-in delay-1">
                     <h2>N&G EXPRESS - Sua entrega em boas mãos</h2>
-                    <p>Fundada em 2016, a N&G EXPRESS se tornou referência em serviços de entregas rápidas em Balneário
-                        Camboriú e região. Nossa missão é proporcionar soluções logísticas ágeis e confiáveis para
-                        pessoas e empresas.</p>
-                    <p>Com uma frota moderna de motos e carros, e uma equipe de profissionais treinados, garantimos que
-                        suas encomendas cheguem ao destino com segurança e no prazo combinado.</p>
+                    <p>Fundada em 2016, a N&G EXPRESS se tornou referência em serviços de entregas rápidas em Balneário Camboriú e região. Nossa missão é proporcionar soluções logísticas ágeis e confiáveis.</p>
+                    <p>Com uma frota moderna de motos e carros, e uma equipe de profissionais treinados, garantimos que suas encomendas cheguem ao destino com segurança e no prazo combinado.</p>
 
                     <div class="features">
                         <div class="feature-item">
@@ -195,9 +170,8 @@
     <section class="cta">
         <div class="container">
             <h2 class="section-title">Precisa de uma entrega urgente?</h2>
-            <p>Não importa o tamanho ou a distância, nossa equipe está pronta para atender sua necessidade com
-                eficiência e profissionalismo.</p>
-            <a href="#" class="btn open-orcamento" id="cta-btn">Solicitar Serviço Agora</a>
+            <p>Não importa o tamanho ou a distância, nossa equipe está pronta para atender sua necessidade com eficiência e profissionalismo.</p>
+            <a href="novo-pedido.html" class="btn">Solicitar Serviço Agora</a>
         </div>
     </section>
 
@@ -258,8 +232,7 @@
                     <p>Soluções logísticas rápidas e eficientes para sua empresa ou necessidade pessoal.</p>
                     <div class="social-links">
                         <a href="https://www.facebook.com/share/1CF3xneNSW/"><i class="bi bi-facebook"></i></a>
-                        <a href="https://www.instagram.com/ng.express_?igsh=MTB6NnJ0N3AxZXc4Zw=="><i
-                                class="bi bi-instagram"></i></a>
+                        <a href="https://www.instagram.com/ng.express_?igsh=MTB6NnJ0N3AxZXc4Zw=="><i class="bi bi-instagram"></i></a>
                         <a href="https://wa.me/5547999123260"><i class="bi bi-whatsapp"></i></a>
                         <a href="https://g.co/kgs/e4ECZJo"><i class="bi bi-google"></i></a>
                     </div>
@@ -267,284 +240,112 @@
                 <div class="footer-column">
                     <h3>Links Rápidos</h3>
                     <ul class="footer-links">
-                        <li><a href="#home">Início</a></li>
+                        <li><a href="index.html">Início</a></li>
                         <li><a href="#services">Serviços</a></li>
                         <li><a href="#about">Sobre Nós</a></li>
                         <li><a href="#contact">Contato</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
-                    <h3>Serviços</h3>
+                    <h3>Minha Conta</h3>
                     <ul class="footer-links">
-                        <li><a href="#servico-motoboy">Entregas de Motoboy</a></li>
-                        <li><a href="#servico-carro">Entregas com Carro</a></li>
-                        <li><a href="#servico-express">Entrega Express</a></li>
-                        <li><a href="#" class="open-orcamento" id="quote-btn-footer">Logística Empresarial</a></li>
+                        <li class="login-item"><a href="#" onclick="abrirModalLogin(); return false;">Entrar</a></li>
+                        <li class="login-item"><a href="#" onclick="abrirModalCadastro(); return false;">Cadastrar</a></li>
+                        <li class="perfil-item" style="display: none;"><a href="dashboard.html">Dashboard</a></li>
+                        <li class="perfil-item" style="display: none;"><a href="historico.html">Histórico</a></li>
+                        <li class="perfil-item" style="display: none;"><a href="perfil.html">Meu Perfil</a></li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2016-2026 N&G EXPRESS. Todos os direitos reservados.</p>
+                <p>&copy; <span id="currentYear"></span> N&G EXPRESS. Todos os direitos reservados.</p>
             </div>
         </div>
     </footer>
 
-    <!-- Notificação Toast -->
-    <div id="toast-container"></div>
+    <!-- Botões Flutuantes -->
+        <a href="https://wa.me/5547999123260?text=Olá!%20Vim%20pelo%20site%20CodeCarvalho%20e%20gostaria%20de%20saber%20mais%20sobre%20seus%20serviços." target="_blank" class="whatsapp-float" aria-label="Contato via WhatsApp">
+            <i class="fab fa-whatsapp"></i>
+            <span class="whatsapp-tooltip">Fale diretamente comigo!</span>
+    </a>
 
-    <!-- Botão WhatsApp -->
-    <div class="whatsapp-btn">
-        <a href="https://wa.me/5547999123260" target="_blank" rel="noopener no referrer">
-            <i class="bi bi-whatsapp"></i>
-        </a>
-    </div>
-
-    <!-- Back to Top -->
-    <div class="back-to-top">
-        <i class="bi bi-arrow-up"></i>
-    </div>
-
-    <!-- Modal de Orçamento -->
-    <div class="modal" id="orcamento-modal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h2><i class="bi bi-calculator"></i> Solicitar Orçamento</h2>
-
-            <form id="form-orcamento">
-                <!-- Dados do Cliente -->
+    <!-- Modais -->
+    <!-- Modal de Login -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="close-modal" onclick="fecharModal('login-modal')">&times;</span>
+            <h2><i class="bi bi-box-arrow-in-right"></i> Login</h2>
+            <form onsubmit="fazerLogin(event)">
                 <div class="form-section">
-                    <h3><i class="bi bi-person"></i> Dados do Cliente</h3>
                     <div class="form-group">
-                        <label for="cliente-nome">Nome Completo*</label>
-                        <input type="text" id="cliente-nome" name="cliente-nome" placeholder="Digite seu nome completo" required>
+                        <label for="login-email">E-mail</label>
+                        <input type="email" id="login-email" placeholder="seu@email.com" required>
                     </div>
-
                     <div class="form-group">
-                        <label for="cliente-telefone">Telefone/WhatsApp*</label>
-                        <input type="tel" id="cliente-telefone" name="cliente-telefone" placeholder="(47) 99999-9999" required>
+                        <label for="login-senha">Senha</label>
+                        <input type="password" id="login-senha" placeholder="******" required>
                     </div>
-
-                    <!-- Campo de E-mail adicionado no mesmo estilo -->
-                    <div class="form-group">
-                        <label for="cliente-email">E-mail*</label>
-                        <input type="email" id="cliente-email" name="cliente-email" placeholder="seuemail@exemplo.com" required>
-                    </div>
-                </div>
-
-                <!-- Endereço de Coleta -->
-                <div class="form-section">
-                    <h3><i class="bi bi-geo-alt"></i> Local de Coleta</h3>
-                    <div class="form-group">
-                        <label for="local-coleta">Cidade de Coleta*</label>
-                        <select id="local-coleta" name="local-coleta" required>
-                            <option value="" disabled selected>Selecione o local de coleta</option>
-                        </select>
-                    </div>
-
-                    <!-- Container para bairro de coleta -->
-                    <div class="bairro-container" id="bairro-coleta-container" style="display: none;">
-                        <div class="form-group">
-                            <label for="bairro-coleta">Bairro de Coleta*</label>
-                            <select id="bairro-coleta" name="bairro-coleta">
-                                <option value="" disabled selected>Selecione o bairro</option>
-                            </select>
-                            <div class="bairro-info">
-                                <small>Alguns bairros podem ter valor adicional</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="endereco-detalhado-container" style="display: none;">
-                        <div class="form-group">
-                            <label for="endereco-detalhado">Endereço Completo de Coleta*</label>
-                            <input type="text" id="endereco-detalhado" name="endereco-detalhado" placeholder="Rua, número, bairro, complemento" required>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Endereço de Entrega -->
-                <div class="form-section">
-                    <h3><i class="bi bi-geo-alt-fill"></i> Endereço de Entrega</h3>
-                    <div class="form-group">
-                        <label for="cidade-destino">Cidade de Destino*</label>
-                        <select id="cidade-destino" name="cidade-destino" required>
-                            <option value="" disabled selected>Selecione a cidade</option>
-                        </select>
-                    </div>
-
-                    <!-- Container para bairro de entrega -->
-                    <div class="bairro-container" id="bairro-entrega-container" style="display: none;">
-                        <div class="form-group">
-                            <label for="bairro-entrega">Bairro de Entrega*</label>
-                            <select id="bairro-entrega" name="bairro-entrega">
-                                <option value="" disabled selected>Selecione o bairro</option>
-                            </select>
-                            <div class="bairro-info">
-                                <small>Alguns bairros podem ter valor adicional</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="entrega-endereco">Endereço Completo de Entrega*</label>
-                        <input type="text" id="entrega-endereco" name="entrega-endereco" placeholder="Rua, número, bairro, complemento" required>
-                    </div>
-                </div>
-
-                <!-- Dimensões da Encomenda -->
-                <div class="form-section">
-                    <h3><i class="bi bi-box"></i> Dimensões da Encomenda</h3>
-
-                    <div class="dimensions-grid">
-                        <div class="form-group">
-                            <label for="comprimento">Comprimento (cm)*</label>
-                            <input type="number" id="comprimento" name="comprimento" min="1" max="200" placeholder="cm" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="largura">Largura (cm)*</label>
-                            <input type="number" id="largura" name="largura" min="1" max="200" placeholder="cm" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="altura">Altura (cm)*</label>
-                            <input type="number" id="altura" name="altura" min="1" max="200" placeholder="cm" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="peso">Peso (kg)*</label>
-                            <input type="number" id="peso" name="peso" min="0.1" max="50" step="0.1" placeholder="kg" required>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="descricao">Descrição da Encomenda</label>
-                        <textarea id="descricao" name="descricao" placeholder="Ex: Documentos, pacote, eletrônico, caixa de sapato, etc." rows="3"></textarea>
-                    </div>
-                </div>
-
-                <!-- Resultado do Orçamento -->
-                <div id="orcamento-resultado" class="orcamento-resultado" style="display: none;">
-                    <h3><i class="bi bi-calculator"></i> Orçamento Calculado</h3>
-                    <div class="valores-detalhes">
-                        <!-- Valores serão inseridos dinamicamente aqui -->
-                    </div>
-                </div>
-
-                <!-- Botões -->
-                <div class="form-buttons">
-                    <button type="button" id="btn-calcular" class="btn btn-secondary">
-                        <i class="bi bi-calculator"></i> Calcular Orçamento
+                    <button type="submit" class="btn" style="width: 100%;">
+                        <i class="bi bi-box-arrow-in-right"></i> Entrar
                     </button>
+                    <p style="text-align: center; margin-top: 15px;">
+                        Não tem conta? 
+                        <a href="#" onclick="abrirModalCadastro(); return false;" style="color: var(--primary-color);">
+                            Cadastre-se
+                        </a>
+                    </p>
+                </div>
+            </form>
+        </div>
+    </div>
 
-                    <button type="button" id="btn-confirmar" class="btn" style="display: none;">
-                        <i class="bi bi-check-circle"></i> Confirmar e Gerar Comprovante
+    <!-- Modal de Cadastro -->
+    <div class="modal" id="cadastro-modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close-modal" onclick="fecharModal('cadastro-modal')">&times;</span>
+            <h2><i class="bi bi-person-plus"></i> Cadastro</h2>
+            <form onsubmit="fazerCadastro(event)">
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="cadastro-nome">Nome Completo</label>
+                        <input type="text" id="cadastro-nome" placeholder="Seu nome" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cadastro-email">E-mail</label>
+                        <input type="email" id="cadastro-email" placeholder="seu@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cadastro-telefone">Telefone/WhatsApp</label>
+                        <input type="tel" id="cadastro-telefone" placeholder="(47) 99999-9999" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cadastro-senha">Senha (mínimo 6 caracteres)</label>
+                        <input type="password" id="cadastro-senha" minlength="6" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cadastro-confirmar-senha">Confirmar Senha</label>
+                        <input type="password" id="cadastro-confirmar-senha" minlength="6" required>
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%;">
+                        <i class="bi bi-check-circle"></i> Cadastrar
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal de Comprovante -->
-    <div class="modal" id="comprovante-modal">
-        <div class="modal-content comprovante-content">
-            <span class="close-comprovante">&times;</span>
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
 
-            <!-- Cabeçalho do Comprovante - CORRIGIDO -->
-            <div class="comprovante-header"
-                style="text-align: center; border-bottom: 2px solid #fff; padding-bottom: 10px; margin-bottom: 20px;">
-                <h2 style="margin: 0; font-size: 24px; color: #fff;">N&G EXPRESS</h2>
-                <h3 style="margin: 5px 0; font-size: 18px; color: #fff;">COMPROVANTE DE PEDIDO</h3>
-                <div style="margin: 10px 0;">
-                    <strong style="font-size: 20px; color: orangered;">Pedido <span
-                            id="pedido-numero">0000</span></strong>
-                </div>
-                <div style="font-style: italic; color: #777; margin-bottom: 5px;"></div>
-                <div style="font-size: 14px; color: #fff;">Data: <span id="pedido-data">--/--/---- --:--</span></div>
-            </div>
-
-            <!-- Informações do Pedido -->
-            <div class="comprovante-info">
-                <!-- CLIENTE -->
-                <div class="info-section"
-                    style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #ccc;">
-                    <h4 style="background: #f5f5f5; padding: 8px; margin: 0 0 10px 0; color: #333;">CLIENTE</h4>
-                    <p style="margin: 5px 0;"><strong>Nome:</strong> <span id="comprovante-nome">--</span></p>
-                    <p style="margin: 5px 0;"><strong>Telefone:</strong> <span id="comprovante-telefone">--</span></p>
-                    <p style="margin: 5px 0;"><strong>E-mail:</strong> <span id="comprovante-email">--</span></p>
-                </div>
-
-                <!-- ENTREGA -->
-                <div class="info-section"
-                    style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #ccc;">
-                    <h4 style="background: #f5f5f5; padding: 8px; margin: 0 0 10px 0; color: #333;">ENTREGA</h4>
-                    <p style="margin: 5px 0;"><strong>Cidade:</strong> <span id="comprovante-cidade">--</span></p>
-                    <p style="margin: 5px 0;"><strong>Endereço:</strong> <span id="comprovante-entrega">--</span></p>
-                </div>
-
-                <!-- VALOR TOTAL - DESTAQUE -->
-                <div class="info-section"
-                    style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border: 2px solid #28a745; border-radius: 8px;">
-                    <h4 style="margin: 0 0 10px 0; color: #28a745; text-align: center;">VALOR TOTAL</h4>
-                    <div style="text-align: center;">
-                        <p
-                            style="font-size: 28px; font-weight: bold; color: #28a745; margin: 10px 0; margin-top: 20px;">
-                            TOTAL: <span id="comprovante-valor">R$ 0,00</span>
-                        </p>
-                    </div>
-                </div>
-
-                <!-- COLETA -->
-                <div class="info-section"
-                    style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #ccc;">
-                    <h4 style="background: #f5f5f5; padding: 8px; margin: 0 0 10px 0; color: #333;">COLETA</h4>
-                    <p style="margin: 5px 0;"><strong>Local:</strong> <span id="comprovante-coleta-cidade">--</span></p>
-                    <p style="margin: 5px 0;"><strong>Endereço:</strong> <span id="comprovante-coleta">--</span></p>
-                </div>
-
-                <!-- ENCOMENDA -->
-                <div class="info-section"
-                    style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #ccc;">
-                    <h4 style="background: #f5f5f5; padding: 8px; margin: 0 0 10px 0; color: #333;">ENCOMENDA</h4>
-                    <p style="margin: 5px 0;"><strong>Dimensões:</strong> <span id="comprovante-dimensoes">--</span></p>
-                    <p style="margin: 5px 0;"><strong>Peso:</strong> <span id="comprovante-peso">--</span></p>
-                    <p style="margin: 5px 0;"><strong>Descrição:</strong> <span id="comprovante-descricao">--</span></p>
-                </div>
-
-                <!-- INSTRUÇÕES -->
-                <div class="info-section"
-                    style="margin-bottom: 15px; padding: 15px; background: #fff8e1; border-radius: 5px;">
-                    <h4 style="margin: 0 0 10px 0; color: #d35400;">INSTRUÇÕES</h4>
-                    <ol style="margin: 0; padding-left: 20px;">
-                        <li>Imprima este comprovante</li>
-                        <li>Entregue ao motoboy/carro no momento da coleta</li>
-                    </ol>
-                </div>
-
-                <!-- RODAPÉ -->
-                <div class="info-section"
-                    style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #ccc; color: #666; font-size: 14px;">
-                    <p style="margin: 5px 0; font-weight: bold;">N&G EXPRESS</p>
-                    <p style="margin: 5px 0;">Rua Olga Bernardes Amorim, 101, Centro, Camboriú - SC</p>
-                    <p style="margin: 5px 0;">Telefone: (47) 9.9912-3260</p>
-                    <p style="margin: 5px 0;">Email: comercial.ngexpress@gmail.com</p>
-                </div>
-            </div>
-
-            <!-- Botões do Comprovante -->
-            <div class="comprovante-buttons" style="display: flex; gap: 10px; margin-top: 20px;">
-                <button id="btn-imprimir" class="btn btn-secondary" style="flex: 1;">
-                    <i class="bi bi-printer"></i> Imprimir Comprovante
-                </button>
-                <button id="btn-whatsapp" class="btn" style="flex: 1;">
-                    <i class="bi bi-whatsapp"></i> Confirmar no WhatsApp
-                </button>
-            </div>
-        </div>
-    </div>
-
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
     <script src="https://unpkg.com/swiper@8/swiper-bundle.min.js"></script>
-    <script src="./js/main.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-core.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-service.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-ui.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-mapevents.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/script.js"></script>
 </body>
-
 </html>

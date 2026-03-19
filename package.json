@@ -1,0 +1,15 @@
+{
+  "name": "ng-express",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently \"npm run php-server\" \"npm run live-server\"",
+    "php-server": "php -S localhost:8000 -t ./",
+    "live-server": "live-server --port=3000 --proxy=/api=http://localhost:8000/api",
+    "start": "php -S localhost:8000 -t ./",
+    "install-tools": "npm install -g live-server concurrently"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "live-server": "^1.2.2"
+  }
+}
