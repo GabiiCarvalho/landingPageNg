@@ -1,14 +1,11 @@
-[phases.setup]
-nixPkgs = ["php82"]
-
-[phases.setup]
-nixPkgs = ["php82", "php82Extensions.pdo", "php82Extensions.pdo_mysql"]
-
 [build]
 builder = "NIXPACKS"
 
 [nixpacks]
 plan = { providers = ["php"] }
+
+[phases.setup]
+nixPkgs = ["php82", "php82Extensions.pdo", "php82Extensions.pdo_mysql"]
 
 [start]
 cmd = "php -S 0.0.0.0:${PORT:-8080} -t ."
