@@ -1,5 +1,5 @@
 <?php
-// cors.php - Inclua este arquivo no início de todos os PHP da API
+// cors.php
 header("Access-Control-Allow-Origin: https://ng-express.netlify.app");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
