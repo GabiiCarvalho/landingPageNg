@@ -1,5 +1,6 @@
 <?php
 // Caminho: /api/orcamentos/historico.php
+require_once '../../cors.php';
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET');
