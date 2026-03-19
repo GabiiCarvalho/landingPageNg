@@ -5,4 +5,4 @@ builder = "NIXPACKS"
 plan = { providers = ["php"] }
 
 [start]
-cmd = "php -S 0.0.0.0:$PORT -t public"
+cmd = "php -S 0.0.0.0:$PORT -t ."
