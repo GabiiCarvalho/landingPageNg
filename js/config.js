@@ -1,4 +1,6 @@
-window.API_BASE_URL = 'landingpageng-production.up.railway.app';
+// Configuração da API
+window.API_BASE_URL = window.location.origin + '/api';
+
 // Configurações da API HERE Maps
 window.HERE_API_CONFIG = {
     apiKey: 'O8E5nipilq9UhVMoh75UR3RxE0J3zvC1DCXR-DZVL6I'

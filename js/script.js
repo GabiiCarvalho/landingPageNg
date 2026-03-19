@@ -1,5 +1,5 @@
 // ============================================================
-//  N&G EXPRESS — script.js  (versão revisada)
+//  N&G EXPRESS — script.js  (versão revisada com API_BASE_URL)
 //  Correções e melhorias aplicadas:
 //   • PRICING_CONFIG → window.PRICING_CONFIG (escopo seguro)
 //   • Login/Cadastro aguardam preenchimento antes de fechar modal
@@ -19,6 +19,7 @@
 //   • Fechar modal com tecla ESC
 //   • Menu mobile fecha ao clicar em link
 //   • Swiper com guard para não inicializar duas vezes
+//   • Todas as chamadas fetch usam window.API_BASE_URL do config.js
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -76,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function () {
         container.appendChild(toast);
 
         setTimeout(() => {
-            toast.style.opacity    = '0';
+            toast.style.opacity = '0';
             toast.style.transition = 'opacity 0.4s';
             setTimeout(() => toast.remove(), 400);
         }, 4600);
@@ -112,8 +113,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!usuario) return;
 
         const campos = {
-            'cliente-nome':     usuario.nome,
-            'cliente-email':    usuario.email,
+            'cliente-nome': usuario.nome,
+            'cliente-email': usuario.email,
             'cliente-telefone': usuario.telefone,
         };
 
@@ -150,17 +151,12 @@ document.addEventListener('DOMContentLoaded', function () {
      *  1. Tenta a API PHP
      *  2. Se falhar, usa sessionStorage como fallback
      */
-    /**
-     * Detecta se o servidor está apenas servindo o .php como texto
-     * em vez de executá-lo (Live Server, servidor estático, file://, etc.)
-     */
     function servidorNaoExecutaPHP(texto) {
         const t = texto.trimStart();
         return t.startsWith('<?php') || t.startsWith('<?');
     }
 
     async function verificarSessao() {
-        // file:// causa "did not match the expected pattern" no Safari/WebKit
         if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') {
             console.warn('⚠️ Protocolo file:// — usando sessionStorage (modo dev)');
             usarSessaoLocal();
@@ -168,12 +164,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         try {
-            const response = await fetch('api/usuarios/verificar.php');
+            const response = await fetch(`${window.API_BASE_URL}/usuarios/verificar.php`);
 
-            // Lê sempre como texto para inspecionar antes de parsear
             const texto = await response.text();
 
-            // Servidor não executa PHP (Live Server, extensão VSCode, etc.)
             if (servidorNaoExecutaPHP(texto)) {
                 console.warn('⚠️ Servidor não executa PHP — modo desenvolvimento ativo');
                 console.info('ℹ️ Use XAMPP/WAMP em http://localhost para o sistema funcionar completamente');
@@ -284,7 +278,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Entrando...'; }
 
         try {
-            const response = await fetch('api/usuarios/login.php', {
+            const response = await fetch(`${window.API_BASE_URL}/usuarios/login.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, senha })
@@ -316,10 +310,10 @@ document.addEventListener('DOMContentLoaded', function () {
     window.fazerCadastro = async (event) => {
         event.preventDefault();
 
-        const nome      = document.getElementById('cadastro-nome')?.value?.trim();
-        const email     = document.getElementById('cadastro-email')?.value?.trim();
-        const telefone  = document.getElementById('cadastro-telefone')?.value?.trim();
-        const senha     = document.getElementById('cadastro-senha')?.value;
+        const nome = document.getElementById('cadastro-nome')?.value?.trim();
+        const email = document.getElementById('cadastro-email')?.value?.trim();
+        const telefone = document.getElementById('cadastro-telefone')?.value?.trim();
+        const senha = document.getElementById('cadastro-senha')?.value;
         const confirmar = document.getElementById('cadastro-confirmar-senha')?.value;
 
         if (!nome || !email || !telefone || !senha) {
@@ -344,7 +338,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Cadastrando...'; }
 
         try {
-            const response = await fetch('api/usuarios/cadastrar.php', {
+            const response = await fetch(`${window.API_BASE_URL}/usuarios/cadastrar.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nome, email, telefone, senha })
@@ -375,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.fazerLogout = async () => {
         try {
-            await fetch('api/usuarios/logout.php', {
+            await fetch(`${window.API_BASE_URL}/usuarios/logout.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -392,10 +386,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function validarFormulario() {
         const obrigatorios = [
-            { id: 'cliente-nome',     label: 'Nome completo' },
+            { id: 'cliente-nome', label: 'Nome completo' },
             { id: 'cliente-telefone', label: 'Telefone' },
-            { id: 'cliente-email',    label: 'E-mail' },
-            { id: 'endereco-coleta',  label: 'Endereço de coleta' },
+            { id: 'cliente-email', label: 'E-mail' },
+            { id: 'endereco-coleta', label: 'Endereço de coleta' },
             { id: 'endereco-entrega', label: 'Endereço de entrega' },
         ];
 
@@ -418,7 +412,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return false;
         }
 
-        const coleta  = document.getElementById('endereco-coleta')?.value?.trim();
+        const coleta = document.getElementById('endereco-coleta')?.value?.trim();
         const entrega = document.getElementById('endereco-entrega')?.value?.trim();
         if (coleta && entrega && coleta.toLowerCase() === entrega.toLowerCase()) {
             mostrarToast('Os endereços de coleta e entrega não podem ser iguais', 'warning');
@@ -433,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ============================================================
 
     function obterDimensoes() {
-        const ids  = ['comprimento', 'largura', 'altura', 'peso'];
+        const ids = ['comprimento', 'largura', 'altura', 'peso'];
         const vals = ids.map(id => {
             const el = document.getElementById(id);
             return el ? parseFloat(el.value) : NaN;
@@ -476,25 +470,20 @@ document.addEventListener('DOMContentLoaded', function () {
     //  ORÇAMENTO — CALCULAR (botão principal)
     // ============================================================
 
-    /** Limpa o endereço longo do Nominatim, mantendo só rua, número e cidade */
     function limparEndereco(enderecoCompleto) {
         if (!enderecoCompleto) return enderecoCompleto;
-        // Remove tudo após a 3ª vírgula (remove estado, CEP, país, regiões)
         const partes = enderecoCompleto.split(',').map(p => p.trim());
-        // Pega: rua, número (se houver), bairro, cidade — no máximo 4 partes
         return partes.slice(0, 4).join(', ');
     }
 
-    /** Monta endereço completo combinando campo de endereço + número + complemento */
     function montarEndereco(campoId, numeroId) {
-        const endereco     = document.getElementById(campoId)?.value?.trim() || '';
-        const numero       = document.getElementById(numeroId)?.value?.trim() || '';
-        const compId       = campoId === 'endereco-coleta' ? 'complemento-coleta' : 'complemento-entrega';
-        const complemento  = document.getElementById(compId)?.value?.trim() || '';
+        const endereco = document.getElementById(campoId)?.value?.trim() || '';
+        const numero = document.getElementById(numeroId)?.value?.trim() || '';
+        const compId = campoId === 'endereco-coleta' ? 'complemento-coleta' : 'complemento-entrega';
+        const complemento = document.getElementById(compId)?.value?.trim() || '';
 
         let resultado = endereco;
 
-        // Insere número se fornecido e não estiver já no endereço
         if (numero && !endereco.match(/,\s*\d+/)) {
             const primeiraVirgula = endereco.indexOf(',');
             if (primeiraVirgula > -1) {
@@ -504,7 +493,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // Adiciona complemento se preenchido
         if (complemento) {
             resultado += ' - ' + complemento;
         }
@@ -518,26 +506,23 @@ document.addEventListener('DOMContentLoaded', function () {
         const btn = document.getElementById('btn-calcular');
         if (!btn) return;
 
-        // Garante que o botão está visível (para recálculo)
         btn.style.display = '';
 
         const originalHTML = btn.innerHTML;
         btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Calculando distância...';
-        btn.disabled  = true;
+        btn.disabled = true;
 
-        // Oculta resultado anterior
-        const resultado    = document.getElementById('orcamento-resultado');
+        const resultado = document.getElementById('orcamento-resultado');
         const distanciaInfo = document.getElementById('distancia-info');
-        const btnConfirmar  = document.getElementById('btn-confirmar');
-        if (resultado)     resultado.style.display     = 'none';
+        const btnConfirmar = document.getElementById('btn-confirmar');
+        if (resultado) resultado.style.display = 'none';
         if (distanciaInfo) distanciaInfo.style.display = 'none';
-        if (btnConfirmar)  btnConfirmar.style.display  = 'none';
+        if (btnConfirmar) btnConfirmar.style.display = 'none';
 
         try {
-            const origem  = document.getElementById('endereco-coleta')?.value?.trim();
+            const origem = document.getElementById('endereco-coleta')?.value?.trim();
             const destino = document.getElementById('endereco-entrega')?.value?.trim();
-            // Endereços com número para exibição (geocodificação usa o endereço base)
-            const origemComNumero  = montarEndereco('endereco-coleta', 'numero-coleta');
+            const origemComNumero = montarEndereco('endereco-coleta', 'numero-coleta');
             const destinoComNumero = montarEndereco('endereco-entrega', 'numero-entrega');
 
             const veiculoRadio = document.querySelector('input[name="tipo-veiculo"]:checked');
@@ -553,38 +538,36 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             const dimensoes = obterDimensoes();
-            const preco     = calcularPreco(window.distanciaAtual.distanciaKm, veiculo, dimensoes);
+            const preco = calcularPreco(window.distanciaAtual.distanciaKm, veiculo, dimensoes);
 
-            // Exibe distância e duração
-            const dtexto   = document.getElementById('distancia-texto');
+            const dtexto = document.getElementById('distancia-texto');
             const dduracao = document.getElementById('duracao-texto');
-            if (dtexto)    dtexto.textContent    = window.distanciaAtual.distanciaTexto;
-            if (dduracao)  dduracao.textContent   = window.distanciaAtual.duracaoTexto;
+            if (dtexto) dtexto.textContent = window.distanciaAtual.distanciaTexto;
+            if (dduracao) dduracao.textContent = window.distanciaAtual.duracaoTexto;
             if (distanciaInfo) distanciaInfo.style.display = 'block';
 
-            // Monta objeto do orçamento
             window.orcamentoAtual = {
-                numeroPedido:    'NG' + Date.now().toString().slice(-6),
-                data:            new Date().toLocaleString('pt-BR'),
-                nome:            document.getElementById('cliente-nome')?.value     || '',
-                telefone:        document.getElementById('cliente-telefone')?.value || '',
-                email:           document.getElementById('cliente-email')?.value    || '',
-                tipoVeiculo:     veiculo,
-                enderecoColeta:  origemComNumero,
+                numeroPedido: 'NG' + Date.now().toString().slice(-6),
+                data: new Date().toLocaleString('pt-BR'),
+                nome: document.getElementById('cliente-nome')?.value || '',
+                telefone: document.getElementById('cliente-telefone')?.value || '',
+                email: document.getElementById('cliente-email')?.value || '',
+                tipoVeiculo: veiculo,
+                enderecoColeta: origemComNumero,
                 enderecoEntrega: destinoComNumero,
-                distancia:       window.distanciaAtual.distanciaTexto,
-                distanciaNum:    window.distanciaAtual.distanciaKm,
-                duracao:         window.distanciaAtual.duracaoTexto,
-                dimensoes:       dimensoes
+                distancia: window.distanciaAtual.distanciaTexto,
+                distanciaNum: window.distanciaAtual.distanciaKm,
+                duracao: window.distanciaAtual.duracaoTexto,
+                dimensoes: dimensoes
                     ? `${dimensoes.comprimento}x${dimensoes.largura}x${dimensoes.altura}cm, ${dimensoes.peso}kg`
                     : 'Não informado',
-                descricao:       document.getElementById('descricao')?.value || 'Não informada',
+                descricao: document.getElementById('descricao')?.value || 'Não informada',
                 preco,
             };
 
             const totalValor = document.getElementById('total-valor');
-            if (totalValor)  totalValor.textContent = formatarMoeda(preco);
-            if (resultado)   resultado.style.display = 'block';
+            if (totalValor) totalValor.textContent = formatarMoeda(preco);
+            if (resultado) resultado.style.display = 'block';
 
             btn.style.display = 'none';
             if (btnConfirmar) btnConfirmar.style.display = 'block';
@@ -594,10 +577,10 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (error) {
             console.error('Erro no cálculo:', error);
             mostrarToast(`Erro: ${error.message}`, 'error');
-            btn.style.display = ''; // restaura visibilidade em caso de erro
+            btn.style.display = '';
         } finally {
             btn.innerHTML = originalHTML;
-            btn.disabled  = false;
+            btn.disabled = false;
         }
     };
 
@@ -648,27 +631,23 @@ ${limparEndereco(o.enderecoEntrega)}
 
 ✅ *Por favor, confirme este pedido.*`;
 
-        // ⚠️ IMPORTANTE: abrir o WhatsApp ANTES de qualquer await
-        // Browsers bloqueiam window.open() se chamado após operações assíncronas
         const whatsappURL = `https://wa.me/5547999123260?text=${encodeURIComponent(mensagem)}`;
         window.open(whatsappURL, '_blank');
 
-        // Salva no histórico ANTES de redirecionar (aguarda a resposta)
-        // O redirect só acontece após o save completar (ou falhar)
         if (sessionStorage.getItem('usuario')) {
             try {
-                const saveResp = await fetch('api/orcamentos/salvar.php', {
+                const saveResp = await fetch(`${window.API_BASE_URL}/orcamentos/salvar.php`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        numero_pedido:    o.numeroPedido,
-                        tipo_veiculo:     o.tipoVeiculo,
-                        endereco_coleta:  o.enderecoColeta,
+                        numero_pedido: o.numeroPedido,
+                        tipo_veiculo: o.tipoVeiculo,
+                        endereco_coleta: o.enderecoColeta,
                         endereco_entrega: o.enderecoEntrega,
-                        dimensoes:        o.dimensoes,
-                        peso:             parseFloat(o.peso) || 0,
-                        descricao:        o.descricao,
-                        valor_total:      o.preco,
+                        dimensoes: o.dimensoes,
+                        peso: parseFloat(o.peso) || 0,
+                        descricao: o.descricao,
+                        valor_total: o.preco,
                     }),
                 });
                 const saveData = await saveResp.text();
@@ -678,7 +657,6 @@ ${limparEndereco(o.enderecoEntrega)}
             }
         }
 
-        // Redireciona após o save (dá 500ms extras de margem)
         setTimeout(() => { window.location.href = 'index.html'; }, 500);
     };
 
@@ -686,12 +664,12 @@ ${limparEndereco(o.enderecoEntrega)}
     //  VARIÁVEIS DE ESTADO
     // ============================================================
 
-    window.orcamentoAtual   = null;
-    window.distanciaAtual   = null;
+    window.orcamentoAtual = null;
+    window.distanciaAtual = null;
     window.coordenadasCache = {};
 
     let herePlatform = null;
-    let hereRouter   = null;
+    let hereRouter = null;
 
     // ============================================================
     //  POSITIONSTACK — AUTOCOMPLETE
@@ -700,7 +678,7 @@ ${limparEndereco(o.enderecoEntrega)}
     let debounceTimer = null;
 
     function inicializarAutocomplete() {
-        const campoColeta  = document.getElementById('endereco-coleta');
+        const campoColeta = document.getElementById('endereco-coleta');
         const campoEntrega = document.getElementById('endereco-entrega');
         if (!campoColeta || !campoEntrega) return;
         if (typeof jQuery === 'undefined' || !jQuery.fn.autocomplete) return;
@@ -726,8 +704,6 @@ ${limparEndereco(o.enderecoEntrega)}
 
     async function buscarSugestoesNominatim(query, callback) {
         try {
-            // Nominatim — OpenStreetMap, gratuito e sem limite de cadastro.
-            // Requisito: User-Agent identificado e debounce >= 300ms (respeitado acima).
             const url = `https://nominatim.openstreetmap.org/search?` +
                 `q=${encodeURIComponent(query)}&format=json&addressdetails=1` +
                 `&countrycodes=br&limit=6&accept-language=pt-BR`;
@@ -741,7 +717,7 @@ ${limparEndereco(o.enderecoEntrega)}
             callback(data.map(item => ({
                 label: item.display_name,
                 value: item.display_name,
-                latitude:  parseFloat(item.lat),
+                latitude: parseFloat(item.lat),
                 longitude: parseFloat(item.lon),
             })));
         } catch (error) {
@@ -779,7 +755,7 @@ ${limparEndereco(o.enderecoEntrega)}
         try {
             if (typeof H !== 'undefined' && window.HERE_API_CONFIG?.apiKey) {
                 herePlatform = new H.service.Platform({ apikey: window.HERE_API_CONFIG.apiKey });
-                hereRouter   = herePlatform.getRoutingService(null, 8);
+                hereRouter = herePlatform.getRoutingService(null, 8);
                 console.log('✅ HERE Maps inicializado!');
             } else {
                 console.warn('⚠️ HERE Maps SDK ou HERE_API_CONFIG não disponíveis');
@@ -798,19 +774,19 @@ ${limparEndereco(o.enderecoEntrega)}
             hereRouter.calculateRoute(
                 {
                     transportMode: 'car',
-                    origin:      `${origemCoords.lat},${origemCoords.lng}`,
+                    origin: `${origemCoords.lat},${origemCoords.lng}`,
                     destination: `${destinoCoords.lat},${destinoCoords.lng}`,
-                    return:      'summary',
+                    return: 'summary',
                 },
                 (result) => {
                     const section = result.routes?.[0]?.sections?.[0];
                     if (!section) { reject(new Error('Nenhuma rota encontrada')); return; }
-                    const km      = (section.summary.length / 1000).toFixed(1);
+                    const km = (section.summary.length / 1000).toFixed(1);
                     const minutos = Math.round(section.summary.duration / 60);
                     resolve({
-                        distanciaKm:    parseFloat(km),
+                        distanciaKm: parseFloat(km),
                         distanciaTexto: `${km} km`,
-                        duracaoTexto:   minutos < 60
+                        duracaoTexto: minutos < 60
                             ? `${minutos} min`
                             : `${Math.floor(minutos / 60)}h ${minutos % 60}min`,
                     });
@@ -856,14 +832,14 @@ ${limparEndereco(o.enderecoEntrega)}
     function inicializarSwiper() {
         const swiperEl = document.querySelector('.hero-swiper');
         if (!swiperEl || typeof Swiper === 'undefined') return;
-        if (swiperEl.swiper) return; // já inicializado, não duplica
+        if (swiperEl.swiper) return;
 
         new Swiper('.hero-swiper', {
-            loop:       true,
-            autoplay:   { delay: 5000, disableOnInteraction: false },
+            loop: true,
+            autoplay: { delay: 5000, disableOnInteraction: false },
             pagination: { el: '.swiper-pagination', clickable: true },
-            speed:      1000,
-            effect:     'fade',
+            speed: 1000,
+            effect: 'fade',
             fadeEffect: { crossFade: true },
         });
     }
@@ -903,13 +879,11 @@ ${limparEndereco(o.enderecoEntrega)}
     inicializarSwiper();
     inicializarSmoothScroll();
 
-    // Header com sombra ao scrollar
     const header = document.querySelector('header');
     if (header) {
         window.addEventListener('scroll', () => header.classList.toggle('scrolled', window.scrollY > 50));
     }
 
-    // Botão "Voltar ao topo"
     const backToTop = document.querySelector('.back-to-top');
     if (backToTop) {
         window.addEventListener('scroll', () => {
@@ -918,27 +892,22 @@ ${limparEndereco(o.enderecoEntrega)}
         backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     }
 
-    // Menu mobile
     const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-    const navLinks      = document.querySelector('.nav-links');
+    const navLinks = document.querySelector('.nav-links');
     if (mobileMenuBtn && navLinks) {
         mobileMenuBtn.addEventListener('click', () => navLinks.classList.toggle('active'));
-        // Fecha menu ao clicar em qualquer link
         navLinks.querySelectorAll('a').forEach(link => {
             link.addEventListener('click', () => navLinks.classList.remove('active'));
         });
     }
 
-    // Event listeners do formulário de orçamento
     document.getElementById('btn-calcular')?.addEventListener('click', window.calcularOrcamento);
     document.getElementById('btn-confirmar')?.addEventListener('click', window.enviarPedidoWhatsApp);
 
-    // Fechar modal ao clicar no backdrop
     window.addEventListener('click', (e) => {
         if (e.target.classList?.contains('modal')) window.fecharModal(e.target.id);
     });
 
-    // Fechar modal com tecla ESC
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             document.querySelectorAll('.modal').forEach(m => {
