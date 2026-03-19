@@ -6,9 +6,3 @@ cmds = []
 
 [start]
 cmd = "php -S 0.0.0.0:$PORT -t ."
-```
-5. Clique em **Commit changes**
-
-6. Repita para o `Procfile` com o conteúdo:
-```
-web: php -S 0.0.0.0:$PORT -t .
