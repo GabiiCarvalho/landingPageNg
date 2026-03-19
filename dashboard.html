@@ -465,8 +465,12 @@
     <script src="js/script.js"></script>
     <script>
     // ============================================================
-    //  DASHBOARD
+    //  DASHBOARD - CORRIGIDO COM API_BASE_URL
     // ============================================================
+    
+    // Definir a URL base da API (Railway)
+    const API_BASE_URL = window.API_BASE_URL || 'https://landingpageng-production.up.railway.app/api';
+    
     let orcamentosCache = [];
 
     function mostrarTab(tab, el) {
@@ -604,7 +608,7 @@
 
         if (!usuario) {
             try {
-                const r = await fetch('api/usuarios/verificar.php');
+                const r = await fetch(`${API_BASE_URL}/usuarios/verificar.php`);
                 const d = await respostaSegura(r);
                 if (d._phpNaoExecutado) {
                     mostrarAlertaDev();
@@ -629,7 +633,7 @@
 
         // 2. Carregar histórico
         try {
-            const r = await fetch('api/orcamentos/historico.php');
+            const r = await fetch(`${API_BASE_URL}/orcamentos/historico.php`);
             const d = await respostaSegura(r);
 
             if (d._phpNaoExecutado) {
@@ -681,7 +685,7 @@
         btn.innerHTML = '<span class="loading-spinner"></span> Salvando...';
 
         try {
-            const r = await fetch('api/usuarios/atualizar.php', {
+            const r = await fetch(`${API_BASE_URL}/usuarios/atualizar.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nome, telefone, senha: senha || null })

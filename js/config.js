@@ -1,5 +1,5 @@
-// Configuração da API
-window.API_BASE_URL = window.location.origin + '/api';
+// Configuração da API - Apontando para o Railway
+window.API_BASE_URL = 'https://landingpageng-production.up.railway.app/api';
 
 // Configurações da API HERE Maps
 window.HERE_API_CONFIG = {

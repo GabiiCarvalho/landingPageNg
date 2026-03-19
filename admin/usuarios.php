@@ -1,4 +1,5 @@
 <?php
+// admin/usuarios.php
 require_once 'config/auth.php';
 require_once '../config/database.php';
 
