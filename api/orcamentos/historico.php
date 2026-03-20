@@ -1,6 +1,6 @@
 <?php
 // api/orcamentos/historico.php
-require_once '../../cors.php';
+require_once(__DIR__ . '/../../cors.php');
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET');
