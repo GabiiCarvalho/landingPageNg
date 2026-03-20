@@ -585,24 +585,27 @@ ${o.enderecoEntrega}
                 debounceTimer = setTimeout(() => buscarSugestoesNominatim(req.term, resp), 400);
             },
             select(event, ui) {
-                event.preventDefault();
-                // Preenche o campo só com a parte da rua (sem número/bairro/cidade)
-                const a = ui.item.address || {};
-                const rua = a.road || a.pedestrian || a.footway || a.path || ui.item.labelCompleto;
-                this.value = rua || ui.item.labelCompleto;
-                if (ui.item.latitude && ui.item.longitude) {
-                    window.coordenadasCache[`geocode_${ui.item.labelCompleto}`] = {
-                        lat: ui.item.latitude,
-                        lng: ui.item.longitude
-                    };
-                    // Salva também pelo valor do campo para geocodificação
-                    window.coordenadasCache[`geocode_${this.value}`] = {
-                        lat: ui.item.latitude,
-                        lng: ui.item.longitude
-                    };
-                }
-                return false;
-            },
+    event.preventDefault();
+    const a = ui.item.address || {};
+
+    const rua    = a.road || a.pedestrian || a.footway || a.path || '';
+    const bairro = a.suburb || a.neighbourhood || a.quarter || '';
+    const cidade = a.city || a.town || a.village || '';
+    const cep    = a.postcode || '';
+
+    // Monta endereço completo no campo: Rua, Bairro, Cidade - CEP
+    const partes = [rua, bairro, cidade].filter(Boolean).join(', ');
+    this.value = cep ? `${partes} - ${cep}` : partes;
+
+    // Salva coordenadas para geocodificação
+    if (ui.item.latitude && ui.item.longitude) {
+        window.coordenadasCache[`geocode_${this.value}`] = {
+            lat: ui.item.latitude,
+            lng: ui.item.longitude
+        };
+    }
+    return false;
+},
         };
 
         $(campoColeta).autocomplete(opcoes);
