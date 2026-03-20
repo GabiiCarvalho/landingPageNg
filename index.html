@@ -272,33 +272,39 @@
 
     <!-- Modais -->
     <!-- Modal de Login -->
-    <div class="modal" id="login-modal">
-        <div class="modal-content" style="max-width: 400px;">
-            <span class="close-modal" onclick="fecharModal('login-modal')">&times;</span>
-            <h2><i class="bi bi-box-arrow-in-right"></i> Login</h2>
-            <form onsubmit="fazerLogin(event)">
-                <div class="form-section">
-                    <div class="form-group">
-                        <label for="login-email">E-mail</label>
-                        <input type="email" id="login-email" placeholder="seu@email.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="login-senha">Senha</label>
-                        <input type="password" id="login-senha" placeholder="******" required>
-                    </div>
-                    <button type="submit" class="btn" style="width: 100%;">
-                        <i class="bi bi-box-arrow-in-right"></i> Entrar
-                    </button>
-                    <p style="text-align: center; margin-top: 15px;">
-                        Não tem conta? 
-                        <a href="#" onclick="abrirModalCadastro(); return false;" style="color: var(--primary-color);">
-                            Cadastre-se
-                        </a>
-                    </p>
+<div class="modal" id="login-modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <span class="close-modal" onclick="fecharModal('login-modal')">&times;</span>
+        <h2><i class="bi bi-box-arrow-in-right"></i> Login</h2>
+        <form onsubmit="fazerLogin(event)">
+            <div class="form-section">
+                <div class="form-group">
+                    <label for="login-email">E-mail</label>
+                    <input type="email" id="login-email" placeholder="seu@email.com" required>
                 </div>
-            </form>
-        </div>
+                <div class="form-group">
+                    <label for="login-senha">Senha</label>
+                    <input type="password" id="login-senha" placeholder="******" required>
+                </div>
+                <div class="form-group" style="display:flex;align-items:center;gap:8px;margin-top:-8px;">
+                    <input type="checkbox" id="lembrar-email" style="width:auto;cursor:pointer;">
+                    <label for="lembrar-email" style="margin:0;font-size:.9rem;cursor:pointer;color:var(--text-secondary);">
+                        Lembrar meu e-mail
+                    </label>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">
+                    <i class="bi bi-box-arrow-in-right"></i> Entrar
+                </button>
+                <p style="text-align: center; margin-top: 15px;">
+                    Não tem conta? 
+                    <a href="#" onclick="abrirModalCadastro(); return false;" style="color: var(--primary-color);">
+                        Cadastre-se
+                    </a>
+                </p>
+            </div>
+        </form>
     </div>
+</div>
 
     <!-- Modal de Cadastro -->
     <div class="modal" id="cadastro-modal">

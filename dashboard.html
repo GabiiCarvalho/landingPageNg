@@ -619,8 +619,12 @@
                     usuario = d.usuario;
                     sessionStorage.setItem('usuario', JSON.stringify(usuario));
                 } else {
-                    window.location.href = 'index.html';
-                    return;
+                    const cached = sessionStorage.getItem('usuario');
+                    if (!cached) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+                    usuario = JSON.parse(cached);
                 }
             } catch {
                 mostrarAlertaDev();

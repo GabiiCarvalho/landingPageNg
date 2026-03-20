@@ -1,27 +1,3 @@
-// ============================================================
-//  N&G EXPRESS — script.js  (versão revisada com API_BASE_URL)
-//  Correções e melhorias aplicadas:
-//   • PRICING_CONFIG → window.PRICING_CONFIG (escopo seguro)
-//   • Login/Cadastro aguardam preenchimento antes de fechar modal
-//   • verificarSessao() com fallback sessionStorage quando API falha
-//   • preencherFormularioComUsuario() centralizada e sem sobrescrever edições
-//   • atualizarUILogado / atualizarUIDeslogado separados (sem duplicação)
-//   • calcularRotaComHere() verifica hereRouter antes de chamar
-//   • mostrarToast() exposta em window (usada pelo dashboard)
-//   • aplicarMascaraTelefone() cobre paste e input
-//   • obterDimensoes() com guards seguros
-//   • calcularOrcamento() restaura botão "Calcular" após novo pedido
-//   • Banner de boas-vindas no formulário quando usuário está logado
-//   • Debounce de autocomplete com cancelamento correto
-//   • Erros de CORS/PositionStack tratados com mensagem amigável
-//   • hereRouter.calculateRoute com verificação prévia de inicialização
-//   • geocodificação em paralelo com Promise.all (mais rápido)
-//   • Fechar modal com tecla ESC
-//   • Menu mobile fecha ao clicar em link
-//   • Swiper com guard para não inicializar duas vezes
-//   • Todas as chamadas fetch usam window.API_BASE_URL do config.js
-// ============================================================
-
 document.addEventListener('DOMContentLoaded', function () {
     console.log('🚀 Sistema N&G EXPRESS iniciado!');
 
@@ -29,13 +5,11 @@ document.addEventListener('DOMContentLoaded', function () {
     //  UTILITÁRIOS GLOBAIS
     // ============================================================
 
-    /** Atualiza o ano no footer */
     function atualizarAno() {
         const el = document.getElementById('currentYear');
         if (el) el.textContent = new Date().getFullYear();
     }
 
-    /** Máscara de telefone — cobre input E paste */
     function aplicarMascaraTelefone() {
         const tel = document.getElementById('cliente-telefone');
         if (!tel) return;
@@ -54,15 +28,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    /** Formata valor em moeda BRL */
     function formatarMoeda(valor) {
         return `R$ ${Number(valor).toFixed(2).replace('.', ',')}`;
     }
 
-    /**
-     * Exibe toast na tela.
-     * Exposta em window para uso externo (dashboard, etc.)
-     */
     function mostrarToast(msg, tipo = 'success') {
         const container = document.getElementById('toast-container');
         if (!container) return;
@@ -82,13 +51,28 @@ document.addEventListener('DOMContentLoaded', function () {
             setTimeout(() => toast.remove(), 400);
         }, 4600);
     }
-    window.mostrarToast = mostrarToast; // expõe globalmente
+    window.mostrarToast = mostrarToast;
+
+    // ============================================================
+    //  LEMBRAR E-MAIL
+    // ============================================================
+
+    function inicializarLembrarEmail() {
+        const campoEmail = document.getElementById('login-email');
+        const checkbox   = document.getElementById('lembrar-email');
+        if (!campoEmail || !checkbox) return;
+
+        const emailSalvo = localStorage.getItem('ng_email_salvo');
+        if (emailSalvo) {
+            campoEmail.value  = emailSalvo;
+            checkbox.checked  = true;
+        }
+    }
 
     // ============================================================
     //  GERENCIAMENTO DE SESSÃO / UI
     // ============================================================
 
-    /** Atualiza a interface para usuário LOGADO */
     function atualizarUILogado(usuario) {
         document.querySelectorAll('.login-item').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.perfil-item').forEach(el => el.style.display = 'block');
@@ -99,22 +83,17 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    /** Atualiza a interface para usuário DESLOGADO */
     function atualizarUIDeslogado() {
         document.querySelectorAll('.login-item').forEach(el => el.style.display = 'block');
         document.querySelectorAll('.perfil-item').forEach(el => el.style.display = 'none');
     }
 
-    /**
-     * Preenche os campos do formulário de pedido com os dados do usuário.
-     * Só preenche campos que ainda estão vazios (não sobrescreve edições manuais).
-     */
     function preencherFormularioComUsuario(usuario) {
         if (!usuario) return;
 
         const campos = {
-            'cliente-nome': usuario.nome,
-            'cliente-email': usuario.email,
+            'cliente-nome':     usuario.nome,
+            'cliente-email':    usuario.email,
             'cliente-telefone': usuario.telefone,
         };
 
@@ -126,7 +105,6 @@ document.addEventListener('DOMContentLoaded', function () {
         exibirBannerUsuario(usuario);
     }
 
-    /** Mostra um banner discreto no topo do formulário quando logado */
     function exibirBannerUsuario(usuario) {
         const form = document.getElementById('form-orcamento');
         if (!form || document.getElementById('banner-usuario')) return;
@@ -146,11 +124,6 @@ document.addEventListener('DOMContentLoaded', function () {
         form.insertBefore(banner, form.firstChild);
     }
 
-    /**
-     * Verifica sessão do usuário:
-     *  1. Tenta a API PHP
-     *  2. Se falhar, usa sessionStorage como fallback
-     */
     function servidorNaoExecutaPHP(texto) {
         const t = texto.trimStart();
         return t.startsWith('<?php') || t.startsWith('<?');
@@ -158,35 +131,41 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function verificarSessao() {
         if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') {
-            console.warn('⚠️ Protocolo file:// — usando sessionStorage (modo dev)');
             usarSessaoLocal();
+            return;
+        }
+
+        // Usa sessionStorage primeiro — evita piscar UI
+        const cached = sessionStorage.getItem('usuario');
+        if (cached) {
+            try {
+                const usuario = JSON.parse(cached);
+                atualizarUILogado(usuario);
+                preencherFormularioComUsuario(usuario);
+            } catch {
+                sessionStorage.removeItem('usuario');
+                atualizarUIDeslogado();
+            }
             return;
         }
 
         try {
             const response = await fetch(`${window.API_BASE_URL}/usuarios/verificar.php`);
-
             const texto = await response.text();
 
             if (servidorNaoExecutaPHP(texto)) {
-                console.warn('⚠️ Servidor não executa PHP — modo desenvolvimento ativo');
-                console.info('ℹ️ Use XAMPP/WAMP em http://localhost para o sistema funcionar completamente');
-                window._modoDesenvolvimento = true;
                 usarSessaoLocal();
                 return;
             }
 
             if (!response.ok) {
-                console.warn('⚠️ API retornou status', response.status, '— usando sessionStorage');
                 usarSessaoLocal();
                 return;
             }
 
             let data;
-            try {
-                data = JSON.parse(texto);
-            } catch {
-                console.warn('⚠️ JSON inválido da API:', texto.substring(0, 120));
+            try { data = JSON.parse(texto); }
+            catch {
                 usarSessaoLocal();
                 return;
             }
@@ -200,12 +179,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 atualizarUIDeslogado();
             }
         } catch (error) {
-            console.warn('⚠️ Erro ao verificar sessão:', error.message);
             usarSessaoLocal();
         }
     }
 
-    /** Fallback: usa os dados em sessionStorage quando a API não responde */
     function usarSessaoLocal() {
         const cached = sessionStorage.getItem('usuario');
         if (cached) {
@@ -222,20 +199,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    /**
-     * Parseia a resposta de uma API PHP de forma segura.
-     * Lança erro descritivo se o servidor não estiver executando PHP.
-     */
     async function parseRespostaAPI(response) {
         const texto = await response.text();
         if (servidorNaoExecutaPHP(texto)) {
             throw new Error('Servidor não executa PHP. Use XAMPP/WAMP em http://localhost');
         }
-        try {
-            return JSON.parse(texto);
-        } catch {
-            throw new Error('Resposta inválida do servidor: ' + texto.substring(0, 80));
-        }
+        try { return JSON.parse(texto); }
+        catch { throw new Error('Resposta inválida do servidor: ' + texto.substring(0, 80)); }
     }
 
     // ============================================================
@@ -244,7 +214,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.abrirModalLogin = () => {
         const modal = document.getElementById('login-modal');
-        if (modal) { modal.style.display = 'block'; document.body.style.overflow = 'hidden'; }
+        if (modal) {
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            inicializarLembrarEmail();
+        }
     };
 
     window.abrirModalCadastro = () => {
@@ -267,6 +241,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const email = document.getElementById('login-email')?.value?.trim();
         const senha = document.getElementById('login-senha')?.value;
+        const lembrar = document.getElementById('lembrar-email')?.checked;
 
         if (!email || !senha) {
             mostrarToast('Preencha e-mail e senha', 'error');
@@ -287,6 +262,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await parseRespostaAPI(response);
 
             if (data.success && data.usuario) {
+                // Lembrar e-mail
+                if (lembrar) {
+                    localStorage.setItem('ng_email_salvo', email);
+                } else {
+                    localStorage.removeItem('ng_email_salvo');
+                }
+
                 sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
                 atualizarUILogado(data.usuario);
                 preencherFormularioComUsuario(data.usuario);
@@ -310,10 +292,10 @@ document.addEventListener('DOMContentLoaded', function () {
     window.fazerCadastro = async (event) => {
         event.preventDefault();
 
-        const nome = document.getElementById('cadastro-nome')?.value?.trim();
-        const email = document.getElementById('cadastro-email')?.value?.trim();
+        const nome     = document.getElementById('cadastro-nome')?.value?.trim();
+        const email    = document.getElementById('cadastro-email')?.value?.trim();
         const telefone = document.getElementById('cadastro-telefone')?.value?.trim();
-        const senha = document.getElementById('cadastro-senha')?.value;
+        const senha    = document.getElementById('cadastro-senha')?.value;
         const confirmar = document.getElementById('cadastro-confirmar-senha')?.value;
 
         if (!nome || !email || !telefone || !senha) {
@@ -386,11 +368,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function validarFormulario() {
         const obrigatorios = [
-            { id: 'cliente-nome', label: 'Nome completo' },
-            { id: 'cliente-telefone', label: 'Telefone' },
-            { id: 'cliente-email', label: 'E-mail' },
-            { id: 'endereco-coleta', label: 'Endereço de coleta' },
-            { id: 'endereco-entrega', label: 'Endereço de entrega' },
+            { id: 'cliente-nome',      label: 'Nome completo' },
+            { id: 'cliente-telefone',  label: 'Telefone' },
+            { id: 'cliente-email',     label: 'E-mail' },
+            { id: 'endereco-coleta',   label: 'Endereço de coleta' },
+            { id: 'endereco-entrega',  label: 'Endereço de entrega' },
         ];
 
         for (const { id, label } of obrigatorios) {
@@ -412,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return false;
         }
 
-        const coleta = document.getElementById('endereco-coleta')?.value?.trim();
+        const coleta  = document.getElementById('endereco-coleta')?.value?.trim();
         const entrega = document.getElementById('endereco-entrega')?.value?.trim();
         if (coleta && entrega && coleta.toLowerCase() === entrega.toLowerCase()) {
             mostrarToast('Os endereços de coleta e entrega não podem ser iguais', 'warning');
@@ -427,7 +409,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ============================================================
 
     function obterDimensoes() {
-        const ids = ['comprimento', 'largura', 'altura', 'peso'];
+        const ids  = ['comprimento', 'largura', 'altura', 'peso'];
         const vals = ids.map(id => {
             const el = document.getElementById(id);
             return el ? parseFloat(el.value) : NaN;
@@ -467,7 +449,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ============================================================
-    //  ORÇAMENTO — CALCULAR (botão principal)
+    //  ORÇAMENTO — CALCULAR
     // ============================================================
 
     function limparEndereco(enderecoCompleto) {
@@ -477,9 +459,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function montarEndereco(campoId, numeroId) {
-        const endereco = document.getElementById(campoId)?.value?.trim() || '';
-        const numero = document.getElementById(numeroId)?.value?.trim() || '';
-        const compId = campoId === 'endereco-coleta' ? 'complemento-coleta' : 'complemento-entrega';
+        const endereco    = document.getElementById(campoId)?.value?.trim() || '';
+        const numero      = document.getElementById(numeroId)?.value?.trim() || '';
+        const compId      = campoId === 'endereco-coleta' ? 'complemento-coleta' : 'complemento-entrega';
         const complemento = document.getElementById(compId)?.value?.trim() || '';
 
         let resultado = endereco;
@@ -493,9 +475,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        if (complemento) {
-            resultado += ' - ' + complemento;
-        }
+        if (complemento) resultado += ' - ' + complemento;
 
         return resultado;
     }
@@ -507,27 +487,25 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!btn) return;
 
         btn.style.display = '';
-
         const originalHTML = btn.innerHTML;
         btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Calculando distância...';
-        btn.disabled = true;
+        btn.disabled  = true;
 
-        const resultado = document.getElementById('orcamento-resultado');
+        const resultado   = document.getElementById('orcamento-resultado');
         const distanciaInfo = document.getElementById('distancia-info');
-        const btnConfirmar = document.getElementById('btn-confirmar');
-        if (resultado) resultado.style.display = 'none';
+        const btnConfirmar  = document.getElementById('btn-confirmar');
+        if (resultado)    resultado.style.display    = 'none';
         if (distanciaInfo) distanciaInfo.style.display = 'none';
-        if (btnConfirmar) btnConfirmar.style.display = 'none';
+        if (btnConfirmar)  btnConfirmar.style.display  = 'none';
 
         try {
-            const origem = document.getElementById('endereco-coleta')?.value?.trim();
+            const origem  = document.getElementById('endereco-coleta')?.value?.trim();
             const destino = document.getElementById('endereco-entrega')?.value?.trim();
-            const origemComNumero = montarEndereco('endereco-coleta', 'numero-coleta');
+            const origemComNumero  = montarEndereco('endereco-coleta',  'numero-coleta');
             const destinoComNumero = montarEndereco('endereco-entrega', 'numero-entrega');
 
             const veiculoRadio = document.querySelector('input[name="tipo-veiculo"]:checked');
             if (!veiculoRadio) throw new Error('Selecione um tipo de veículo');
-
             const veiculo = veiculoRadio.value;
 
             if (typeof window.calcularDistanciaCombinado === 'function') {
@@ -538,26 +516,26 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             const dimensoes = obterDimensoes();
-            const preco = calcularPreco(window.distanciaAtual.distanciaKm, veiculo, dimensoes);
+            const preco     = calcularPreco(window.distanciaAtual.distanciaKm, veiculo, dimensoes);
 
-            const dtexto = document.getElementById('distancia-texto');
+            const dtexto  = document.getElementById('distancia-texto');
             const dduracao = document.getElementById('duracao-texto');
-            if (dtexto) dtexto.textContent = window.distanciaAtual.distanciaTexto;
+            if (dtexto)   dtexto.textContent  = window.distanciaAtual.distanciaTexto;
             if (dduracao) dduracao.textContent = window.distanciaAtual.duracaoTexto;
             if (distanciaInfo) distanciaInfo.style.display = 'block';
 
             window.orcamentoAtual = {
-                numeroPedido: 'NG' + Date.now().toString().slice(-6),
-                data: new Date().toLocaleString('pt-BR'),
-                nome: document.getElementById('cliente-nome')?.value || '',
-                telefone: document.getElementById('cliente-telefone')?.value || '',
-                email: document.getElementById('cliente-email')?.value || '',
-                tipoVeiculo: veiculo,
-                enderecoColeta: origemComNumero,
+                numeroPedido:   'NG' + Date.now().toString().slice(-6),
+                data:           new Date().toLocaleString('pt-BR'),
+                nome:           document.getElementById('cliente-nome')?.value  || '',
+                telefone:       document.getElementById('cliente-telefone')?.value || '',
+                email:          document.getElementById('cliente-email')?.value || '',
+                tipoVeiculo:    veiculo,
+                enderecoColeta:  origemComNumero,
                 enderecoEntrega: destinoComNumero,
-                distancia: window.distanciaAtual.distanciaTexto,
-                distanciaNum: window.distanciaAtual.distanciaKm,
-                duracao: window.distanciaAtual.duracaoTexto,
+                distancia:       window.distanciaAtual.distanciaTexto,
+                distanciaNum:    window.distanciaAtual.distanciaKm,
+                duracao:         window.distanciaAtual.duracaoTexto,
                 dimensoes: dimensoes
                     ? `${dimensoes.comprimento}x${dimensoes.largura}x${dimensoes.altura}cm, ${dimensoes.peso}kg`
                     : 'Não informado',
@@ -567,7 +545,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const totalValor = document.getElementById('total-valor');
             if (totalValor) totalValor.textContent = formatarMoeda(preco);
-            if (resultado) resultado.style.display = 'block';
+            if (resultado)  resultado.style.display  = 'block';
 
             btn.style.display = 'none';
             if (btnConfirmar) btnConfirmar.style.display = 'block';
@@ -580,7 +558,7 @@ document.addEventListener('DOMContentLoaded', function () {
             btn.style.display = '';
         } finally {
             btn.innerHTML = originalHTML;
-            btn.disabled = false;
+            btn.disabled  = false;
         }
     };
 
@@ -636,22 +614,20 @@ ${limparEndereco(o.enderecoEntrega)}
 
         if (sessionStorage.getItem('usuario')) {
             try {
-                const saveResp = await fetch(`${window.API_BASE_URL}/orcamentos/salvar.php`, {
+                await fetch(`${window.API_BASE_URL}/orcamentos/salvar.php`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        numero_pedido: o.numeroPedido,
-                        tipo_veiculo: o.tipoVeiculo,
-                        endereco_coleta: o.enderecoColeta,
+                        numero_pedido:    o.numeroPedido,
+                        tipo_veiculo:     o.tipoVeiculo,
+                        endereco_coleta:  o.enderecoColeta,
                         endereco_entrega: o.enderecoEntrega,
-                        dimensoes: o.dimensoes,
-                        peso: parseFloat(o.peso) || 0,
-                        descricao: o.descricao,
-                        valor_total: o.preco,
+                        dimensoes:        o.dimensoes,
+                        peso:             parseFloat(o.peso) || 0,
+                        descricao:        o.descricao,
+                        valor_total:      o.preco,
                     }),
                 });
-                const saveData = await saveResp.text();
-                console.log('✅ Resposta do salvar.php:', saveData.substring(0, 100));
             } catch (e) {
                 console.warn('⚠️ Não foi possível salvar no histórico:', e.message);
             }
@@ -664,21 +640,21 @@ ${limparEndereco(o.enderecoEntrega)}
     //  VARIÁVEIS DE ESTADO
     // ============================================================
 
-    window.orcamentoAtual = null;
-    window.distanciaAtual = null;
+    window.orcamentoAtual  = null;
+    window.distanciaAtual  = null;
     window.coordenadasCache = {};
 
     let herePlatform = null;
-    let hereRouter = null;
+    let hereRouter   = null;
 
     // ============================================================
-    //  POSITIONSTACK — AUTOCOMPLETE
+    //  AUTOCOMPLETE — NOMINATIM
     // ============================================================
 
     let debounceTimer = null;
 
     function inicializarAutocomplete() {
-        const campoColeta = document.getElementById('endereco-coleta');
+        const campoColeta  = document.getElementById('endereco-coleta');
         const campoEntrega = document.getElementById('endereco-entrega');
         if (!campoColeta || !campoEntrega) return;
         if (typeof jQuery === 'undefined' || !jQuery.fn.autocomplete) return;
@@ -715,9 +691,9 @@ ${limparEndereco(o.enderecoEntrega)}
             const data = await response.json();
 
             callback(data.map(item => ({
-                label: item.display_name,
-                value: item.display_name,
-                latitude: parseFloat(item.lat),
+                label:     item.display_name,
+                value:     item.display_name,
+                latitude:  parseFloat(item.lat),
                 longitude: parseFloat(item.lon),
             })));
         } catch (error) {
@@ -748,14 +724,14 @@ ${limparEndereco(o.enderecoEntrega)}
     }
 
     // ============================================================
-    //  HERE MAPS — ROTAS
+    //  HERE MAPS
     // ============================================================
 
     function inicializarHereMaps() {
         try {
             if (typeof H !== 'undefined' && window.HERE_API_CONFIG?.apiKey) {
                 herePlatform = new H.service.Platform({ apikey: window.HERE_API_CONFIG.apiKey });
-                hereRouter = herePlatform.getRoutingService(null, 8);
+                hereRouter   = herePlatform.getRoutingService(null, 8);
                 console.log('✅ HERE Maps inicializado!');
             } else {
                 console.warn('⚠️ HERE Maps SDK ou HERE_API_CONFIG não disponíveis');
@@ -774,19 +750,19 @@ ${limparEndereco(o.enderecoEntrega)}
             hereRouter.calculateRoute(
                 {
                     transportMode: 'car',
-                    origin: `${origemCoords.lat},${origemCoords.lng}`,
+                    origin:      `${origemCoords.lat},${origemCoords.lng}`,
                     destination: `${destinoCoords.lat},${destinoCoords.lng}`,
                     return: 'summary',
                 },
                 (result) => {
                     const section = result.routes?.[0]?.sections?.[0];
                     if (!section) { reject(new Error('Nenhuma rota encontrada')); return; }
-                    const km = (section.summary.length / 1000).toFixed(1);
+                    const km      = (section.summary.length / 1000).toFixed(1);
                     const minutos = Math.round(section.summary.duration / 60);
                     resolve({
-                        distanciaKm: parseFloat(km),
+                        distanciaKm:   parseFloat(km),
                         distanciaTexto: `${km} km`,
-                        duracaoTexto: minutos < 60
+                        duracaoTexto:   minutos < 60
                             ? `${minutos} min`
                             : `${Math.floor(minutos / 60)}h ${minutos % 60}min`,
                     });
@@ -796,12 +772,8 @@ ${limparEndereco(o.enderecoEntrega)}
         });
     }
 
-    // ============================================================
-    //  FUNÇÃO PRINCIPAL DE CÁLCULO (geocodifica em paralelo)
-    // ============================================================
-
     window.calcularDistanciaCombinado = async function (origem, destino) {
-        console.log('📍 Geocodificando endereços via Nominatim (OSM)...');
+        console.log('📍 Geocodificando endereços via Nominatim...');
         const [origemCoords, destinoCoords] = await Promise.all([
             geocodificarComNominatim(origem),
             geocodificarComNominatim(destino),
@@ -811,17 +783,13 @@ ${limparEndereco(o.enderecoEntrega)}
         return await calcularRotaComHere(origemCoords, destinoCoords);
     };
 
-    // ============================================================
-    //  INICIALIZAÇÃO DO HERE MAPS COM RETRY
-    // ============================================================
-
     function aguardarHereMaps(tentativas = 0) {
         if (typeof H !== 'undefined') {
             inicializarHereMaps();
         } else if (tentativas < 10) {
             setTimeout(() => aguardarHereMaps(tentativas + 1), 300);
         } else {
-            console.warn('⚠️ HERE Maps não carregou após 3s. Verifique os scripts no HTML.');
+            console.warn('⚠️ HERE Maps não carregou após 3s.');
         }
     }
 
@@ -893,7 +861,7 @@ ${limparEndereco(o.enderecoEntrega)}
     }
 
     const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-    const navLinks = document.querySelector('.nav-links');
+    const navLinks      = document.querySelector('.nav-links');
     if (mobileMenuBtn && navLinks) {
         mobileMenuBtn.addEventListener('click', () => navLinks.classList.toggle('active'));
         navLinks.querySelectorAll('a').forEach(link => {
