@@ -13,7 +13,6 @@
 
         .admin-page { padding: 40px 0 80px; background: var(--bg-primary); }
         .admin-grid { display: grid; grid-template-columns: 260px 1fr; gap: 28px; align-items: start; }
-        @media (max-width: 768px) { .admin-grid { grid-template-columns: 1fr; } }
 
         .page-header {
             background: linear-gradient(135deg, #1a0533, #0a0a1f);
@@ -80,8 +79,7 @@
         .admin-card-body { padding: 24px; }
 
         .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-        @media (max-width: 900px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 500px) { .stats-row { grid-template-columns: 1fr; } }
+
         .stat-box {
             background: var(--bg-tertiary); border: 1px solid var(--border-light);
             border-radius: var(--radius-md); padding: 22px 16px; text-align: center; transition: var(--transition-base);
@@ -119,10 +117,19 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        .user-cell { display: flex; flex-direction: column; }
+        .user-cell span { font-weight: 600; font-size: .88rem; }
+        .user-cell small { color: var(--text-tertiary); font-size: .78rem; }
+
+        .veiculo-bars { display: flex; gap: 16px; flex-wrap: wrap; }
+        .veiculo-bar-item { flex: 1; min-width: 140px; background: var(--bg-tertiary); border-radius: var(--radius-md); padding: 16px; border: 1px solid var(--border-light); }
+        .veiculo-bar-item .vb-label { font-size: .8rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .5px; }
+        .veiculo-bar-item .vb-num { font-size: 2rem; font-weight: 800; color: var(--primary-color); }
+
         /* LOGIN */
         .admin-login-wrap {
             min-height: 100vh; display: flex; align-items: center; justify-content: center;
-            background: var(--bg-primary);
+            background: var(--bg-primary); padding: 16px;
         }
         .admin-login-box {
             background: var(--bg-secondary); border-radius: var(--radius-xl);
@@ -137,16 +144,12 @@
             width: 52px; height: 52px; border-radius: 50%;
             object-fit: cover; border: 2px solid var(--primary-color);
         }
-        .admin-login-logo-text { text-align: left; }
         .admin-login-logo-text .main {
             font-size: 1.4rem; font-weight: 700;
             background: linear-gradient(135deg, var(--primary-color), #003366);
-            background-clip: text; -webkit-text-fill-color: transparent;
-            line-height: 1.2;
+            background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2;
         }
-        .admin-login-logo-text .sub {
-            font-size: .7rem; color: var(--text-tertiary); letter-spacing: 1px;
-        }
+        .admin-login-logo-text .sub { font-size: .7rem; color: var(--text-tertiary); letter-spacing: 1px; }
         .admin-login-box p { text-align: center; color: var(--text-tertiary); margin: 0 0 32px; font-size: .9rem; }
         .admin-login-box .form-group { margin-bottom: 20px; }
         .admin-login-box label { display: block; margin-bottom: 8px; font-size: .85rem; font-weight: 500; color: var(--text-secondary); }
@@ -165,17 +168,105 @@
         .btn-admin-login:hover { opacity: .88; transform: translateY(-2px); }
         .btn-admin-login:disabled { opacity: .6; cursor: not-allowed; transform: none; }
 
-        .user-cell { display: flex; flex-direction: column; }
-        .user-cell span { font-weight: 600; font-size: .88rem; }
-        .user-cell small { color: var(--text-tertiary); font-size: .78rem; }
-
-        .veiculo-bars { display: flex; gap: 16px; flex-wrap: wrap; }
-        .veiculo-bar-item { flex: 1; min-width: 140px; background: var(--bg-tertiary); border-radius: var(--radius-md); padding: 16px; border: 1px solid var(--border-light); }
-        .veiculo-bar-item .vb-label { font-size: .8rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .5px; }
-        .veiculo-bar-item .vb-num { font-size: 2rem; font-weight: 800; color: var(--primary-color); }
-
-        /* Logo sem sublinhado */
         .logo, .logo:hover, .logo:focus, .logo:visited, .logo * { text-decoration: none !important; }
+
+        /* ===== RESPONSIVIDADE ===== */
+
+        /* Monitor grande */
+        @media (min-width: 1400px) {
+            .admin-grid { grid-template-columns: 280px 1fr; gap: 32px; }
+            .stats-row { gap: 20px; }
+            .stat-box .num { font-size: 2.4rem; }
+        }
+
+        /* Tablet */
+        @media (max-width: 1024px) {
+            .admin-grid { grid-template-columns: 220px 1fr; gap: 20px; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* Mobile e Tablet pequeno */
+        @media (max-width: 768px) {
+            .admin-grid { grid-template-columns: 1fr; }
+
+            .admin-sidebar { position: relative; top: 0; }
+
+            .admin-profile {
+                padding: 16px; display: flex; align-items: center;
+                gap: 14px; text-align: left;
+            }
+            .admin-profile::before { display: none; }
+            .admin-avatar { width: 52px; height: 52px; font-size: 1.4rem; margin: 0; flex-shrink: 0; }
+            .admin-profile h3 { font-size: .95rem; margin: 0 0 2px; }
+            .admin-profile p  { font-size: .75rem; }
+            .admin-badge { margin-top: 4px; font-size: .65rem; padding: 2px 8px; }
+
+            .admin-nav {
+                display: flex; overflow-x: auto; padding: 0;
+                border-top: 1px solid var(--border-light);
+                -webkit-overflow-scrolling: touch; scrollbar-width: none;
+            }
+            .admin-nav::-webkit-scrollbar { display: none; }
+            .admin-nav a {
+                flex-shrink: 0; padding: 12px 14px;
+                border-right: none; border-bottom: 3px solid transparent;
+                font-size: .8rem; white-space: nowrap;
+                justify-content: center; flex-direction: column;
+                gap: 4px; min-width: 76px; text-align: center;
+            }
+            .admin-nav a i { width: auto; font-size: 1.1rem; }
+            .admin-nav a:hover, .admin-nav a.active {
+                border-right: none; border-bottom-color: var(--primary-color);
+                background: rgba(255,107,0,.06);
+            }
+            .admin-nav .logout-link:hover { border-bottom-color: var(--danger-color); }
+            .admin-nav-divider { width: 1px; height: 40px; margin: auto 4px; flex-shrink: 0; }
+
+            .admin-card-body { padding: 16px; }
+            .admin-card-header { padding: 14px 16px; }
+            .admin-card-header h3 { font-size: .95rem; }
+
+            .stats-row { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .stat-box { padding: 16px 12px; }
+            .stat-box .num { font-size: 1.6rem; }
+            .stat-box .lbl { font-size: .7rem; }
+
+            .veiculo-bar-item { min-width: 0; padding: 12px; }
+            .veiculo-bar-item .vb-num { font-size: 1.6rem; }
+
+            .table-scroll { max-height: 380px; }
+            .hist-table { font-size: .8rem; }
+            .hist-table thead th { padding: 9px 10px; font-size: .68rem; }
+            .hist-table td { padding: 10px; }
+            .addr-cell { max-width: 90px; }
+
+            .page-header { padding: 24px 0 20px; margin-top: 70px; }
+            .page-header h1 { font-size: 1.4rem; }
+
+            .admin-login-box { padding: 32px 24px; }
+        }
+
+        /* Mobile pequeno */
+        @media (max-width: 480px) {
+            .stats-row { gap: 8px; }
+            .stat-box .num { font-size: 1.3rem; }
+            .stat-box .lbl { font-size: .65rem; }
+
+            .admin-nav a { min-width: 68px; padding: 10px 8px; font-size: .72rem; }
+            .admin-nav a i { font-size: 1rem; }
+
+            .hist-table { font-size: .75rem; }
+            .hist-table thead th { padding: 8px; font-size: .63rem; }
+            .hist-table td { padding: 8px; }
+
+            .page-header h1 { font-size: 1.15rem; }
+
+            .admin-login-box { padding: 28px 18px; }
+            .admin-login-logo img { width: 44px; height: 44px; }
+            .admin-login-logo-text .main { font-size: 1.1rem; }
+
+            .veiculo-bar-item .vb-num { font-size: 1.4rem; }
+        }
     </style>
 </head>
 <body>
@@ -245,16 +336,18 @@
                     <aside class="admin-sidebar">
                         <div class="admin-profile">
                             <div class="admin-avatar"><i class="bi bi-person-fill"></i></div>
-                            <h3 id="admin-nome-display">Admin</h3>
-                            <p id="admin-email-display">—</p>
-                            <div class="admin-badge">ADMINISTRADOR</div>
+                            <div>
+                                <h3 id="admin-nome-display">Admin</h3>
+                                <p id="admin-email-display">—</p>
+                                <div class="admin-badge">ADMINISTRADOR</div>
+                            </div>
                         </div>
                         <nav class="admin-nav">
                             <a href="#" class="active" onclick="mostrarTabAdmin('resumo', this); return false;">
                                 <i class="bi bi-speedometer2"></i> Resumo
                             </a>
                             <a href="#" onclick="mostrarTabAdmin('corridas', this); return false;">
-                                <i class="bi bi-clock-history"></i> Todas as Corridas
+                                <i class="bi bi-clock-history"></i> Corridas
                             </a>
                             <a href="#" onclick="mostrarTabAdmin('usuarios', this); return false;">
                                 <i class="bi bi-people-fill"></i> Usuários
@@ -308,7 +401,7 @@
                                             Últimas 5 corridas
                                         </h4>
                                         <a href="#" onclick="mostrarTabAdmin('corridas', null); return false;"
-                                           style="font-size:.82rem;font-weight:600;color:var(--primary-color);text-decoration:none;">
+                                           style="font-size:.82rem;font-weight:600;color:var(--primary-color);text-decoration:none;white-space:nowrap;">
                                             Ver todas <i class="bi bi-arrow-right"></i>
                                         </a>
                                     </div>
