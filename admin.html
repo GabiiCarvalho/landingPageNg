@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - N&G EXPRESS</title>
+    <link rel="icon" href="img/logoAba.png" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .admin-page { padding: 40px 0 80px; background: var(--bg-primary); min-height: 80vh; }
+        .admin-grid { display: grid; grid-template-columns: 260px 1fr; gap: 28px; align-items: start; }
+        @media (max-width: 768px) { .admin-grid { grid-template-columns: 1fr; } }
+
+        .page-header {
+            background: linear-gradient(135deg, #1a0533, #0a0a1f);
+            border-bottom: 1px solid rgba(255,107,0,.3);
+            color: var(--text-primary);
+            padding: 40px 0 30px;
+            margin-top: 80px;
+        }
+        .page-header h1 { font-size: 2rem; margin: 0 0 6px; }
+        .page-header p  { margin: 0; color: var(--text-secondary); }
+
+        .admin-sidebar {
+            background: var(--bg-secondary); border-radius: var(--radius-lg);
+            border: 1px solid rgba(255,107,0,.2); overflow: hidden;
+            box-shadow: var(--shadow-md); position: sticky; top: 100px;
+        }
+        .admin-profile {
+            background: linear-gradient(135deg, #FF6B00, #003366);
+            padding: 28px 20px; text-align: center; color: white;
+            position: relative; overflow: hidden;
+        }
+        .admin-profile::before {
+            content: ''; position: absolute; top: -40px; right: -40px;
+            width: 120px; height: 120px; background: rgba(255,255,255,.08); border-radius: 50%;
+        }
+        .admin-avatar {
+            width: 72px; height: 72px; border-radius: 50%;
+            background: rgba(255,255,255,.2); border: 2px solid rgba(255,255,255,.4);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 12px; font-size: 2rem;
+        }
+        .admin-profile h3 { font-size: 1.1rem; margin: 0 0 4px; font-weight: 700; }
+        .admin-profile p  { font-size: .82rem; opacity: .8; margin: 0; }
+        .admin-badge {
+            display: inline-block; background: rgba(255,255,255,.2);
+            border: 1px solid rgba(255,255,255,.3); border-radius: 20px;
+            padding: 3px 12px; font-size: .75rem; font-weight: 700;
+            margin-top: 8px; letter-spacing: .5px;
+        }
+
+        .admin-nav { padding: 10px 0; }
+        .admin-nav a {
+            display: flex; align-items: center; gap: 12px; padding: 12px 20px;
+            color: var(--text-secondary); font-weight: 500; text-decoration: none;
+            transition: var(--transition-fast); font-size: .93rem; border-right: 3px solid transparent;
+        }
+        .admin-nav a i { font-size: 1.1rem; width: 20px; }
+        .admin-nav a:hover, .admin-nav a.active {
+            background: rgba(255,107,0,.08); color: var(--primary-color); border-right-color: var(--primary-color);
+        }
+        .admin-nav .logout-link { color: var(--danger-color); }
+        .admin-nav .logout-link:hover { background: rgba(255,92,92,.08); color: var(--danger-color); border-right-color: var(--danger-color); }
+        .admin-nav-divider { height: 1px; background: var(--border-light); margin: 8px 16px; }
+
+        .admin-main { display: flex; flex-direction: column; gap: 24px; }
+        .admin-card {
+            background: var(--bg-secondary); border-radius: var(--radius-lg);
+            border: 1px solid var(--border-light); overflow: hidden; box-shadow: var(--shadow-md);
+        }
+        .admin-card-header {
+            padding: 20px 24px; border-bottom: 1px solid var(--border-light);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .admin-card-header h3 { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
+        .admin-card-body { padding: 24px; }
+
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        @media (max-width: 900px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 500px) { .stats-row { grid-template-columns: 1fr; } }
+        .stat-box {
+            background: var(--bg-tertiary); border: 1px solid var(--border-light);
+            border-radius: var(--radius-md); padding: 22px 16px; text-align: center; transition: var(--transition-base);
+        }
+        .stat-box:hover { border-color: var(--primary-color); box-shadow: var(--shadow-glow); transform: translateY(-2px); }
+        .stat-box .num { font-size: 2rem; font-weight: 800; color: var(--primary-color); display: block; }
+        .stat-box .lbl { font-size: .78rem; color: var(--text-tertiary); margin-top: 6px; display: block; text-transform: uppercase; letter-spacing: .5px; }
+
+        .hist-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+        .hist-table th {
+            background: var(--bg-tertiary); padding: 11px 14px; text-align: left;
+            color: var(--text-tertiary); font-weight: 600; font-size: .75rem;
+            text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border-medium);
+        }
+        .hist-table td { padding: 13px 14px; border-bottom: 1px solid var(--border-light); color: var(--text-primary); vertical-align: middle; }
+        .hist-table tr:last-child td { border-bottom: none; }
+        .hist-table tr:hover td { background: var(--bg-tertiary); }
+
+        .pill { display: inline-block; padding: 4px 10px; border-radius: var(--radius-full); font-size: .75rem; font-weight: 600; }
+        .pill-moto  { background: rgba(0,163,255,.12); color: var(--info-color); border: 1px solid rgba(0,163,255,.2); }
+        .pill-carro { background: rgba(0,196,140,.12); color: var(--success-color); border: 1px solid rgba(0,196,140,.2); }
+
+        .addr-cell { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary); font-size: .83rem; }
+        .badge-valor { font-weight: 700; color: var(--success-color); }
+        .num-pedido  { font-weight: 700; color: var(--primary-color); font-size: .85rem; }
+        .badge-status { display: inline-block; padding: 3px 10px; border-radius: var(--radius-full); font-size: .72rem; font-weight: 700; background: rgba(0,196,140,.12); color: var(--success-color); border: 1px solid rgba(0,196,140,.2); }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-tertiary); }
+        .empty-state i { font-size: 2.8rem; margin-bottom: 12px; display: block; }
+        .loading-spinner {
+            display: inline-block; width: 18px; height: 18px;
+            border: 2px solid var(--border-medium); border-top-color: var(--primary-color);
+            border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* LOGIN */
+        .admin-login-wrap {
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            background: var(--bg-primary);
+        }
+        .admin-login-box {
+            background: var(--bg-secondary); border-radius: var(--radius-xl);
+            border: 1px solid rgba(255,107,0,.2); padding: 48px 40px;
+            width: 100%; max-width: 420px; box-shadow: var(--shadow-lg);
+        }
+        .admin-login-box h1 {
+            font-size: 1.6rem; margin: 0 0 8px; text-align: center;
+            background: linear-gradient(135deg, var(--primary-color), #003366);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .admin-login-box p { text-align: center; color: var(--text-tertiary); margin: 0 0 32px; font-size: .9rem; }
+        .admin-login-box .form-group { margin-bottom: 20px; }
+        .admin-login-box label { display: block; margin-bottom: 8px; font-size: .85rem; font-weight: 500; color: var(--text-secondary); }
+        .admin-login-box input {
+            width: 100%; padding: 13px 16px; background: var(--bg-tertiary);
+            border: 1.5px solid var(--border-medium); border-radius: var(--radius-md);
+            font-size: .95rem; color: var(--text-primary); transition: var(--transition-fast);
+        }
+        .admin-login-box input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-glow); }
+        .btn-admin-login {
+            width: 100%; padding: 14px; background: linear-gradient(135deg, var(--primary-color), #003366);
+            color: white; border: none; border-radius: var(--radius-full); font-size: 1rem;
+            font-weight: 600; cursor: pointer; transition: var(--transition-base);
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-admin-login:hover { opacity: .88; transform: translateY(-2px); }
+        .btn-admin-login:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+        .user-cell { display: flex; flex-direction: column; }
+        .user-cell span { font-weight: 600; font-size: .88rem; }
+        .user-cell small { color: var(--text-tertiary); font-size: .78rem; }
+
+        .veiculo-bars { display: flex; gap: 16px; flex-wrap: wrap; }
+        .veiculo-bar-item { flex: 1; min-width: 140px; background: var(--bg-tertiary); border-radius: var(--radius-md); padding: 16px; border: 1px solid var(--border-light); }
+        .veiculo-bar-item .vb-label { font-size: .8rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .5px; }
+        .veiculo-bar-item .vb-num { font-size: 2rem; font-weight: 800; color: var(--primary-color); }
+    </style>
+</head>
+<body>
+
+    <!-- TELA DE LOGIN -->
+    <div id="admin-login-screen" class="admin-login-wrap">
+        <div class="admin-login-box">
+            <h1><i class="bi bi-shield-lock-fill"></i> Admin</h1>
+            <p>N&G EXPRESS — Painel Administrativo</p>
+            <form onsubmit="fazerLoginAdmin(event)">
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" id="admin-email" placeholder="admin@ngexpress.com.br" required>
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="admin-senha" placeholder="••••••" required>
+                </div>
+                <button type="submit" class="btn-admin-login" id="btn-admin-login">
+                    <i class="bi bi-box-arrow-in-right"></i> Entrar
+                </button>
+                <div id="admin-login-erro" style="margin-top:16px;text-align:center;color:var(--danger-color);font-size:.88rem;display:none;"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- PAINEL ADMIN -->
+    <div id="admin-painel" style="display:none;">
+
+        <header>
+            <div class="container">
+                <nav class="navbar">
+                    <a href="index.html" class="logo">
+                        <div class="logo-icon"><i class="bi bi-rocket-takeoff-fill"></i></div>
+                        <div class="logo-text">
+                            <div class="logo-text-main">N&G <span>EXPRESS</span></div>
+                            <div class="logo-text-sub">ADMIN</div>
+                        </div>
+                    </a>
+                    <ul class="nav-links">
+                        <li><a href="index.html">Ver site</a></li>
+                        <li><a href="#" onclick="fazerLogoutAdmin(); return false;" style="color:var(--danger-color);">
+                            <i class="bi bi-box-arrow-right"></i> Sair
+                        </a></li>
+                    </ul>
+                </nav>
+            </div>
+        </header>
+
+        <div class="page-header">
+            <div class="container">
+                <h1><i class="bi bi-shield-lock-fill"></i> Painel Administrativo</h1>
+                <p>Visão geral de todos os pedidos e usuários</p>
+            </div>
+        </div>
+
+        <section class="admin-page">
+            <div class="container">
+                <div class="admin-grid">
+
+                    <aside class="admin-sidebar">
+                        <div class="admin-profile">
+                            <div class="admin-avatar"><i class="bi bi-person-fill"></i></div>
+                            <h3 id="admin-nome-display">Admin</h3>
+                            <p id="admin-email-display">—</p>
+                            <div class="admin-badge">ADMINISTRADOR</div>
+                        </div>
+                        <nav class="admin-nav">
+                            <a href="#" class="active" onclick="mostrarTabAdmin('resumo', this); return false;">
+                                <i class="bi bi-speedometer2"></i> Resumo
+                            </a>
+                            <a href="#" onclick="mostrarTabAdmin('corridas', this); return false;">
+                                <i class="bi bi-clock-history"></i> Todas as Corridas
+                            </a>
+                            <a href="#" onclick="mostrarTabAdmin('usuarios', this); return false;">
+                                <i class="bi bi-people-fill"></i> Usuários
+                            </a>
+                            <div class="admin-nav-divider"></div>
+                            <a href="#" class="logout-link" onclick="fazerLogoutAdmin(); return false;">
+                                <i class="bi bi-box-arrow-right"></i> Sair
+                            </a>
+                        </nav>
+                    </aside>
+
+                    <div class="admin-main">
+
+                        <!-- ABA RESUMO -->
+                        <div id="tab-admin-resumo" class="admin-card">
+                            <div class="admin-card-header">
+                                <h3><i class="bi bi-speedometer2" style="color:var(--primary-color)"></i> Resumo Geral</h3>
+                            </div>
+                            <div class="admin-card-body">
+                                <div class="stats-row">
+                                    <div class="stat-box">
+                                        <span class="num" id="admin-stat-corridas">—</span>
+                                        <span class="lbl">Total de corridas</span>
+                                    </div>
+                                    <div class="stat-box">
+                                        <span class="num" id="admin-stat-faturado">—</span>
+                                        <span class="lbl">Total faturado</span>
+                                    </div>
+                                    <div class="stat-box">
+                                        <span class="num" id="admin-stat-usuarios">—</span>
+                                        <span class="lbl">Usuários cadastrados</span>
+                                    </div>
+                                    <div class="stat-box">
+                                        <span class="num" id="admin-stat-ticket">—</span>
+                                        <span class="lbl">Ticket médio</span>
+                                    </div>
+                                </div>
+
+                                <div style="margin-top:28px;margin-bottom:14px;">
+                                    <h4 style="margin:0 0 16px;color:var(--text-primary);font-size:.88rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">
+                                        Corridas por veículo
+                                    </h4>
+                                    <div class="veiculo-bars" id="admin-veiculo-bars">
+                                        <div class="empty-state"><span class="loading-spinner"></span></div>
+                                    </div>
+                                </div>
+
+                                <div style="margin-top:28px;">
+                                    <h4 style="margin:0 0 14px;color:var(--text-primary);font-size:.88rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">
+                                        Últimas corridas
+                                    </h4>
+                                    <div id="admin-ultimas-wrap" style="overflow-x:auto;">
+                                        <div class="empty-state"><span class="loading-spinner"></span> Carregando...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ABA CORRIDAS -->
+                        <div id="tab-admin-corridas" class="admin-card" style="display:none;">
+                            <div class="admin-card-header">
+                                <h3><i class="bi bi-clock-history" style="color:var(--primary-color)"></i> Todas as Corridas</h3>
+                                <span id="admin-corridas-count" style="font-size:.82rem;color:var(--text-tertiary);"></span>
+                            </div>
+                            <div style="overflow-x:auto;">
+                                <table class="hist-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Pedido</th>
+                                            <th>Cliente</th>
+                                            <th>Veículo</th>
+                                            <th>Coleta</th>
+                                            <th>Entrega</th>
+                                            <th>Valor</th>
+                                            <th>Data</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-corridas-tbody">
+                                        <tr><td colspan="8" style="text-align:center;padding:32px;">
+                                            <span class="loading-spinner"></span> Carregando...
+                                        </td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- ABA USUÁRIOS -->
+                        <div id="tab-admin-usuarios" class="admin-card" style="display:none;">
+                            <div class="admin-card-header">
+                                <h3><i class="bi bi-people-fill" style="color:var(--primary-color)"></i> Usuários Cadastrados</h3>
+                            </div>
+                            <div style="overflow-x:auto;">
+                                <table class="hist-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Nome</th>
+                                            <th>Telefone</th>
+                                            <th>Pedidos</th>
+                                            <th>Total gasto</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-usuarios-tbody">
+                                        <tr><td colspan="4" style="text-align:center;padding:32px;">
+                                            <span class="loading-spinner"></span> Carregando...
+                                        </td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="js/config.js"></script>
+    <script>
+    const API = window.API_BASE_URL || 'https://landingpageng-production.up.railway.app/api';
+    let adminData = null;
+    let dadosCache = null;
+
+    function mostrarToast(msg, tipo = 'success') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const icone = tipo === 'success' ? 'check-circle' : 'exclamation-circle';
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${tipo}`;
+        toast.innerHTML = `<i class="bi bi-${icone}"></i> ${msg}`;
+        container.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.4s'; setTimeout(() => toast.remove(), 400); }, 4600);
+    }
+
+    function formatarValor(v) { return 'R$ ' + parseFloat(v || 0).toFixed(2).replace('.', ','); }
+
+    function formatarData(str) {
+        if (!str) return '—';
+        const d = new Date(str.includes('T') ? str : str.replace(' ', 'T'));
+        if (isNaN(d)) return str;
+        return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+    }
+
+    function mostrarTabAdmin(tab, el) {
+        ['resumo','corridas','usuarios'].forEach(t => {
+            const d = document.getElementById('tab-admin-' + t);
+            if (d) d.style.display = 'none';
+        });
+        const alvo = document.getElementById('tab-admin-' + tab);
+        if (alvo) alvo.style.display = 'block';
+        document.querySelectorAll('.admin-nav a').forEach(a => a.classList.remove('active'));
+        if (el) el.classList.add('active');
+    }
+
+    async function fazerLoginAdmin(event) {
+        event.preventDefault();
+        const email = document.getElementById('admin-email').value.trim();
+        const senha = document.getElementById('admin-senha').value;
+        const btn   = document.getElementById('btn-admin-login');
+        const erro  = document.getElementById('admin-login-erro');
+
+        btn.disabled = true;
+        btn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;"></span> Entrando...';
+        erro.style.display = 'none';
+
+        try {
+            const r = await fetch(`${API}/admin/login.php`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, senha })
+            });
+            const d = await r.json();
+            if (d.success && d.admin) {
+                adminData = d.admin;
+                sessionStorage.setItem('admin', JSON.stringify(adminData));
+                iniciarPainel();
+            } else {
+                erro.textContent = d.message || 'E-mail ou senha inválidos';
+                erro.style.display = 'block';
+            }
+        } catch (e) {
+            erro.textContent = 'Erro ao conectar com o servidor';
+            erro.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Entrar';
+        }
+    }
+
+    async function fazerLogoutAdmin() {
+        try { await fetch(`${API}/admin/logout.php`, { method: 'POST' }); } catch {}
+        sessionStorage.removeItem('admin');
+        document.getElementById('admin-login-screen').style.display = 'flex';
+        document.getElementById('admin-painel').style.display = 'none';
+    }
+
+    function iniciarPainel() {
+        document.getElementById('admin-login-screen').style.display = 'none';
+        document.getElementById('admin-painel').style.display = 'block';
+        document.getElementById('admin-nome-display').textContent  = adminData.nome;
+        document.getElementById('admin-email-display').textContent = adminData.email;
+        carregarDados();
+    }
+
+    async function carregarDados() {
+        try {
+            const r = await fetch(`${API}/admin/dados.php?aid=${adminData.id}`);
+            const d = await r.json();
+            if (!d.success) throw new Error(d.message);
+            dadosCache = d;
+            renderizarResumo(d);
+            renderizarCorridas(d.corridas);
+            renderizarUsuarios(d.topUsuarios);
+        } catch (e) {
+            mostrarToast('Erro ao carregar dados: ' + e.message, 'error');
+        }
+    }
+
+    function renderizarResumo(d) {
+        document.getElementById('admin-stat-corridas').textContent  = d.totalCorridas;
+        document.getElementById('admin-stat-faturado').textContent  = formatarValor(d.totalFaturado);
+        document.getElementById('admin-stat-usuarios').textContent  = d.totalUsuarios;
+        const ticket = d.totalCorridas > 0 ? d.totalFaturado / d.totalCorridas : 0;
+        document.getElementById('admin-stat-ticket').textContent    = formatarValor(ticket);
+
+        // Veículos
+        const barsWrap = document.getElementById('admin-veiculo-bars');
+        if (d.porVeiculo && d.porVeiculo.length > 0) {
+            barsWrap.innerHTML = d.porVeiculo.map(v => `
+                <div class="veiculo-bar-item">
+                    <div class="vb-label">${v.tipo_veiculo === 'carro' ? '🚗 Carro' : '🏍️ Moto'}</div>
+                    <div class="vb-num">${v.total}</div>
+                    <div style="font-size:.78rem;color:var(--text-tertiary);">corridas</div>
+                </div>
+            `).join('');
+        } else {
+            barsWrap.innerHTML = '<div style="color:var(--text-tertiary);font-size:.88rem;">Nenhuma corrida ainda</div>';
+        }
+
+        // Últimas corridas (5)
+        const wrap = document.getElementById('admin-ultimas-wrap');
+        const ultimas = d.corridas.slice(0, 5);
+        if (ultimas.length === 0) {
+            wrap.innerHTML = '<div class="empty-state"><i class="bi bi-inbox"></i><p>Nenhuma corrida ainda</p></div>';
+        } else {
+            wrap.innerHTML = `
+                <table class="hist-table">
+                    <thead><tr>
+                        <th>Pedido</th><th>Cliente</th><th>Veículo</th>
+                        <th>Valor</th><th>Data</th>
+                    </tr></thead>
+                    <tbody>${ultimas.map(o => `<tr>
+                        <td><span class="num-pedido">#${o.numero_pedido}</span></td>
+                        <td><div class="user-cell"><span>${o.usuario_nome || '—'}</span><small>${o.usuario_telefone || ''}</small></div></td>
+                        <td><span class="pill pill-${o.tipo_veiculo}">${o.tipo_veiculo === 'carro' ? '🚗 Carro' : '🏍️ Moto'}</span></td>
+                        <td class="badge-valor">${formatarValor(o.valor_total)}</td>
+                        <td style="white-space:nowrap;color:var(--text-tertiary);font-size:.82rem;">${formatarData(o.data_orcamento)}</td>
+                    </tr>`).join('')}</tbody>
+                </table>`;
+        }
+
+        document.getElementById('admin-corridas-count').textContent = `${d.totalCorridas} corrida(s)`;
+    }
+
+    function renderizarCorridas(corridas) {
+        const tbody = document.getElementById('admin-corridas-tbody');
+        if (!corridas || corridas.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="bi bi-inbox"></i><p>Nenhuma corrida ainda</p></div></td></tr>`;
+            return;
+        }
+        tbody.innerHTML = corridas.map(o => `<tr>
+            <td><span class="num-pedido">#${o.numero_pedido || '—'}</span></td>
+            <td><div class="user-cell"><span>${o.usuario_nome || '—'}</span><small>${o.usuario_email || ''}</small></div></td>
+            <td><span class="pill pill-${o.tipo_veiculo}">${o.tipo_veiculo === 'carro' ? '🚗 Carro' : '🏍️ Moto'}</span></td>
+            <td class="addr-cell" title="${o.endereco_coleta||''}">${o.endereco_coleta||'—'}</td>
+            <td class="addr-cell" title="${o.endereco_entrega||''}">${o.endereco_entrega||'—'}</td>
+            <td class="badge-valor">${formatarValor(o.valor_total)}</td>
+            <td style="white-space:nowrap;color:var(--text-tertiary);font-size:.82rem;">${formatarData(o.data_orcamento)}</td>
+            <td><span class="badge-status">Confirmado</span></td>
+        </tr>`).join('');
+    }
+
+    function renderizarUsuarios(usuarios) {
+        const tbody = document.getElementById('admin-usuarios-tbody');
+        if (!usuarios || usuarios.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><i class="bi bi-people"></i><p>Nenhum usuário ainda</p></div></td></tr>`;
+            return;
+        }
+        tbody.innerHTML = usuarios.map(u => `<tr>
+            <td><div class="user-cell"><span>${u.nome || '—'}</span><small>${u.email || ''}</small></div></td>
+            <td style="color:var(--text-secondary);">${u.telefone || '—'}</td>
+            <td><strong style="color:var(--primary-color);">${u.total_pedidos}</strong></td>
+            <td class="badge-valor">${formatarValor(u.total_gasto)}</td>
+        </tr>`).join('');
+    }
+
+    // Verifica se já tem sessão admin
+    const adminCached = sessionStorage.getItem('admin');
+    if (adminCached) {
+        try {
+            adminData = JSON.parse(adminCached);
+            iniciarPainel();
+        } catch {
+            sessionStorage.removeItem('admin');
+        }
+    }
+    </script>
+</body>
+</html>
