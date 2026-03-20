@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 session_start();
-require_once '../../config/database.php';
+require_once __DIR__ . '/../../config/database.php';
 
 // ── Verificar sessão ─────────────────────────────────────────────
 if (!isset($_SESSION['usuario_id'])) {
