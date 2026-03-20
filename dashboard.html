@@ -8,17 +8,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="css/styles.css">
     <style>
-        .dashboard-page {
-            padding: 40px 0 80px;
-            background: var(--bg-primary);
-            min-height: 80vh;
-        }
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 260px 1fr;
-            gap: 28px;
-            align-items: start;
-        }
+        .dashboard-page { padding: 40px 0 80px; background: var(--bg-primary); min-height: 80vh; }
+        .dashboard-grid { display: grid; grid-template-columns: 260px 1fr; gap: 28px; align-items: start; }
         @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
 
         .page-header {
@@ -31,240 +22,131 @@
         .page-header h1 { font-size: 2rem; margin: 0 0 6px; }
         .page-header p  { margin: 0; color: var(--text-secondary); }
 
-        /* SIDEBAR */
         .dash-sidebar {
-            background: var(--bg-secondary);
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--border-light);
-            overflow: hidden;
-            box-shadow: var(--shadow-md);
-            position: sticky;
-            top: 100px;
+            background: var(--bg-secondary); border-radius: var(--radius-lg);
+            border: 1px solid var(--border-light); overflow: hidden;
+            box-shadow: var(--shadow-md); position: sticky; top: 100px;
         }
         .dash-profile {
-            background: var(--gradient-primary);
-            padding: 28px 20px;
-            text-align: center;
-            color: white;
-            position: relative;
-            overflow: hidden;
+            background: var(--gradient-primary); padding: 28px 20px;
+            text-align: center; color: white; position: relative; overflow: hidden;
         }
         .dash-profile::before {
-            content: '';
-            position: absolute;
-            top: -40px; right: -40px;
-            width: 120px; height: 120px;
-            background: rgba(255,255,255,.08);
-            border-radius: 50%;
+            content: ''; position: absolute; top: -40px; right: -40px;
+            width: 120px; height: 120px; background: rgba(255,255,255,.08); border-radius: 50%;
         }
         .dash-avatar {
-            width: 72px; height: 72px;
-            border-radius: 50%;
-            background: rgba(255,255,255,.2);
-            border: 2px solid rgba(255,255,255,.3);
+            width: 72px; height: 72px; border-radius: 50%;
+            background: rgba(255,255,255,.2); border: 2px solid rgba(255,255,255,.3);
             display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 12px;
-            font-size: 2rem;
+            margin: 0 auto 12px; font-size: 2rem;
         }
         .dash-profile h3 { font-size: 1.1rem; margin: 0 0 4px; font-weight: 700; }
         .dash-profile p  { font-size: .82rem; opacity: .8; margin: 0; }
 
         .dash-nav { padding: 10px 0; }
         .dash-nav a {
-            display: flex; align-items: center; gap: 12px;
-            padding: 12px 20px;
-            color: var(--text-secondary);
-            font-weight: 500;
-            text-decoration: none;
-            transition: var(--transition-fast);
-            font-size: .93rem;
-            border-right: 3px solid transparent;
+            display: flex; align-items: center; gap: 12px; padding: 12px 20px;
+            color: var(--text-secondary); font-weight: 500; text-decoration: none;
+            transition: var(--transition-fast); font-size: .93rem; border-right: 3px solid transparent;
         }
         .dash-nav a i { font-size: 1.1rem; width: 20px; }
         .dash-nav a:hover, .dash-nav a.active {
-            background: rgba(255,107,0,.08);
-            color: var(--primary-color);
-            border-right-color: var(--primary-color);
+            background: rgba(255,107,0,.08); color: var(--primary-color); border-right-color: var(--primary-color);
         }
         .dash-nav .logout-link { color: var(--danger-color); }
-        .dash-nav .logout-link:hover {
-            background: rgba(255,92,92,.08);
-            color: var(--danger-color);
-            border-right-color: var(--danger-color);
-        }
+        .dash-nav .logout-link:hover { background: rgba(255,92,92,.08); color: var(--danger-color); border-right-color: var(--danger-color); }
         .dash-nav-divider { height: 1px; background: var(--border-light); margin: 8px 16px; }
 
-        /* CARDS */
         .dash-main { display: flex; flex-direction: column; gap: 24px; }
         .dash-card {
-            background: var(--bg-secondary);
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--border-light);
-            overflow: hidden;
-            box-shadow: var(--shadow-md);
+            background: var(--bg-secondary); border-radius: var(--radius-lg);
+            border: 1px solid var(--border-light); overflow: hidden; box-shadow: var(--shadow-md);
         }
         .dash-card-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--border-light);
+            padding: 20px 24px; border-bottom: 1px solid var(--border-light);
             display: flex; align-items: center; justify-content: space-between;
         }
-        .dash-card-header h3 {
-            margin: 0; font-size: 1.05rem; font-weight: 700;
-            color: var(--text-primary);
-            display: flex; align-items: center; gap: 10px;
-        }
+        .dash-card-header h3 { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
         .dash-card-body { padding: 24px; }
 
-        /* STATS */
         .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
         @media (max-width: 600px) { .stats-row { grid-template-columns: 1fr; } }
         .stat-box {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius-md);
-            padding: 22px 16px; text-align: center;
-            transition: var(--transition-base);
+            background: var(--bg-tertiary); border: 1px solid var(--border-light);
+            border-radius: var(--radius-md); padding: 22px 16px; text-align: center; transition: var(--transition-base);
         }
-        .stat-box:hover {
-            border-color: var(--primary-color);
-            box-shadow: var(--shadow-glow);
-            transform: translateY(-2px);
-        }
-        .stat-box .num {
-            font-size: 2rem; font-weight: 800;
-            color: var(--primary-color); display: block;
-        }
-        .stat-box .lbl {
-            font-size: .78rem; color: var(--text-tertiary);
-            margin-top: 6px; display: block;
-            text-transform: uppercase; letter-spacing: .5px;
-        }
+        .stat-box:hover { border-color: var(--primary-color); box-shadow: var(--shadow-glow); transform: translateY(-2px); }
+        .stat-box .num { font-size: 2rem; font-weight: 800; color: var(--primary-color); display: block; }
+        .stat-box .lbl { font-size: .78rem; color: var(--text-tertiary); margin-top: 6px; display: block; text-transform: uppercase; letter-spacing: .5px; }
 
-        /* TABELA */
         .hist-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
         .hist-table th {
-            background: var(--bg-tertiary);
-            padding: 11px 14px; text-align: left;
-            color: var(--text-tertiary); font-weight: 600;
-            font-size: .75rem; text-transform: uppercase; letter-spacing: .5px;
-            border-bottom: 1px solid var(--border-medium);
+            background: var(--bg-tertiary); padding: 11px 14px; text-align: left;
+            color: var(--text-tertiary); font-weight: 600; font-size: .75rem;
+            text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border-medium);
         }
-        .hist-table td {
-            padding: 13px 14px;
-            border-bottom: 1px solid var(--border-light);
-            color: var(--text-primary); vertical-align: middle;
-        }
+        .hist-table td { padding: 13px 14px; border-bottom: 1px solid var(--border-light); color: var(--text-primary); vertical-align: middle; }
         .hist-table tr:last-child td { border-bottom: none; }
         .hist-table tr:hover td { background: var(--bg-tertiary); }
 
-        .pill {
-            display: inline-block; padding: 4px 10px;
-            border-radius: var(--radius-full);
-            font-size: .75rem; font-weight: 600;
-        }
+        .pill { display: inline-block; padding: 4px 10px; border-radius: var(--radius-full); font-size: .75rem; font-weight: 600; }
         .pill-moto  { background: rgba(0,163,255,.12); color: var(--info-color); border: 1px solid rgba(0,163,255,.2); }
         .pill-carro { background: rgba(0,196,140,.12); color: var(--success-color); border: 1px solid rgba(0,196,140,.2); }
 
-        .addr-cell {
-            max-width: 150px;
-            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-            color: var(--text-secondary); font-size: .83rem;
-        }
+        .addr-cell { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary); font-size: .83rem; }
         .badge-valor { font-weight: 700; color: var(--success-color); }
         .num-pedido  { font-weight: 700; color: var(--primary-color); font-size: .85rem; }
         .badge-status {
-            display: inline-block; padding: 3px 10px;
-            border-radius: var(--radius-full);
+            display: inline-block; padding: 3px 10px; border-radius: var(--radius-full);
             font-size: .72rem; font-weight: 700;
-            background: rgba(0,196,140,.12); color: var(--success-color);
-            border: 1px solid rgba(0,196,140,.2);
+            background: rgba(0,196,140,.12); color: var(--success-color); border: 1px solid rgba(0,196,140,.2);
         }
 
-        /* PERFIL FORM */
         .perfil-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         @media (max-width: 600px) { .perfil-form .form-row { grid-template-columns: 1fr; } }
         .fg { display: flex; flex-direction: column; gap: 7px; }
-        .fg label {
-            font-size: .8rem; font-weight: 600;
-            color: var(--text-tertiary);
-            text-transform: uppercase; letter-spacing: .4px;
-        }
+        .fg label { font-size: .8rem; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .4px; }
         .fg input {
-            width: 100%; padding: 11px 14px;
-            background: var(--bg-tertiary);
-            border: 1.5px solid var(--border-medium);
-            border-radius: var(--radius-sm);
-            font-size: .95rem; color: var(--text-primary);
-            transition: var(--transition-fast);
+            width: 100%; padding: 11px 14px; background: var(--bg-tertiary);
+            border: 1.5px solid var(--border-medium); border-radius: var(--radius-sm);
+            font-size: .95rem; color: var(--text-primary); transition: var(--transition-fast);
         }
-        .fg input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px var(--primary-glow);
-            background: var(--bg-elevated);
-        }
+        .fg input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-glow); background: var(--bg-elevated); }
         .fg input[readonly] { opacity: .5; cursor: not-allowed; }
         .btn-salvar {
-            background: var(--gradient-primary);
-            color: white; border: none;
-            padding: 12px 28px; border-radius: var(--radius-full);
-            font-size: .95rem; font-weight: 600;
-            cursor: pointer; margin-top: 20px;
-            transition: var(--transition-base);
-            display: inline-flex; align-items: center; gap: 8px;
-            box-shadow: var(--shadow-glow);
+            background: var(--gradient-primary); color: white; border: none;
+            padding: 12px 28px; border-radius: var(--radius-full); font-size: .95rem; font-weight: 600;
+            cursor: pointer; margin-top: 20px; transition: var(--transition-base);
+            display: inline-flex; align-items: center; gap: 8px; box-shadow: var(--shadow-glow);
         }
         .btn-salvar:hover { opacity: .88; transform: translateY(-2px); }
         .btn-salvar:disabled { opacity: .6; cursor: not-allowed; transform: none; }
 
-        /* STATES */
         .empty-state { text-align: center; padding: 40px 20px; color: var(--text-tertiary); }
         .empty-state i { font-size: 2.8rem; margin-bottom: 12px; display: block; }
         .empty-state p { margin: 0; font-size: .93rem; }
         .empty-state a { color: var(--primary-color); }
 
-        .loading-row td {
-            text-align: center; padding: 32px;
-            color: var(--text-tertiary); font-style: italic;
-        }
-
+        .loading-row td { text-align: center; padding: 32px; color: var(--text-tertiary); font-style: italic; }
         .loading-spinner {
             display: inline-block; width: 18px; height: 18px;
-            border: 2px solid var(--border-medium);
-            border-top-color: var(--primary-color);
-            border-radius: 50%;
-            animation: spin .7s linear infinite;
-            vertical-align: middle; margin-right: 6px;
+            border: 2px solid var(--border-medium); border-top-color: var(--primary-color);
+            border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .ver-mais-link {
-            display: inline-flex; align-items: center; gap: 6px;
-            font-size: .82rem; font-weight: 600;
-            color: var(--primary-color);
-            text-decoration: none;
-            padding: 5px 12px;
-            border: 1px solid rgba(255,107,0,.2);
-            border-radius: var(--radius-full);
-            transition: var(--transition-fast);
-            background: rgba(255,107,0,.05);
+            display: inline-flex; align-items: center; gap: 6px; font-size: .82rem; font-weight: 600;
+            color: var(--primary-color); text-decoration: none; padding: 5px 12px;
+            border: 1px solid rgba(255,107,0,.2); border-radius: var(--radius-full);
+            transition: var(--transition-fast); background: rgba(255,107,0,.05);
         }
         .ver-mais-link:hover { background: rgba(255,107,0,.12); border-color: var(--primary-color); }
-
-        .dev-alert {
-            background: rgba(255,184,0,.08);
-            border: 1px solid rgba(255,184,0,.3);
-            border-radius: var(--radius-md);
-            padding: 12px 16px; font-size: .87rem;
-            color: var(--warning-color);
-            display: flex; align-items: center; gap: 10px;
-            margin-bottom: 20px;
-        }
     </style>
 </head>
 <body>
 
-    <!-- HEADER -->
     <header>
         <div class="container">
             <nav class="navbar">
@@ -275,21 +157,41 @@
                         <div class="logo-text-sub">ENTREGAS RÁPIDAS</div>
                     </div>
                 </a>
+
+                <button class="mobile-menu-btn" aria-label="Menu">
+                    <i class="bi bi-list"></i>
+                </button>
+
                 <ul class="nav-links">
                     <li><a href="index.html">Início</a></li>
                     <li><a href="novo-pedido.html" class="btn">Novo Pedido</a></li>
-                    <li class="perfil-item" style="display:none;">
-                        <a href="dashboard.html"><i class="bi bi-person-circle"></i> <span id="menu-perfil-nome">Perfil</span></a>
-                    </li>
+
                     <li class="login-item">
-                        <a href="#" onclick="abrirModalLogin(); return false;">Entrar</a>
+                        <a href="#" onclick="abrirModalLogin(); return false;">
+                            <i class="bi bi-box-arrow-in-right"></i> Entrar
+                        </a>
+                    </li>
+
+                    <li class="perfil-item" style="display:none;">
+                        <a href="dashboard.html">
+                            <i class="bi bi-person-circle"></i> <span id="menu-perfil-nome">Perfil</span>
+                        </a>
+                    </li>
+                    <li class="perfil-item" style="display:none;">
+                        <a href="dashboard.html">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="perfil-item" style="display:none;">
+                        <a href="#" onclick="fazerLogout(); return false;" class="nav-logout">
+                            <i class="bi bi-box-arrow-right"></i> Sair
+                        </a>
                     </li>
                 </ul>
             </nav>
         </div>
     </header>
 
-    <!-- PAGE HEADER -->
     <div class="page-header">
         <div class="container">
             <h1><i class="bi bi-person-circle"></i> Meu Painel</h1>
@@ -297,12 +199,10 @@
         </div>
     </div>
 
-    <!-- DASHBOARD -->
     <section class="dashboard-page">
         <div class="container">
             <div class="dashboard-grid">
 
-                <!-- SIDEBAR -->
                 <aside class="dash-sidebar">
                     <div class="dash-profile">
                         <div class="dash-avatar"><i class="bi bi-person-fill"></i></div>
@@ -329,16 +229,13 @@
                     </nav>
                 </aside>
 
-                <!-- MAIN -->
                 <div class="dash-main">
 
-                    <!-- ABA: INÍCIO -->
                     <div id="tab-inicio" class="dash-card">
                         <div class="dash-card-header">
                             <h3><i class="bi bi-speedometer2" style="color:var(--primary-color)"></i> Resumo</h3>
                         </div>
                         <div class="dash-card-body">
-                            <div id="dev-alert-wrap"></div>
                             <div class="stats-row">
                                 <div class="stat-box">
                                     <span class="num" id="stat-total">—</span>
@@ -353,12 +250,11 @@
                                     <span class="lbl">Último pedido</span>
                                 </div>
                             </div>
-
                             <div style="margin-top:28px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                                 <h4 style="margin:0;color:var(--text-primary);font-size:.88rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">
                                     Últimos pedidos
                                 </h4>
-                                <a href="#" class="ver-mais-link" onclick="mostrarTab('historico',null);return false;">
+                                <a href="#" class="ver-mais-link" onclick="mostrarTab('historico', null); return false;">
                                     Ver todos <i class="bi bi-arrow-right"></i>
                                 </a>
                             </div>
@@ -370,7 +266,6 @@
                         </div>
                     </div>
 
-                    <!-- ABA: HISTÓRICO -->
                     <div id="tab-historico" class="dash-card" style="display:none;">
                         <div class="dash-card-header">
                             <h3><i class="bi bi-clock-history" style="color:var(--primary-color)"></i> Histórico de Pedidos</h3>
@@ -398,7 +293,6 @@
                         </div>
                     </div>
 
-                    <!-- ABA: PERFIL -->
                     <div id="tab-perfil" class="dash-card" style="display:none;">
                         <div class="dash-card-header">
                             <h3><i class="bi bi-person-gear" style="color:var(--primary-color)"></i> Meu Perfil</h3>
@@ -432,12 +326,11 @@
                         </div>
                     </div>
 
-                </div><!-- /dash-main -->
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Modal login -->
     <div class="modal" id="login-modal">
         <div class="modal-content" style="max-width:400px;">
             <span class="close-modal" onclick="fecharModal('login-modal')">&times;</span>
@@ -452,6 +345,12 @@
                         <label for="login-senha">Senha</label>
                         <input type="password" id="login-senha" placeholder="******" required>
                     </div>
+                    <div class="form-group" style="display:flex;align-items:center;gap:8px;margin-top:-8px;">
+                        <input type="checkbox" id="lembrar-email" style="width:auto;cursor:pointer;">
+                        <label for="lembrar-email" style="margin:0;font-size:.9rem;cursor:pointer;color:var(--text-secondary);">
+                            Lembrar meu e-mail
+                        </label>
+                    </div>
                     <button type="submit" class="btn" style="width:100%;">Entrar</button>
                 </div>
             </form>
@@ -464,13 +363,7 @@
     <script src="js/config.js"></script>
     <script src="js/script.js"></script>
     <script>
-    // ============================================================
-    //  DASHBOARD - CORRIGIDO COM API_BASE_URL
-    // ============================================================
-    
-    // Definir a URL base da API (Railway)
     const API_BASE_URL = window.API_BASE_URL || 'https://landingpageng-production.up.railway.app/api';
-    
     let orcamentosCache = [];
 
     function mostrarTab(tab, el) {
@@ -488,8 +381,7 @@
         if (!str) return '—';
         const d = new Date(str.includes('T') ? str : str.replace(' ', 'T'));
         if (isNaN(d)) return str;
-        return d.toLocaleDateString('pt-BR') + ' ' +
-               d.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+        return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
     }
 
     function formatarValor(v) {
@@ -510,12 +402,10 @@
 
     function renderizarTabela(tbody, orcamentos, limite, comStatus) {
         if (!orcamentos || orcamentos.length === 0) {
-            const cols = comStatus ? 7 : 6;
-            tbody.innerHTML = `<tr><td colspan="${cols}">
+            tbody.innerHTML = `<tr><td colspan="${comStatus ? 7 : 6}">
                 <div class="empty-state">
                     <i class="bi bi-inbox"></i>
-                    <p>Nenhum pedido ainda.<br>
-                    <a href="novo-pedido.html">Fazer primeiro pedido!</a></p>
+                    <p>Nenhum pedido ainda.<br><a href="novo-pedido.html">Fazer primeiro pedido!</a></p>
                 </div></td></tr>`;
             return;
         }
@@ -549,8 +439,7 @@
             orcamentos.reduce((acc, o) => acc + parseFloat(o.valor_total || 0), 0)
         );
         document.getElementById('stat-ultimo').textContent = orcamentos[0]
-            ? formatarData(orcamentos[0].data_orcamento).split(' ')[0]
-            : '—';
+            ? formatarData(orcamentos[0].data_orcamento).split(' ')[0] : '—';
     }
 
     function preencherPerfil(usuario) {
@@ -569,111 +458,53 @@
         const texto = await response.text();
         const t = texto.trimStart();
         if (t.startsWith('<?php') || t.startsWith('<?')) return { _phpNaoExecutado: true };
-        try { return JSON.parse(texto); }
-        catch { return { _erroJSON: true }; }
-    }
-
-    function mostrarAlertaDev(msg) {
-        const wrap = document.getElementById('dev-alert-wrap');
-        if (!wrap || wrap.querySelector('.dev-alert')) return;
-        wrap.innerHTML = `<div class="dev-alert">
-            <i class="bi bi-exclamation-triangle-fill"></i>
-            <span>${msg || 'Servidor PHP não detectado. Rode com <strong>php -S localhost:8000</strong>.'}</span>
-        </div>`;
-        document.getElementById('stat-total').textContent  = '0';
-        document.getElementById('stat-valor').textContent  = 'R$ 0,00';
-        document.getElementById('stat-ultimo').textContent = '—';
-    }
-
-    function estadoSemServidor() {
-        document.getElementById('ultimos-pedidos-wrap').innerHTML = `
-            <div class="empty-state">
-                <i class="bi bi-code-slash"></i>
-                <p>Modo desenvolvimento — histórico requer servidor PHP</p>
-            </div>`;
-        document.getElementById('hist-tbody').innerHTML = `
-            <tr class="loading-row">
-                <td colspan="7">Rode com <code style="color:var(--primary-color)">php -S localhost:8000</code> para ver o histórico</td>
-            </tr>`;
-        document.getElementById('hist-count').textContent = '';
+        try { return JSON.parse(texto); } catch { return { _erroJSON: true }; }
     }
 
     async function carregarDashboard() {
-        // 1. Verificar usuário
         let usuario = null;
         const sessaoRaw = sessionStorage.getItem('usuario');
-        if (sessaoRaw) {
-            try { usuario = JSON.parse(sessaoRaw); } catch {}
-        }
+        if (sessaoRaw) { try { usuario = JSON.parse(sessaoRaw); } catch {} }
 
         if (!usuario) {
             try {
                 const r = await fetch(`${API_BASE_URL}/usuarios/verificar.php`);
                 const d = await respostaSegura(r);
-                if (d._phpNaoExecutado) {
-                    mostrarAlertaDev();
-                    estadoSemServidor();
-                    return;
-                }
                 if (d.logado && d.usuario) {
                     usuario = d.usuario;
                     sessionStorage.setItem('usuario', JSON.stringify(usuario));
                 } else {
-                    const cached = sessionStorage.getItem('usuario');
-                    if (!cached) {
-                        window.location.href = 'index.html';
-                        return;
-                    }
-                    usuario = JSON.parse(cached);
+                    window.location.href = 'index.html'; return;
                 }
             } catch {
-                mostrarAlertaDev();
-                estadoSemServidor();
-                return;
+                window.location.href = 'index.html'; return;
             }
         }
 
         preencherPerfil(usuario);
 
-        // 2. Carregar histórico
         try {
-            const r = await fetch(`${API_BASE_URL}/orcamentos/historico.php`);
+            const r = await fetch(`${API_BASE_URL}/orcamentos/historico.php?uid=${usuario.id}`, {
+                credentials: 'include'
+            });
             const d = await respostaSegura(r);
+            if (d._erroJSON || !d.success) throw new Error(d.message || 'Erro ao carregar histórico');
 
-            if (d._phpNaoExecutado) {
-                mostrarAlertaDev();
-                estadoSemServidor();
-                return;
-            }
-            if (d._erroJSON) throw new Error('Resposta inválida da API');
+            orcamentosCache = d.orcamentos || [];
+            renderizarEstatisticas(orcamentosCache);
+            renderizarTabelaResumida(document.getElementById('ultimos-pedidos-wrap'), orcamentosCache);
+            renderizarTabela(document.getElementById('hist-tbody'), orcamentosCache, null, true);
+            document.getElementById('hist-count').textContent = `${orcamentosCache.length} pedido(s)`;
 
-            if (d.success) {
-                orcamentosCache = d.orcamentos || [];
-                renderizarEstatisticas(orcamentosCache);
-                renderizarTabelaResumida(
-                    document.getElementById('ultimos-pedidos-wrap'),
-                    orcamentosCache
-                );
-                renderizarTabela(
-                    document.getElementById('hist-tbody'),
-                    orcamentosCache, null, true
-                );
-                document.getElementById('hist-count').textContent =
-                    `${orcamentosCache.length} pedido(s)`;
-            } else {
-                throw new Error(d.message || 'Erro da API');
-            }
         } catch (e) {
             console.warn('Histórico:', e.message);
             document.getElementById('ultimos-pedidos-wrap').innerHTML = `
                 <div class="empty-state">
-                    <i class="bi bi-wifi-off"></i>
-                    <p>Histórico indisponível — verifique o servidor PHP</p>
+                    <i class="bi bi-inbox"></i>
+                    <p>Nenhum pedido encontrado. <a href="novo-pedido.html">Fazer primeiro pedido</a></p>
                 </div>`;
             document.getElementById('hist-tbody').innerHTML = `
-                <tr class="loading-row">
-                    <td colspan="7">Erro ao carregar histórico: ${e.message}</td>
-                </tr>`;
+                <tr class="loading-row"><td colspan="7">Nenhum pedido encontrado</td></tr>`;
         }
     }
 
@@ -692,14 +523,10 @@
             const r = await fetch(`${API_BASE_URL}/usuarios/atualizar.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ nome, telefone, senha: senha || null })
             });
             const d = await respostaSegura(r);
-
-            if (d._phpNaoExecutado) {
-                window.mostrarToast('Servidor PHP não disponível', 'error');
-                return;
-            }
             if (d.success) {
                 window.mostrarToast('Perfil atualizado!', 'success');
                 const u = JSON.parse(sessionStorage.getItem('usuario') || '{}');

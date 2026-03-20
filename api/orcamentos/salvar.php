@@ -1,10 +1,6 @@
 <?php
-// api/orcamentos/salvar.php
-require_once(__DIR__ . '/../../cors.php');
+require_once __DIR__ . '/../../cors.php';
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -14,19 +10,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 session_start();
 require_once __DIR__ . '/../../config/database.php';
 
-// ── Verificar sessão ─────────────────────────────────────────────
-if (!isset($_SESSION['usuario_id'])) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'Usuário não está logado',
-        'debug'   => 'session_id=' . session_id()
-    ]);
-    exit;
-}
-
-$usuarioId = $_SESSION['usuario_id'];
-
-// ── Ler body ─────────────────────────────────────────────────────
 $data = json_decode(file_get_contents('php://input'), true);
 
 if (!$data) {
@@ -34,7 +17,14 @@ if (!$data) {
     exit;
 }
 
-// ── Extrair campos ───────────────────────────────────────────────
+// Aceita usuario_id do body como fallback quando sessão PHP não persiste
+$usuarioId = $_SESSION['usuario_id'] ?? intval($data['usuario_id'] ?? 0);
+
+if (!$usuarioId) {
+    echo json_encode(['success' => false, 'message' => 'Usuário não está logado']);
+    exit;
+}
+
 $numeroPedido    = trim($data['numero_pedido']    ?? '');
 $tipoVeiculo     = trim($data['tipo_veiculo']     ?? '');
 $enderecoColeta  = trim($data['endereco_coleta']  ?? '');
@@ -44,23 +34,14 @@ $peso            = floatval($data['peso']         ?? 0);
 $descricao       = trim($data['descricao']        ?? '');
 $valorTotal      = floatval($data['valor_total']  ?? 0);
 
-// ── Validar obrigatórios ─────────────────────────────────────────
 if (empty($numeroPedido) || empty($tipoVeiculo) || empty($enderecoColeta) || empty($enderecoEntrega) || $valorTotal <= 0) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'Campos obrigatórios faltando',
-        'debug'   => compact('numeroPedido', 'tipoVeiculo', 'valorTotal')
-    ]);
+    echo json_encode(['success' => false, 'message' => 'Campos obrigatórios faltando']);
     exit;
 }
 
-// ── Decompor endereços em partes ─────────────────────────────────
-// Nominatim retorna: "Rua X, 123, Bairro, Cidade, Estado, ..."
-// A tabela tem colunas separadas: local_coleta, bairro_coleta, cidade_destino, etc.
 $partesColeta  = array_map('trim', explode(',', $enderecoColeta));
 $partesEntrega = array_map('trim', explode(',', $enderecoEntrega));
 
-// local_coleta: rua + número (partes 0 e 1 se parte 1 for numérica)
 $localColeta = $partesColeta[0] ?? $enderecoColeta;
 if (isset($partesColeta[1]) && preg_match('/^\d/', $partesColeta[1])) {
     $localColeta .= ', ' . $partesColeta[1];
@@ -73,7 +54,6 @@ if (isset($partesColeta[1]) && preg_match('/^\d/', $partesColeta[1])) {
     $bairroEntrega = $partesEntrega[1] ?? '';
 }
 
-// ── Verificar duplicata ──────────────────────────────────────────
 try {
     $check = $pdo->prepare("SELECT id FROM historico_orcamentos WHERE numero_pedido = ?");
     $check->execute([$numeroPedido]);
@@ -81,50 +61,23 @@ try {
         echo json_encode(['success' => true, 'message' => 'Pedido já registrado']);
         exit;
     }
-} catch (PDOException $e) {
-    // ignora — tenta inserir mesmo assim
-}
+} catch (PDOException $e) {}
 
-// ── INSERT usando as colunas REAIS da tabela ─────────────────────
-// Estrutura confirmada pelo DESCRIBE:
-// usuario_id | numero_pedido | tipo_veiculo |
-// local_coleta | bairro_coleta | endereco_coleta |
-// cidade_destino | bairro_entrega | endereco_entrega |
-// dimensoes | peso | descricao | valor_total | status | data_orcamento
 try {
     $stmt = $pdo->prepare("
         INSERT INTO historico_orcamentos (
-            usuario_id,
-            numero_pedido,
-            tipo_veiculo,
-            local_coleta,
-            bairro_coleta,
-            endereco_coleta,
-            cidade_destino,
-            bairro_entrega,
-            endereco_entrega,
-            dimensoes,
-            peso,
-            descricao,
-            valor_total,
-            status
+            usuario_id, numero_pedido, tipo_veiculo,
+            local_coleta, bairro_coleta, endereco_coleta,
+            cidade_destino, bairro_entrega, endereco_entrega,
+            dimensoes, peso, descricao, valor_total, status
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmado')
     ");
 
     $stmt->execute([
-        $usuarioId,
-        $numeroPedido,
-        $tipoVeiculo,
-        $localColeta,       // "Rua São Paulo, 312"
-        $bairroColeta,      // "Areias"
-        $enderecoColeta,    // endereço completo de coleta
-        $cidadeDestino,     // "Camboriú"
-        $bairroEntrega,     // "Centro"
-        $enderecoEntrega,   // endereço completo de entrega
-        $dimensoes,
-        $peso,
-        $descricao,
-        $valorTotal
+        $usuarioId, $numeroPedido, $tipoVeiculo,
+        $localColeta, $bairroColeta, $enderecoColeta,
+        $cidadeDestino, $bairroEntrega, $enderecoEntrega,
+        $dimensoes, $peso, $descricao, $valorTotal
     ]);
 
     echo json_encode([
@@ -132,11 +85,7 @@ try {
         'message'      => 'Pedido salvo com sucesso!',
         'orcamento_id' => (int) $pdo->lastInsertId()
     ]);
-
 } catch (PDOException $e) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'Erro SQL: ' . $e->getMessage()
-    ]);
+    echo json_encode(['success' => false, 'message' => 'Erro SQL: ' . $e->getMessage()]);
 }
 ?>

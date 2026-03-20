@@ -1,20 +1,17 @@
 <?php
-// api/orcamentos/historico.php
-require_once(__DIR__ . '/../../cors.php');
+require_once __DIR__ . '/../../cors.php';
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET');
-header('Access-Control-Allow-Headers: Content-Type');
 
 session_start();
 require_once __DIR__ . '/../../config/database.php';
 
-if (!isset($_SESSION['usuario_id'])) {
+// Aceita uid via GET como fallback quando sessão PHP não persiste
+$usuarioId = $_SESSION['usuario_id'] ?? intval($_GET['uid'] ?? 0);
+
+if (!$usuarioId) {
     echo json_encode(['success' => false, 'message' => 'Usuário não está logado']);
     exit;
 }
-
-$usuarioId = $_SESSION['usuario_id'];
 
 try {
     $stmt = $pdo->prepare("
@@ -47,7 +44,6 @@ try {
         'orcamentos' => $orcamentos,
         'total'      => count($orcamentos)
     ]);
-
 } catch (PDOException $e) {
     echo json_encode([
         'success' => false,
