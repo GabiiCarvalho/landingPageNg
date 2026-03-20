@@ -179,6 +179,40 @@
                         </div>
                     </div>
 
+                    <!-- Quem receberá a entrega -->
+                    <div class="form-section">
+                        <h3><i class="bi bi-person-check"></i> Quem receberá a entrega?</h3>
+                        <div class="vehicle-selector" style="gap:16px;">
+                            <div class="vehicle-option">
+                            <input type="radio" name="quem-recebe" id="recebe-eu" value="eu" checked onchange="toggleRecebeEntrega(this.value)">
+                                <label for="recebe-eu" style="padding:20px;">
+                                <i class="bi bi-person-fill"></i>
+                                <span>Sou eu</span>
+                            <small>Eu mesmo vou receber</small>
+                                </label>
+                            </div>
+                             <div class="vehicle-option">
+                                <input type="radio" name="quem-recebe" id="recebe-outro" value="outro" onchange="toggleRecebeEntrega(this.value)">
+                                <label for="recebe-outro" style="padding:20px;">
+                                <i class="bi bi-people-fill"></i>
+                                <span>Outra pessoa</span>
+                            <small>Enviar para terceiro</small>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="dados-receptor" style="display:none;margin-top:20px;">
+                        <div class="form-group">
+                            <label for="receptor-nome">Nome de quem vai receber*</label>
+                            <input type="text" id="receptor-nome" placeholder="Nome completo do receptor">
+                        </div>
+                            <div class="form-group">
+                                <label for="receptor-telefone">Telefone/WhatsApp de quem vai receber*</label>
+                                    <input type="tel" id="receptor-telefone" placeholder="(47) 99999-9999">
+                             </div>
+                        </div>
+                    </div>
+
                     <!-- Dimensões da Encomenda (opcional) -->
                     <div class="form-section">
                         <h3><i class="bi bi-box"></i> Dimensões da Encomenda (opcional)</h3>

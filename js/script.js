@@ -59,9 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.login-item').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.perfil-item').forEach(el => el.style.display = 'block');
         const perfilNome = document.getElementById('menu-perfil-nome');
-        if (perfilNome && usuario?.nome) {
-            perfilNome.textContent = usuario.nome.split(' ')[0];
-        }
+        if (perfilNome && usuario?.nome) perfilNome.textContent = usuario.nome.split(' ')[0];
     }
 
     function atualizarUIDeslogado() {
@@ -181,6 +179,20 @@ document.addEventListener('DOMContentLoaded', function () {
     window.fecharModal = (modalId) => {
         const modal = document.getElementById(modalId);
         if (modal) { modal.style.display = 'none'; document.body.style.overflow = 'auto'; }
+    };
+
+    // ============================================================
+    //  TOGGLE RECEPTOR
+    // ============================================================
+
+    window.toggleRecebeEntrega = function(valor) {
+        const dadosReceptor = document.getElementById('dados-receptor');
+        if (!dadosReceptor) return;
+        dadosReceptor.style.display = valor === 'outro' ? 'block' : 'none';
+        const nome = document.getElementById('receptor-nome');
+        const tel  = document.getElementById('receptor-telefone');
+        if (nome) nome.required = valor === 'outro';
+        if (tel)  tel.required  = valor === 'outro';
     };
 
     // ============================================================
@@ -314,6 +326,24 @@ document.addEventListener('DOMContentLoaded', function () {
             mostrarToast('Os endereços de coleta e entrega não podem ser iguais', 'warning');
             return false;
         }
+
+        // Valida receptor se for outra pessoa
+        const quemRecebe = document.querySelector('input[name="quem-recebe"]:checked')?.value;
+        if (quemRecebe === 'outro') {
+            const nomeReceptor = document.getElementById('receptor-nome')?.value?.trim();
+            const telReceptor  = document.getElementById('receptor-telefone')?.value?.trim();
+            if (!nomeReceptor) {
+                mostrarToast('Informe o nome de quem vai receber', 'error');
+                document.getElementById('receptor-nome')?.focus();
+                return false;
+            }
+            if (!telReceptor) {
+                mostrarToast('Informe o telefone de quem vai receber', 'error');
+                document.getElementById('receptor-telefone')?.focus();
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -339,33 +369,23 @@ document.addEventListener('DOMContentLoaded', function () {
         return Math.min(Math.round(preco * 100) / 100, config.valorMaximo ?? 500);
     }
 
-    function limparEndereco(enderecoCompleto) {
-        if (!enderecoCompleto) return enderecoCompleto;
-        return enderecoCompleto.split(',').map(p => p.trim()).slice(0, 4).join(', ');
-    }
-
-    // Monta endereço completo incluindo número e complemento
     function montarEndereco(campoId, numeroId) {
         const endereco    = document.getElementById(campoId)?.value?.trim() || '';
         const numero      = document.getElementById(numeroId)?.value?.trim() || '';
         const compId      = campoId === 'endereco-coleta' ? 'complemento-coleta' : 'complemento-entrega';
         const complemento = document.getElementById(compId)?.value?.trim() || '';
 
-        // Pega a primeira parte da rua (antes da primeira vírgula do Nominatim)
-        const parteRua = endereco.split(',')[0].trim();
-
-        let resultado = parteRua;
-        if (numero) resultado += `, ${numero}`;
-        if (complemento) resultado += ` - ${complemento}`;
-
-        // Adiciona cidade/bairro do endereço original se existir
-        const partesExtras = endereco.split(',').slice(1);
-        if (partesExtras.length > 0) {
-            // Pega bairro e cidade (partes 1 e 2 se houver)
-            const extras = partesExtras.slice(0, 2).map(p => p.trim()).filter(Boolean);
-            if (extras.length) resultado += ', ' + extras.join(', ');
+        let resultado = endereco;
+        if (numero) {
+            // Insere número após o nome da rua (antes de qualquer vírgula)
+            const primeiraVirgula = endereco.indexOf(',');
+            if (primeiraVirgula > -1) {
+                resultado = endereco.slice(0, primeiraVirgula) + ', ' + numero + endereco.slice(primeiraVirgula);
+            } else {
+                resultado = endereco + ', ' + numero;
+            }
         }
-
+        if (complemento) resultado += ' - ' + complemento;
         return resultado;
     }
 
@@ -405,8 +425,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 window.distanciaAtual = { distanciaKm: 5.5, distanciaTexto: '5.5 km', duracaoTexto: '15 min' };
             }
 
-            const dimensoes = obterDimensoes();
-            const preco     = calcularPreco(window.distanciaAtual.distanciaKm, veiculo, dimensoes);
+            const dimensoes  = obterDimensoes();
+            const preco      = calcularPreco(window.distanciaAtual.distanciaKm, veiculo, dimensoes);
+            const quemRecebe = document.querySelector('input[name="quem-recebe"]:checked')?.value || 'eu';
 
             const dtexto   = document.getElementById('distancia-texto');
             const dduracao = document.getElementById('duracao-texto');
@@ -415,21 +436,24 @@ document.addEventListener('DOMContentLoaded', function () {
             if (distanciaInfo) distanciaInfo.style.display = 'block';
 
             window.orcamentoAtual = {
-                numeroPedido:    'NG' + Date.now().toString().slice(-6),
-                data:            new Date().toLocaleString('pt-BR'),
-                nome:            document.getElementById('cliente-nome')?.value     || '',
-                telefone:        document.getElementById('cliente-telefone')?.value || '',
-                email:           document.getElementById('cliente-email')?.value    || '',
-                tipoVeiculo:     veiculo,
-                enderecoColeta:  origemComNumero,
-                enderecoEntrega: destinoComNumero,
-                distancia:       window.distanciaAtual.distanciaTexto,
-                distanciaNum:    window.distanciaAtual.distanciaKm,
-                duracao:         window.distanciaAtual.duracaoTexto,
-                dimensoes:       dimensoes
+                numeroPedido:     'NG' + Date.now().toString().slice(-6),
+                data:             new Date().toLocaleString('pt-BR'),
+                nome:             document.getElementById('cliente-nome')?.value     || '',
+                telefone:         document.getElementById('cliente-telefone')?.value || '',
+                email:            document.getElementById('cliente-email')?.value    || '',
+                tipoVeiculo:      veiculo,
+                enderecoColeta:   origemComNumero,
+                enderecoEntrega:  destinoComNumero,
+                distancia:        window.distanciaAtual.distanciaTexto,
+                distanciaNum:     window.distanciaAtual.distanciaKm,
+                duracao:          window.distanciaAtual.duracaoTexto,
+                dimensoes:        dimensoes
                     ? `${dimensoes.comprimento}x${dimensoes.largura}x${dimensoes.altura}cm, ${dimensoes.peso}kg`
                     : 'Não informado',
-                descricao: document.getElementById('descricao')?.value || 'Não informada',
+                descricao:        document.getElementById('descricao')?.value || 'Não informada',
+                quemRecebe,
+                receptorNome:     document.getElementById('receptor-nome')?.value?.trim()     || '',
+                receptorTelefone: document.getElementById('receptor-telefone')?.value?.trim() || '',
                 preco,
             };
 
@@ -458,6 +482,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!window.orcamentoAtual) return;
         const o = window.orcamentoAtual;
 
+        const blocoReceptor = o.quemRecebe === 'outro' ? `
+━━━━━━━━━━━━━━━━━━━━━
+👤 *RECEPTOR*
+━━━━━━━━━━━━━━━━━━━━━
+📛 *Nome:* ${o.receptorNome}
+📱 *Telefone:* ${o.receptorTelefone}` : '';
+
         const mensagem =
 `🆕 *NOVO PEDIDO - N&G EXPRESS* 🆕
 
@@ -484,7 +515,7 @@ ${o.enderecoColeta}
 ━━━━━━━━━━━━━━━━━━━━━
 🎯 *ENTREGA*
 ━━━━━━━━━━━━━━━━━━━━━
-${o.enderecoEntrega}
+${o.enderecoEntrega}${blocoReceptor}
 
 ━━━━━━━━━━━━━━━━━━━━━
 📦 *ENCOMENDA*
@@ -507,15 +538,15 @@ ${o.enderecoEntrega}
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        usuario_id:       usuario.id,
-                        numero_pedido:    o.numeroPedido,
-                        tipo_veiculo:     o.tipoVeiculo,
-                        endereco_coleta:  o.enderecoColeta,
-                        endereco_entrega: o.enderecoEntrega,
-                        dimensoes:        o.dimensoes,
-                        peso:             parseFloat(o.peso) || 0,
-                        descricao:        o.descricao,
-                        valor_total:      o.preco,
+                        usuario_id:        usuario.id,
+                        numero_pedido:     o.numeroPedido,
+                        tipo_veiculo:      o.tipoVeiculo,
+                        endereco_coleta:   o.enderecoColeta,
+                        endereco_entrega:  o.enderecoEntrega,
+                        dimensoes:         o.dimensoes,
+                        peso:              parseFloat(o.peso) || 0,
+                        descricao:         o.descricao,
+                        valor_total:       o.preco,
                     }),
                 });
             } catch (e) {
@@ -538,38 +569,8 @@ ${o.enderecoEntrega}
     let debounceTimer = null;
 
     // ============================================================
-    //  AUTOCOMPLETE — NOMINATIM COM FORMATO BRASILEIRO
+    //  AUTOCOMPLETE — NOMINATIM FORMATO BRASILEIRO
     // ============================================================
-
-    function formatarEnderecoNominatim(item) {
-        const a = item.address || {};
-
-        const rua     = a.road || a.pedestrian || a.footway || a.path || '';
-        const numero  = a.house_number || '';
-        const bairro  = a.suburb || a.neighbourhood || a.quarter || '';
-        const cidade  = a.city || a.town || a.village || a.municipality || '';
-        const estado  = a.state || '';
-
-        // Abreviação de estado
-        const siglaEstado = {
-            'Acre': 'AC', 'Alagoas': 'AL', 'Amapá': 'AP', 'Amazonas': 'AM',
-            'Bahia': 'BA', 'Ceará': 'CE', 'Distrito Federal': 'DF',
-            'Espírito Santo': 'ES', 'Goiás': 'GO', 'Maranhão': 'MA',
-            'Mato Grosso': 'MT', 'Mato Grosso do Sul': 'MS', 'Minas Gerais': 'MG',
-            'Pará': 'PA', 'Paraíba': 'PB', 'Paraná': 'PR', 'Pernambuco': 'PE',
-            'Piauí': 'PI', 'Rio de Janeiro': 'RJ', 'Rio Grande do Norte': 'RN',
-            'Rio Grande do Sul': 'RS', 'Rondônia': 'RO', 'Roraima': 'RR',
-            'Santa Catarina': 'SC', 'São Paulo': 'SP', 'Sergipe': 'SE', 'Tocantins': 'TO'
-        }[estado] || estado;
-
-        const partes = [];
-        if (rua)     partes.push(rua + (numero ? ', ' + numero : ''));
-        if (bairro)  partes.push(bairro);
-        if (cidade)  partes.push(cidade);
-        if (siglaEstado) partes.push(siglaEstado);
-
-        return partes.length > 0 ? partes.join(' - ') : item.display_name;
-    }
 
     function inicializarAutocomplete() {
         const campoColeta  = document.getElementById('endereco-coleta');
@@ -585,34 +586,30 @@ ${o.enderecoEntrega}
                 debounceTimer = setTimeout(() => buscarSugestoesNominatim(req.term, resp), 400);
             },
             select(event, ui) {
-    event.preventDefault();
-    const a = ui.item.address || {};
+                event.preventDefault();
+                const a = ui.item.address || {};
+                const rua    = a.road || a.pedestrian || a.footway || a.path || '';
+                const bairro = a.suburb || a.neighbourhood || a.quarter || '';
+                const cidade = a.city || a.town || a.village || '';
+                const cep    = a.postcode || '';
 
-    const rua    = a.road || a.pedestrian || a.footway || a.path || '';
-    const bairro = a.suburb || a.neighbourhood || a.quarter || '';
-    const cidade = a.city || a.town || a.village || '';
-    const cep    = a.postcode || '';
+                const partes = [rua, bairro, cidade].filter(Boolean).join(', ');
+                this.value = cep ? `${partes} - ${cep}` : partes;
 
-    // Monta endereço completo no campo: Rua, Bairro, Cidade - CEP
-    const partes = [rua, bairro, cidade].filter(Boolean).join(', ');
-    this.value = cep ? `${partes} - ${cep}` : partes;
-
-    // Salva coordenadas para geocodificação
-    if (ui.item.latitude && ui.item.longitude) {
-        window.coordenadasCache[`geocode_${this.value}`] = {
-            lat: ui.item.latitude,
-            lng: ui.item.longitude
-        };
-    }
-    return false;
-},
+                if (ui.item.latitude && ui.item.longitude) {
+                    window.coordenadasCache[`geocode_${this.value}`] = {
+                        lat: ui.item.latitude,
+                        lng: ui.item.longitude
+                    };
+                }
+                return false;
+            },
         };
 
         $(campoColeta).autocomplete(opcoes);
         $(campoEntrega).autocomplete(opcoes);
 
-        // Estilo personalizado do dropdown
-        $(campoColeta).autocomplete('instance')._renderItem = function(ul, item) {
+        const renderItem = function(ul, item) {
             return $('<li>').append(`
                 <div style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;">
                     <div style="font-size:.92rem;color:var(--text-primary);font-weight:500;">
@@ -626,83 +623,67 @@ ${o.enderecoEntrega}
             `).appendTo(ul);
         };
 
-        $(campoEntrega).autocomplete('instance')._renderItem = function(ul, item) {
-            return $('<li>').append(`
-                <div style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;">
-                    <div style="font-size:.92rem;color:var(--text-primary);font-weight:500;">
-                        <i class="bi bi-geo-alt-fill" style="color:var(--primary-color);margin-right:6px;"></i>
-                        ${item.label}
-                    </div>
-                    <div style="font-size:.78rem;color:var(--text-tertiary);margin-top:3px;padding-left:20px;">
-                        ${item.labelSecundario || ''}
-                    </div>
-                </div>
-            `).appendTo(ul);
-        };
+        $(campoColeta).autocomplete('instance')._renderItem = renderItem;
+        $(campoEntrega).autocomplete('instance')._renderItem = renderItem;
     }
 
     async function buscarSugestoesNominatim(query, callback) {
-    try {
-        const url = `https://nominatim.openstreetmap.org/search?` +
-            `q=${encodeURIComponent(query)}&format=json&addressdetails=1` +
-            `&countrycodes=br&limit=6&accept-language=pt-BR`;
+        try {
+            const url = `https://nominatim.openstreetmap.org/search?` +
+                `q=${encodeURIComponent(query)}&format=json&addressdetails=1` +
+                `&countrycodes=br&limit=6&accept-language=pt-BR`;
 
-        const response = await fetch(url, {
-            headers: { 'User-Agent': 'NGExpress/1.0 (ngexpress@email.com)' }
-        });
-        if (!response.ok) throw new Error(`Status ${response.status}`);
-        const data = await response.json();
+            const response = await fetch(url, {
+                headers: { 'User-Agent': 'NGExpress/1.0 (ngexpress@email.com)' }
+            });
+            if (!response.ok) throw new Error(`Status ${response.status}`);
+            const data = await response.json();
 
-        const siglas = {
-            'Acre':'AC','Alagoas':'AL','Amapá':'AP','Amazonas':'AM','Bahia':'BA',
-            'Ceará':'CE','Distrito Federal':'DF','Espírito Santo':'ES','Goiás':'GO',
-            'Maranhão':'MA','Mato Grosso':'MT','Mato Grosso do Sul':'MS','Minas Gerais':'MG',
-            'Pará':'PA','Paraíba':'PB','Paraná':'PR','Pernambuco':'PE','Piauí':'PI',
-            'Rio de Janeiro':'RJ','Rio Grande do Norte':'RN','Rio Grande do Sul':'RS',
-            'Rondônia':'RO','Roraima':'RR','Santa Catarina':'SC','São Paulo':'SP',
-            'Sergipe':'SE','Tocantins':'TO'
-        };
-
-        const resultados = data.map(item => {
-            const a = item.address || {};
-
-            const rua     = a.road || a.pedestrian || a.footway || a.path || '';
-            const bairro  = a.suburb || a.neighbourhood || a.quarter || '';
-            const cidade  = a.city || a.town || a.village || '';
-            const uf      = siglas[a.state] || a.state || '';
-            const cep     = a.postcode || '';
-
-            // Label principal: só a rua
-            const labelPrincipal = rua || cidade;
-
-            // Label secundário: bairro, cidade - UF (CEP se tiver)
-            const partes = [bairro, cidade].filter(Boolean).join(', ');
-            const labelSecundario = [partes, uf, cep].filter(Boolean).join(' - ');
-
-            // Valor que vai para o campo ao selecionar
-            const valorCampo = rua || labelPrincipal;
-
-            return {
-                label:          labelPrincipal,
-                labelSecundario,
-                value:          valorCampo,
-                address:        a,
-                latitude:       parseFloat(item.lat),
-                longitude:      parseFloat(item.lon),
+            const siglas = {
+                'Acre':'AC','Alagoas':'AL','Amapá':'AP','Amazonas':'AM','Bahia':'BA',
+                'Ceará':'CE','Distrito Federal':'DF','Espírito Santo':'ES','Goiás':'GO',
+                'Maranhão':'MA','Mato Grosso':'MT','Mato Grosso do Sul':'MS','Minas Gerais':'MG',
+                'Pará':'PA','Paraíba':'PB','Paraná':'PR','Pernambuco':'PE','Piauí':'PI',
+                'Rio de Janeiro':'RJ','Rio Grande do Norte':'RN','Rio Grande do Sul':'RS',
+                'Rondônia':'RO','Roraima':'RR','Santa Catarina':'SC','São Paulo':'SP',
+                'Sergipe':'SE','Tocantins':'TO'
             };
-        });
 
-        callback(resultados);
-    } catch (error) {
-        console.warn('⚠️ Autocomplete Nominatim:', error.message);
-        callback([]);
+            const resultados = data.map(item => {
+                const a = item.address || {};
+                const rua    = a.road || a.pedestrian || a.footway || a.path || '';
+                const bairro = a.suburb || a.neighbourhood || a.quarter || '';
+                const cidade = a.city || a.town || a.village || '';
+                const uf     = siglas[a.state] || a.state || '';
+                const cep    = a.postcode || '';
+
+                const labelPrincipal  = rua || cidade;
+                const partes          = [bairro, cidade].filter(Boolean).join(', ');
+                const labelSecundario = [partes, uf, cep].filter(Boolean).join(' - ');
+
+                const partesCampo = [rua, bairro, cidade].filter(Boolean).join(', ');
+                const valorCampo  = cep ? `${partesCampo} - ${cep}` : partesCampo;
+
+                return {
+                    label:          labelPrincipal,
+                    labelSecundario,
+                    value:          valorCampo,
+                    address:        a,
+                    latitude:       parseFloat(item.lat),
+                    longitude:      parseFloat(item.lon),
+                };
+            });
+
+            callback(resultados);
+        } catch (error) {
+            console.warn('⚠️ Autocomplete Nominatim:', error.message);
+            callback([]);
+        }
     }
-}
 
     async function geocodificarComNominatim(endereco) {
         const cacheKey = `geocode_${endereco}`;
         if (window.coordenadasCache[cacheKey]) return window.coordenadasCache[cacheKey];
-
         const url = `https://nominatim.openstreetmap.org/search?` +
             `q=${encodeURIComponent(endereco)}&format=json&countrycodes=br&limit=1`;
         const response = await fetch(url, {
@@ -736,7 +717,12 @@ ${o.enderecoEntrega}
         if (!hereRouter) throw new Error('HERE Maps não está inicializado.');
         return new Promise((resolve, reject) => {
             hereRouter.calculateRoute(
-                { transportMode: 'car', origin: `${origemCoords.lat},${origemCoords.lng}`, destination: `${destinoCoords.lat},${destinoCoords.lng}`, return: 'summary' },
+                {
+                    transportMode: 'car',
+                    origin:      `${origemCoords.lat},${origemCoords.lng}`,
+                    destination: `${destinoCoords.lat},${destinoCoords.lng}`,
+                    return: 'summary'
+                },
                 (result) => {
                     const section = result.routes?.[0]?.sections?.[0];
                     if (!section) { reject(new Error('Nenhuma rota encontrada')); return; }
