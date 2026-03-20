@@ -1536,3 +1536,78 @@ footer::before {
         color: black;
     }
 }
+/* ===== MOBILE MENU AUTH ===== */
+@media (max-width: 768px) {
+    .nav-links {
+        gap: 0;
+        padding: 0;
+        overflow-y: auto;
+        justify-content: flex-start;
+    }
+
+    .nav-links li {
+        width: 100%;
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .nav-links li:last-child {
+        border-bottom: none;
+        padding: 16px 24px;
+    }
+
+    .nav-links li a {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 32px;
+        font-size: 1.05rem;
+        width: 100%;
+        color: var(--text-primary);
+        transition: var(--transition-fast);
+        border-radius: 0;
+    }
+
+    .nav-links li a:hover {
+        background: rgba(255, 107, 0, 0.08);
+        color: var(--primary-color);
+        padding-left: 40px;
+    }
+
+    /* Entrar — laranja */
+    .nav-links .login-item:nth-of-type(1) a {
+        color: var(--primary-color);
+        font-weight: 600;
+        background: rgba(255, 107, 0, 0.05);
+    }
+
+    /* Cadastrar — verde */
+    .nav-links .login-item:nth-of-type(2) a {
+        color: var(--success-color);
+        font-weight: 600;
+        background: rgba(0, 196, 140, 0.05);
+    }
+
+    /* Sair — vermelho */
+    .nav-logout {
+        color: var(--danger-color) !important;
+        background: rgba(255, 92, 92, 0.05) !important;
+    }
+
+    .nav-logout:hover {
+        background: rgba(255, 92, 92, 0.12) !important;
+        color: var(--danger-color) !important;
+        padding-left: 40px !important;
+    }
+
+    /* Botão Solicitar Orçamento no mobile */
+    .nav-links li:last-child {
+        padding: 16px 24px;
+    }
+
+    .nav-links li:last-child a.btn {
+        width: 100%;
+        border-radius: var(--radius-full);
+        justify-content: center;
+        font-size: 1rem;
+    }
+}

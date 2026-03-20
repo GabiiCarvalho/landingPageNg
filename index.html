@@ -9,43 +9,69 @@
     <link rel="stylesheet" href="https://unpkg.com/swiper@8/swiper-bundle.min.css">
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <link rel="stylesheet" href="css/styles.css">
-    <!-- HERE Maps API -->
     <link rel="stylesheet" href="https://js.api.here.com/v3/3.1/mapsjs-ui.css" />
-    <!-- Adicione esta linha para o Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <!-- Header -->
+
     <header>
         <div class="container">
             <nav class="navbar">
                 <a href="index.html" class="logo">
-                        <div class="logo-icon">
+                    <div class="logo-icon">
                         <i class="bi bi-rocket-takeoff-fill"></i>
-                        </div>
-                        <div class="logo-text">
+                    </div>
+                    <div class="logo-text">
                         <div class="logo-text-main">N&G <span>EXPRESS</span></div>
-                    <div class="logo-text-sub">ENTREGAS RÁPIDAS</div>
-                </div>
-            </a>
+                        <div class="logo-text-sub">ENTREGAS RÁPIDAS</div>
+                    </div>
+                </a>
+
+                <button class="mobile-menu-btn" aria-label="Menu">
+                    <i class="bi bi-list"></i>
+                </button>
+
                 <ul class="nav-links">
                     <li><a href="index.html">Início</a></li>
                     <li><a href="#services">Serviços</a></li>
                     <li><a href="#about">Sobre</a></li>
                     <li><a href="#contact">Contato</a></li>
-                    <li class="perfil-item" style="display: none;">
-                        <a href="dashboard.html"><i class="bi bi-person-circle"></i> <span id="menu-perfil-nome">Perfil</span></a>
+
+                    <!-- Deslogado -->
+                    <li class="login-item">
+                        <a href="#" onclick="abrirModalLogin(); return false;">
+                            <i class="bi bi-box-arrow-in-right"></i> Entrar
+                        </a>
                     </li>
                     <li class="login-item">
-                        <a href="#" onclick="abrirModalLogin(); return false;">Entrar</a>
+                        <a href="#" onclick="abrirModalCadastro(); return false;">
+                            <i class="bi bi-person-plus"></i> Cadastrar
+                        </a>
                     </li>
+
+                    <!-- Logado -->
+                    <li class="perfil-item" style="display:none;">
+                        <a href="dashboard.html">
+                            <i class="bi bi-person-circle"></i> <span id="menu-perfil-nome">Perfil</span>
+                        </a>
+                    </li>
+                    <li class="perfil-item" style="display:none;">
+                        <a href="dashboard.html">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="perfil-item" style="display:none;">
+                        <a href="#" onclick="fazerLogout(); return false;" class="nav-logout">
+                            <i class="bi bi-box-arrow-right"></i> Sair
+                        </a>
+                    </li>
+
                     <li><a href="novo-pedido.html" class="btn">Solicitar Orçamento</a></li>
                 </ul>
             </nav>
         </div>
     </header>
 
-    <!-- Hero Section -->
     <section class="hero" id="home">
         <div class="swiper hero-swiper">
             <div class="swiper-wrapper">
@@ -84,7 +110,6 @@
         </div>
     </section>
 
-    <!-- Serviços -->
     <section class="services" id="services">
         <div class="container">
             <h2 class="section-title">Nossos Serviços</h2>
@@ -101,7 +126,6 @@
                         <a href="novo-pedido.html" class="btn saiba-mais-btn">Solicitar Orçamento</a>
                     </div>
                 </div>
-
                 <div class="service-card fade-in delay-1">
                     <div class="service-img">
                         <img src="img/entregaDeCarro.jpeg" alt="Serviço de Carro">
@@ -113,13 +137,10 @@
                         <a href="novo-pedido.html" class="btn saiba-mais-btn">Solicitar Orçamento</a>
                     </div>
                 </div>
-
-
             </div>
         </div>
     </section>
 
-    <!-- Sobre -->
     <section class="about" id="about">
         <div class="container">
             <h2 class="section-title">Sobre Nós</h2>
@@ -131,30 +152,23 @@
                     <h2>N&G EXPRESS - Sua entrega em boas mãos</h2>
                     <p>Fundada em 2016, a N&G EXPRESS se tornou referência em serviços de entregas rápidas em Balneário Camboriú e região. Nossa missão é proporcionar soluções logísticas ágeis e confiáveis.</p>
                     <p>Com uma frota moderna de motos e carros, e uma equipe de profissionais treinados, garantimos que suas encomendas cheguem ao destino com segurança e no prazo combinado.</p>
-
                     <div class="features">
                         <div class="feature-item">
-                            <div class="feature-icon">
-                                <i class="bi bi-check-circle-fill"></i>
-                            </div>
+                            <div class="feature-icon"><i class="bi bi-check-circle-fill"></i></div>
                             <div>
                                 <h4>Rastreamento em Tempo Real</h4>
                                 <p>Acompanhe sua entrega do início ao fim.</p>
                             </div>
                         </div>
                         <div class="feature-item">
-                            <div class="feature-icon">
-                                <i class="bi bi-shield-check"></i>
-                            </div>
+                            <div class="feature-icon"><i class="bi bi-shield-check"></i></div>
                             <div>
                                 <h4>Segurança Garantida</h4>
                                 <p>Todos nossos colaboradores são treinados e certificados.</p>
                             </div>
                         </div>
                         <div class="feature-item">
-                            <div class="feature-icon">
-                                <i class="bi bi-headset"></i>
-                            </div>
+                            <div class="feature-icon"><i class="bi bi-headset"></i></div>
                             <div>
                                 <h4>Suporte 24/7</h4>
                                 <p>Nossa central de atendimento está sempre disponível.</p>
@@ -166,7 +180,6 @@
         </div>
     </section>
 
-    <!-- CTA -->
     <section class="cta">
         <div class="container">
             <h2 class="section-title">Precisa de uma entrega urgente?</h2>
@@ -175,7 +188,6 @@
         </div>
     </section>
 
-    <!-- Contato -->
     <section class="contact" id="contact">
         <div class="container">
             <h2 class="section-title">Entre em Contato</h2>
@@ -183,36 +195,28 @@
                 <div class="contact-info fade-in">
                     <h3>Informações de Contato</h3>
                     <div class="contact-item">
-                        <div class="contact-icon">
-                            <i class="bi bi-geo-alt-fill"></i>
-                        </div>
+                        <div class="contact-icon"><i class="bi bi-geo-alt-fill"></i></div>
                         <div>
                             <h4>Endereço</h4>
                             <p>Rua Olga Bernardes Amorim, 101, Centro, Camboriú - SC</p>
                         </div>
                     </div>
                     <div class="contact-item">
-                        <div class="contact-icon">
-                            <i class="bi bi-telephone-fill"></i>
-                        </div>
+                        <div class="contact-icon"><i class="bi bi-telephone-fill"></i></div>
                         <div>
                             <h4>Telefone</h4>
                             <p>(47) 9.9912-3260</p>
                         </div>
                     </div>
                     <div class="contact-item">
-                        <div class="contact-icon">
-                            <i class="bi bi-envelope-fill"></i>
-                        </div>
+                        <div class="contact-icon"><i class="bi bi-envelope-fill"></i></div>
                         <div>
                             <h4>E-mail</h4>
                             <p>comercial.ngexpress@gmail.com</p>
                         </div>
                     </div>
                     <div class="contact-item">
-                        <div class="contact-icon">
-                            <i class="bi bi-clock-fill"></i>
-                        </div>
+                        <div class="contact-icon"><i class="bi bi-clock-fill"></i></div>
                         <div>
                             <h4>Horário de Funcionamento</h4>
                             <p>Seg-Sex: 9h-18h<br>Sáb: 9h-16h</p>
@@ -223,7 +227,6 @@
         </div>
     </section>
 
-    <!-- Footer -->
     <footer>
         <div class="container">
             <div class="footer-content">
@@ -251,64 +254,62 @@
                     <ul class="footer-links">
                         <li class="login-item"><a href="#" onclick="abrirModalLogin(); return false;">Entrar</a></li>
                         <li class="login-item"><a href="#" onclick="abrirModalCadastro(); return false;">Cadastrar</a></li>
-                        <li class="perfil-item" style="display: none;"><a href="dashboard.html">Dashboard</a></li>
-                        <li class="perfil-item" style="display: none;"><a href="historico.html">Histórico</a></li>
-                        <li class="perfil-item" style="display: none;"><a href="perfil.html">Meu Perfil</a></li>
+                        <li class="perfil-item" style="display:none;"><a href="dashboard.html">Dashboard</a></li>
+                        <li class="perfil-item" style="display:none;"><a href="historico.html">Histórico</a></li>
+                        <li class="perfil-item" style="display:none;"><a href="perfil.html">Meu Perfil</a></li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
                 <p>&copy; <span id="currentYear"></span> N&G EXPRESS. Todos os direitos reservados.</p>
-                <p style="font-size: 0.85rem; margin-top: 5px; opacity: 0.8;">Desenvolvido por CodeCarvalho</p>
+                <p style="font-size:0.85rem;margin-top:5px;opacity:0.8;">Desenvolvido por CodeCarvalho</p>
             </div>
         </div>
     </footer>
 
-    <!-- Botões Flutuantes -->
-        <a href="https://wa.me/5547999123260?text=Olá!%20Vim%20pelo%20site%20NG%20EXPRESS%20e%20gostaria%20de%20saber%20mais%20sobre%20seus%20serviços." target="_blank" class="whatsapp-float" aria-label="Contato via WhatsApp">
-            <i class="fab fa-whatsapp"></i>
-            <span class="whatsapp-tooltip">Fale diretamente comigo!</span>
+    <a href="https://wa.me/5547999123260?text=Olá!%20Vim%20pelo%20site%20NG%20EXPRESS%20e%20gostaria%20de%20saber%20mais%20sobre%20seus%20serviços." target="_blank" class="whatsapp-float" aria-label="Contato via WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+        <span class="whatsapp-tooltip">Fale diretamente comigo!</span>
     </a>
 
-    <!-- Modais -->
     <!-- Modal de Login -->
-<div class="modal" id="login-modal">
-    <div class="modal-content" style="max-width: 400px;">
-        <span class="close-modal" onclick="fecharModal('login-modal')">&times;</span>
-        <h2><i class="bi bi-box-arrow-in-right"></i> Login</h2>
-        <form onsubmit="fazerLogin(event)">
-            <div class="form-section">
-                <div class="form-group">
-                    <label for="login-email">E-mail</label>
-                    <input type="email" id="login-email" placeholder="seu@email.com" required>
+    <div class="modal" id="login-modal">
+        <div class="modal-content" style="max-width:400px;">
+            <span class="close-modal" onclick="fecharModal('login-modal')">&times;</span>
+            <h2><i class="bi bi-box-arrow-in-right"></i> Login</h2>
+            <form onsubmit="fazerLogin(event)">
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="login-email">E-mail</label>
+                        <input type="email" id="login-email" placeholder="seu@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-senha">Senha</label>
+                        <input type="password" id="login-senha" placeholder="******" required>
+                    </div>
+                    <div class="form-group" style="display:flex;align-items:center;gap:8px;margin-top:-8px;">
+                        <input type="checkbox" id="lembrar-email" style="width:auto;cursor:pointer;">
+                        <label for="lembrar-email" style="margin:0;font-size:.9rem;cursor:pointer;color:var(--text-secondary);">
+                            Lembrar meu e-mail
+                        </label>
+                    </div>
+                    <button type="submit" class="btn" style="width:100%;">
+                        <i class="bi bi-box-arrow-in-right"></i> Entrar
+                    </button>
+                    <p style="text-align:center;margin-top:15px;">
+                        Não tem conta?
+                        <a href="#" onclick="abrirModalCadastro(); return false;" style="color:var(--primary-color);">
+                            Cadastre-se
+                        </a>
+                    </p>
                 </div>
-                <div class="form-group">
-                    <label for="login-senha">Senha</label>
-                    <input type="password" id="login-senha" placeholder="******" required>
-                </div>
-                <div class="form-group" style="display:flex;align-items:center;gap:8px;margin-top:-8px;">
-                    <input type="checkbox" id="lembrar-email" style="width:auto;cursor:pointer;">
-                    <label for="lembrar-email" style="margin:0;font-size:.9rem;cursor:pointer;color:var(--text-secondary);">
-                        Lembrar meu e-mail
-                    </label>
-                </div>
-                <button type="submit" class="btn" style="width: 100%;">
-                    <i class="bi bi-box-arrow-in-right"></i> Entrar
-                </button>
-                <p style="text-align: center; margin-top: 15px;">
-                    Não tem conta? 
-                    <a href="#" onclick="abrirModalCadastro(); return false;" style="color: var(--primary-color);">
-                        Cadastre-se
-                    </a>
-                </p>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
-</div>
 
     <!-- Modal de Cadastro -->
     <div class="modal" id="cadastro-modal">
-        <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-content" style="max-width:500px;">
             <span class="close-modal" onclick="fecharModal('cadastro-modal')">&times;</span>
             <h2><i class="bi bi-person-plus"></i> Cadastro</h2>
             <form onsubmit="fazerCadastro(event)">
@@ -333,7 +334,7 @@
                         <label for="cadastro-confirmar-senha">Confirmar Senha</label>
                         <input type="password" id="cadastro-confirmar-senha" minlength="6" required>
                     </div>
-                    <button type="submit" class="btn" style="width: 100%;">
+                    <button type="submit" class="btn" style="width:100%;">
                         <i class="bi bi-check-circle"></i> Cadastrar
                     </button>
                 </div>
@@ -341,10 +342,8 @@
         </div>
     </div>
 
-    <!-- Toast Container -->
     <div id="toast-container"></div>
 
-    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
     <script src="https://unpkg.com/swiper@8/swiper-bundle.min.js"></script>
