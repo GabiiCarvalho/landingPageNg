@@ -1,13 +1,10 @@
 <?php
-// router.php
-
-// CORS — sempre primeiro
+// Headers CORS sempre primeiro
 header("Access-Control-Allow-Origin: https://ng-express.netlify.app");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Access-Control-Allow-Credentials: true");
 
-// Responde preflight imediatamente
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
@@ -16,16 +13,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $file = __DIR__ . $uri;
 
-// Serve arquivos estáticos (css, js, img, html, php)
-if ($uri !== '/' && file_exists($file) && !is_dir($file)) {
-    // Para arquivos PHP, inclui direto (mantém execução)
+// Se o arquivo existe no disco, serve ele
+if (file_exists($file) && !is_dir($file)) {
     if (pathinfo($file, PATHINFO_EXTENSION) === 'php') {
-        include $file;
+        require $file;
         exit();
     }
-    // Arquivos estáticos — deixa o servidor servir
+    // Arquivo estático — servidor cuida
     return false;
 }
 
-// Rota padrão
+// Fallback para index.html
 include __DIR__ . '/index.html';
