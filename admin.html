@@ -9,40 +9,24 @@
     <link rel="stylesheet" href="css/styles.css">
     <style>
         * { box-sizing: border-box; }
-
         body { overflow-x: hidden; }
 
-        .admin-page {
-            padding: 40px 0 80px;
-            background: var(--bg-primary);
-        }
-
-        .admin-grid {
-            display: grid;
-            grid-template-columns: 260px 1fr;
-            gap: 28px;
-            align-items: start;
-        }
+        .admin-page { padding: 40px 0 80px; background: var(--bg-primary); }
+        .admin-grid { display: grid; grid-template-columns: 260px 1fr; gap: 28px; align-items: start; }
         @media (max-width: 768px) { .admin-grid { grid-template-columns: 1fr; } }
 
         .page-header {
             background: linear-gradient(135deg, #1a0533, #0a0a1f);
             border-bottom: 1px solid rgba(255,107,0,.3);
-            color: var(--text-primary);
-            padding: 40px 0 30px;
-            margin-top: 80px;
+            color: var(--text-primary); padding: 40px 0 30px; margin-top: 80px;
         }
         .page-header h1 { font-size: 2rem; margin: 0 0 6px; }
         .page-header p  { margin: 0; color: var(--text-secondary); }
 
         .admin-sidebar {
-            background: var(--bg-secondary);
-            border-radius: var(--radius-lg);
-            border: 1px solid rgba(255,107,0,.2);
-            overflow: hidden;
-            box-shadow: var(--shadow-md);
-            position: sticky;
-            top: 100px;
+            background: var(--bg-secondary); border-radius: var(--radius-lg);
+            border: 1px solid rgba(255,107,0,.2); overflow: hidden;
+            box-shadow: var(--shadow-md); position: sticky; top: 100px;
         }
         .admin-profile {
             background: linear-gradient(135deg, #FF6B00, #003366);
@@ -83,22 +67,11 @@
         .admin-nav-divider { height: 1px; background: var(--border-light); margin: 8px 16px; }
 
         .admin-main { display: flex; flex-direction: column; gap: 24px; }
-
         .admin-card {
-            background: var(--bg-secondary);
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--border-light);
-            overflow: hidden;
-            box-shadow: var(--shadow-md);
+            background: var(--bg-secondary); border-radius: var(--radius-lg);
+            border: 1px solid var(--border-light); overflow: hidden; box-shadow: var(--shadow-md);
         }
-
-        /* Tabelas com scroll interno */
-        .table-scroll {
-            overflow-x: auto;
-            max-height: 480px;
-            overflow-y: auto;
-        }
-
+        .table-scroll { overflow-x: auto; max-height: 480px; overflow-y: auto; }
         .admin-card-header {
             padding: 20px 24px; border-bottom: 1px solid var(--border-light);
             display: flex; align-items: center; justify-content: space-between;
@@ -109,7 +82,6 @@
         .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
         @media (max-width: 900px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 500px) { .stats-row { grid-template-columns: 1fr; } }
-
         .stat-box {
             background: var(--bg-tertiary); border: 1px solid var(--border-light);
             border-radius: var(--radius-md); padding: 22px 16px; text-align: center; transition: var(--transition-base);
@@ -120,11 +92,9 @@
 
         .hist-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
         .hist-table thead th {
-            background: var(--bg-tertiary);
-            position: sticky; top: 0; z-index: 1;
-            padding: 11px 14px; text-align: left;
-            color: var(--text-tertiary); font-weight: 600; font-size: .75rem;
-            text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border-medium);
+            background: var(--bg-tertiary); position: sticky; top: 0; z-index: 1;
+            padding: 11px 14px; text-align: left; color: var(--text-tertiary); font-weight: 600;
+            font-size: .75rem; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border-medium);
         }
         .hist-table td { padding: 13px 14px; border-bottom: 1px solid var(--border-light); color: var(--text-primary); vertical-align: middle; }
         .hist-table tr:last-child td { border-bottom: none; }
@@ -159,10 +129,23 @@
             border: 1px solid rgba(255,107,0,.2); padding: 48px 40px;
             width: 100%; max-width: 420px; box-shadow: var(--shadow-lg);
         }
-        .admin-login-box h1 {
-            font-size: 1.6rem; margin: 0 0 8px; text-align: center;
+        .admin-login-logo {
+            display: flex; align-items: center; justify-content: center;
+            gap: 12px; margin-bottom: 8px;
+        }
+        .admin-login-logo img {
+            width: 52px; height: 52px; border-radius: 50%;
+            object-fit: cover; border: 2px solid var(--primary-color);
+        }
+        .admin-login-logo-text { text-align: left; }
+        .admin-login-logo-text .main {
+            font-size: 1.4rem; font-weight: 700;
             background: linear-gradient(135deg, var(--primary-color), #003366);
             background-clip: text; -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+        }
+        .admin-login-logo-text .sub {
+            font-size: .7rem; color: var(--text-tertiary); letter-spacing: 1px;
         }
         .admin-login-box p { text-align: center; color: var(--text-tertiary); margin: 0 0 32px; font-size: .9rem; }
         .admin-login-box .form-group { margin-bottom: 20px; }
@@ -191,8 +174,8 @@
         .veiculo-bar-item .vb-label { font-size: .8rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .5px; }
         .veiculo-bar-item .vb-num { font-size: 2rem; font-weight: 800; color: var(--primary-color); }
 
-        /* Resumo — tabela de últimas corridas com altura fixa */
-        #admin-ultimas-wrap .hist-table tbody tr:nth-child(n+6) { display: none; }
+        /* Logo sem sublinhado */
+        .logo, .logo:hover, .logo:focus, .logo:visited, .logo * { text-decoration: none !important; }
     </style>
 </head>
 <body>
@@ -200,8 +183,14 @@
     <!-- TELA DE LOGIN -->
     <div id="admin-login-screen" class="admin-login-wrap">
         <div class="admin-login-box">
-            <h1><i class="bi bi-shield-lock-fill"></i> Admin</h1>
-            <p>N&G EXPRESS — Painel Administrativo</p>
+            <div class="admin-login-logo">
+                <img src="img/logo.jpeg" alt="N&G EXPRESS">
+                <div class="admin-login-logo-text">
+                    <div class="main">N&G <span>EXPRESS</span></div>
+                    <div class="sub">PAINEL ADMINISTRATIVO</div>
+                </div>
+            </div>
+            <p style="margin-top:12px;">Acesso restrito a administradores</p>
             <form onsubmit="fazerLoginAdmin(event)">
                 <div class="form-group">
                     <label>E-mail</label>
@@ -225,10 +214,10 @@
         <header>
             <div class="container">
                 <nav class="navbar">
-                    <a href="index.html" class="logo">
-                        <div class="logo-icon"><i class="bi bi-rocket-takeoff-fill"></i></div>
-                        <div class="logo-text">
-                            <div class="logo-text-main">N&G <span>EXPRESS</span></div>
+                    <a href="index.html" class="logo" style="text-decoration:none;">
+                        <img src="img/logo.jpeg" alt="N&G EXPRESS" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid var(--primary-color);">
+                        <div class="logo-text" style="text-decoration:none;">
+                            <div class="logo-text-main" style="text-decoration:none;">N&G <span>EXPRESS</span></div>
                             <div class="logo-text-sub">ADMIN</div>
                         </div>
                     </a>
@@ -318,7 +307,7 @@
                                         <h4 style="margin:0;color:var(--text-primary);font-size:.88rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">
                                             Últimas 5 corridas
                                         </h4>
-                                        <a href="#" onclick="mostrarTabAdmin('corridas', document.querySelector('.admin-nav a:nth-child(2)')); return false;"
+                                        <a href="#" onclick="mostrarTabAdmin('corridas', null); return false;"
                                            style="font-size:.82rem;font-weight:600;color:var(--primary-color);text-decoration:none;">
                                             Ver todas <i class="bi bi-arrow-right"></i>
                                         </a>
@@ -511,7 +500,7 @@
             barsWrap.innerHTML = '<div style="color:var(--text-tertiary);font-size:.88rem;">Nenhuma corrida ainda</div>';
         }
 
-        const wrap   = document.getElementById('admin-ultimas-wrap');
+        const wrap    = document.getElementById('admin-ultimas-wrap');
         const ultimas = (d.corridas || []).slice(0, 5);
         if (ultimas.length === 0) {
             wrap.innerHTML = '<div class="empty-state"><i class="bi bi-inbox"></i><p>Nenhuma corrida ainda</p></div>';
