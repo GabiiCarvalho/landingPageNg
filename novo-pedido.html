@@ -12,16 +12,16 @@
     <style>
         .logo, .logo:hover, .logo:focus, .logo:visited, .logo * { text-decoration: none !important; }
         .logo img {
-            width: 48px; height: 48px; border-radius: 50%; object-fit: cover;
-            box-shadow: 0 2px 12px rgba(0,0,0,.4); transition: transform .2s;
+            width: 72px; height: 72px; border-radius: 50%; object-fit: cover;
+            box-shadow: 0 2px 14px rgba(0,0,0,.45); transition: transform .2s;
         }
         .logo:hover img { transform: scale(1.06); }
-        @media (max-width: 768px) { .logo img { width: 40px; height: 40px; } }
-        @media (max-width: 375px) { .logo img { width: 36px; height: 36px; } }
+        @media (max-width: 1024px) { .logo img { width: 66px; height: 66px; } }
+        @media (max-width: 768px)  { .logo img { width: 60px; height: 60px; } }
+        @media (max-width: 480px)  { .logo img { width: 56px; height: 56px; } }
+        @media (max-width: 375px)  { .logo img { width: 52px; height: 52px; } }
 
-        .endereco-row {
-            display: grid; grid-template-columns: 1fr 120px; gap: 12px; align-items: end;
-        }
+        .endereco-row { display: grid; grid-template-columns: 1fr 120px; gap: 12px; align-items: end; }
         @media (max-width: 576px) { .endereco-row { grid-template-columns: 1fr; } }
         #distancia-info .distancia-box {
             display: flex; justify-content: space-between; padding: 12px 16px;
@@ -98,7 +98,7 @@
                                 <input type="text" id="endereco-coleta" placeholder="Ex: Rua Olga Bernardes Amorim, Centro, Camboriú - SC" required>
                                 <input type="text" id="numero-coleta" placeholder="Nº" style="text-align:center;" maxlength="10">
                             </div>
-                            <small class="form-text text-muted">Digite o nome da rua e selecione no autocomplete.</small>
+                            <small class="form-text text-muted">Digite o nome da rua e selecione no autocomplete. O número pode ser inserido no campo ao lado.</small>
                         </div>
                         <div class="form-group"><label for="complemento-coleta">Complemento (opcional)</label><input type="text" id="complemento-coleta" placeholder="Apto, Bloco, Sala, etc."></div>
                     </div>
@@ -111,7 +111,7 @@
                                 <input type="text" id="endereco-entrega" placeholder="Ex: Rua Francisco Barreto, Centro, Camboriú - SC" required>
                                 <input type="text" id="numero-entrega" placeholder="Nº" style="text-align:center;" maxlength="10">
                             </div>
-                            <small class="form-text text-muted">Digite o nome da rua e selecione no autocomplete.</small>
+                            <small class="form-text text-muted">Digite o nome da rua e selecione no autocomplete. O número pode ser inserido no campo ao lado.</small>
                         </div>
                         <div class="form-group"><label for="complemento-entrega">Complemento (opcional)</label><input type="text" id="complemento-entrega" placeholder="Apto, Bloco, Sala, etc."></div>
                     </div>

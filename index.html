@@ -14,12 +14,14 @@
     <style>
         .logo, .logo:hover, .logo:focus, .logo:visited, .logo * { text-decoration: none !important; }
         .logo img {
-            width: 48px; height: 48px; border-radius: 50%; object-fit: cover;
-            box-shadow: 0 2px 12px rgba(0,0,0,.4); transition: transform .2s;
+            width: 72px; height: 72px; border-radius: 50%; object-fit: cover;
+            box-shadow: 0 2px 14px rgba(0,0,0,.45); transition: transform .2s;
         }
         .logo:hover img { transform: scale(1.06); }
-        @media (max-width: 768px) { .logo img { width: 40px; height: 40px; } }
-        @media (max-width: 375px) { .logo img { width: 36px; height: 36px; } }
+        @media (max-width: 1024px) { .logo img { width: 66px; height: 66px; } }
+        @media (max-width: 768px)  { .logo img { width: 60px; height: 60px; } }
+        @media (max-width: 480px)  { .logo img { width: 56px; height: 56px; } }
+        @media (max-width: 375px)  { .logo img { width: 52px; height: 52px; } }
     </style>
 </head>
 <body>
@@ -44,34 +46,21 @@
                     <li><a href="#services">Serviços</a></li>
                     <li><a href="#about">Sobre</a></li>
                     <li><a href="#contact">Contato</a></li>
-
                     <li class="login-item">
-                        <a href="#" onclick="abrirModalLogin(); return false;">
-                            <i class="bi bi-box-arrow-in-right"></i> Entrar
-                        </a>
+                        <a href="#" onclick="abrirModalLogin(); return false;"><i class="bi bi-box-arrow-in-right"></i> Entrar</a>
                     </li>
                     <li class="login-item">
-                        <a href="#" onclick="abrirModalCadastro(); return false;">
-                            <i class="bi bi-person-plus"></i> Cadastrar
-                        </a>
-                    </li>
-
-                    <li class="perfil-item" style="display:none;">
-                        <a href="dashboard.html">
-                            <i class="bi bi-person-circle"></i> <span id="menu-perfil-nome">Perfil</span>
-                        </a>
+                        <a href="#" onclick="abrirModalCadastro(); return false;"><i class="bi bi-person-plus"></i> Cadastrar</a>
                     </li>
                     <li class="perfil-item" style="display:none;">
-                        <a href="dashboard.html">
-                            <i class="bi bi-speedometer2"></i> Dashboard
-                        </a>
+                        <a href="dashboard.html"><i class="bi bi-person-circle"></i> <span id="menu-perfil-nome">Perfil</span></a>
                     </li>
                     <li class="perfil-item" style="display:none;">
-                        <a href="#" onclick="fazerLogout(); return false;" class="nav-logout">
-                            <i class="bi bi-box-arrow-right"></i> Sair
-                        </a>
+                        <a href="dashboard.html"><i class="bi bi-speedometer2"></i> Dashboard</a>
                     </li>
-
+                    <li class="perfil-item" style="display:none;">
+                        <a href="#" onclick="fazerLogout(); return false;" class="nav-logout"><i class="bi bi-box-arrow-right"></i> Sair</a>
+                    </li>
                     <li><a href="novo-pedido.html" class="btn">Solicitar Orçamento</a></li>
                 </ul>
             </nav>
@@ -152,7 +141,7 @@
                 </div>
                 <div class="about-text fade-in delay-1">
                     <h2>N&G EXPRESS - Sua entrega em boas mãos</h2>
-                    <p>Fundada em 2016, a N&G EXPRESS se tornou referência em serviços de entregas rápidas em Balneário Camboriú e região.</p>
+                    <p>Fundada em 2016, a N&G EXPRESS se tornou referência em serviços de entregas rápidas em Balneário Camboriú e região. Nossa missão é proporcionar soluções logísticas ágeis e confiáveis.</p>
                     <p>Com uma frota moderna de motos e carros, e uma equipe de profissionais treinados, garantimos que suas encomendas cheguem ao destino com segurança e no prazo combinado.</p>
                     <div class="features">
                         <div class="feature-item">
@@ -176,7 +165,7 @@
     <section class="cta">
         <div class="container">
             <h2 class="section-title">Precisa de uma entrega urgente?</h2>
-            <p>Não importa o tamanho ou a distância, nossa equipe está pronta para atender sua necessidade.</p>
+            <p>Não importa o tamanho ou a distância, nossa equipe está pronta para atender sua necessidade com eficiência e profissionalismo.</p>
             <a href="novo-pedido.html" class="btn">Solicitar Serviço Agora</a>
         </div>
     </section>
@@ -258,14 +247,8 @@
             <h2><i class="bi bi-box-arrow-in-right"></i> Login</h2>
             <form onsubmit="fazerLogin(event)">
                 <div class="form-section">
-                    <div class="form-group">
-                        <label for="login-email">E-mail</label>
-                        <input type="email" id="login-email" placeholder="seu@email.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="login-senha">Senha</label>
-                        <input type="password" id="login-senha" placeholder="******" required>
-                    </div>
+                    <div class="form-group"><label for="login-email">E-mail</label><input type="email" id="login-email" placeholder="seu@email.com" required></div>
+                    <div class="form-group"><label for="login-senha">Senha</label><input type="password" id="login-senha" placeholder="******" required></div>
                     <div class="form-group" style="display:flex;align-items:center;gap:8px;margin-top:-8px;">
                         <input type="checkbox" id="lembrar-email" style="width:auto;cursor:pointer;">
                         <label for="lembrar-email" style="margin:0;font-size:.9rem;cursor:pointer;color:var(--text-secondary);">Lembrar meu e-mail</label>

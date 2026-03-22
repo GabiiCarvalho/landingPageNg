@@ -69,12 +69,14 @@
     /* LOGO */
     .logo, .logo:hover, .logo:focus, .logo:visited, .logo * { text-decoration: none !important; }
     .logo img {
-        width: 52px; height: 52px;
-        border-radius: 50%; object-fit: cover;
-        box-shadow: 0 2px 12px rgba(0,0,0,.35);
-        transition: transform .2s;
+        width: 72px; height: 72px; border-radius: 50%; object-fit: cover;
+        box-shadow: 0 2px 14px rgba(0,0,0,.45); transition: transform .2s;
     }
     .logo:hover img { transform: scale(1.05); }
+    @media (max-width: 1024px) { .logo img { width: 66px; height: 66px; } }
+    @media (max-width: 768px)  { .logo img { width: 60px; height: 60px; } }
+    @media (max-width: 480px)  { .logo img { width: 56px; height: 56px; } }
+    @media (max-width: 375px)  { .logo img { width: 52px; height: 52px; } }
 
     /* CARDS */
     .admin-main { display: flex; flex-direction: column; gap: 24px; }
@@ -153,9 +155,11 @@
         display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 10px;
     }
     .admin-login-logo img {
-        width: 64px; height: 64px; border-radius: 50%; object-fit: cover;
-        box-shadow: 0 4px 16px rgba(0,0,0,.4);
+    width: 84px; height: 84px; border-radius: 50%; object-fit: cover;
+    box-shadow: 0 4px 18px rgba(0,0,0,.45);
     }
+    @media (max-width: 480px) { .admin-login-logo img { width: 72px; height: 72px; } }
+    @media (max-width: 375px) { .admin-login-logo img { width: 64px; height: 64px; } }
     .admin-login-logo-text .main {
         font-size: 1.5rem; font-weight: 700;
         background: linear-gradient(135deg, var(--primary-color), #003366);
