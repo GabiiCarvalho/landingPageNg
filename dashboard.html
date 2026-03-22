@@ -8,25 +8,38 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="css/styles.css">
     <style>
+        .logo, .logo:hover, .logo:focus, .logo:visited, .logo * { text-decoration: none !important; }
+        .logo img {
+            width: 48px; height: 48px; border-radius: 50%; object-fit: cover;
+            box-shadow: 0 2px 12px rgba(0,0,0,.4); transition: transform .2s;
+        }
+        .logo:hover img { transform: scale(1.06); }
+        @media (max-width: 768px) { .logo img { width: 40px; height: 40px; } }
+        @media (max-width: 375px) { .logo img { width: 36px; height: 36px; } }
+
         .dashboard-page { padding: 40px 0 80px; background: var(--bg-primary); min-height: 80vh; }
         .dashboard-grid { display: grid; grid-template-columns: 260px 1fr; gap: 28px; align-items: start; }
-        @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 1024px) { .dashboard-grid { grid-template-columns: 220px 1fr; gap: 20px; } }
+        @media (max-width: 768px)  { .dashboard-grid { grid-template-columns: 1fr; } }
 
         .page-header {
             background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
             border-bottom: 1px solid var(--border-light);
-            color: var(--text-primary);
-            padding: 40px 0 30px;
-            margin-top: 80px;
+            color: var(--text-primary); padding: 40px 0 30px; margin-top: 80px;
         }
         .page-header h1 { font-size: 2rem; margin: 0 0 6px; }
         .page-header p  { margin: 0; color: var(--text-secondary); }
+        @media (max-width: 768px) { .page-header { padding: 24px 0 20px; margin-top: 70px; } .page-header h1 { font-size: 1.5rem; } }
+        @media (max-width: 480px) { .page-header h1 { font-size: 1.3rem; } }
+        @media (max-width: 375px) { .page-header h1 { font-size: 1.15rem; } }
 
         .dash-sidebar {
             background: var(--bg-secondary); border-radius: var(--radius-lg);
             border: 1px solid var(--border-light); overflow: hidden;
             box-shadow: var(--shadow-md); position: sticky; top: 100px;
         }
+        @media (max-width: 768px) { .dash-sidebar { position: relative; top: 0; } }
+
         .dash-profile {
             background: var(--gradient-primary); padding: 28px 20px;
             text-align: center; color: white; position: relative; overflow: hidden;
@@ -35,14 +48,22 @@
             content: ''; position: absolute; top: -40px; right: -40px;
             width: 120px; height: 120px; background: rgba(255,255,255,.08); border-radius: 50%;
         }
+        @media (max-width: 768px) {
+            .dash-profile { padding: 16px 20px; display: flex; align-items: center; gap: 14px; text-align: left; }
+            .dash-profile::before { display: none; }
+        }
+
         .dash-avatar {
             width: 72px; height: 72px; border-radius: 50%;
             background: rgba(255,255,255,.2); border: 2px solid rgba(255,255,255,.3);
             display: flex; align-items: center; justify-content: center;
             margin: 0 auto 12px; font-size: 2rem;
         }
+        @media (max-width: 768px) { .dash-avatar { width: 52px; height: 52px; font-size: 1.4rem; margin: 0; flex-shrink: 0; } }
+
         .dash-profile h3 { font-size: 1.1rem; margin: 0 0 4px; font-weight: 700; }
         .dash-profile p  { font-size: .82rem; opacity: .8; margin: 0; }
+        @media (max-width: 768px) { .dash-profile h3 { font-size: .95rem; } .dash-profile p { font-size: .75rem; } }
 
         .dash-nav { padding: 10px 0; }
         .dash-nav a {
@@ -58,6 +79,24 @@
         .dash-nav .logout-link:hover { background: rgba(255,92,92,.08); color: var(--danger-color); border-right-color: var(--danger-color); }
         .dash-nav-divider { height: 1px; background: var(--border-light); margin: 8px 16px; }
 
+        @media (max-width: 768px) {
+            .dash-nav {
+                display: flex; overflow-x: auto; padding: 0;
+                border-top: 1px solid var(--border-light);
+                -webkit-overflow-scrolling: touch; scrollbar-width: none;
+            }
+            .dash-nav::-webkit-scrollbar { display: none; }
+            .dash-nav a {
+                flex-shrink: 0; flex-direction: column; justify-content: center;
+                padding: 12px 14px; border-right: none; border-bottom: 3px solid transparent;
+                font-size: .78rem; white-space: nowrap; gap: 4px; min-width: 72px; text-align: center;
+            }
+            .dash-nav a i { width: auto; font-size: 1.1rem; }
+            .dash-nav a:hover, .dash-nav a.active { border-right: none; border-bottom-color: var(--primary-color); }
+            .dash-nav .logout-link:hover { border-bottom-color: var(--danger-color); }
+            .dash-nav-divider { width: 1px; height: 40px; margin: auto 2px; flex-shrink: 0; }
+        }
+
         .dash-main { display: flex; flex-direction: column; gap: 24px; }
         .dash-card {
             background: var(--bg-secondary); border-radius: var(--radius-lg);
@@ -69,9 +108,12 @@
         }
         .dash-card-header h3 { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
         .dash-card-body { padding: 24px; }
+        @media (max-width: 768px) { .dash-card-body { padding: 16px; } .dash-card-header { padding: 14px 16px; } }
 
         .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-        @media (max-width: 600px) { .stats-row { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .stats-row { grid-template-columns: repeat(3, 1fr); gap: 10px; } }
+        @media (max-width: 480px) { .stats-row { grid-template-columns: 1fr; gap: 10px; } }
+
         .stat-box {
             background: var(--bg-tertiary); border: 1px solid var(--border-light);
             border-radius: var(--radius-md); padding: 22px 16px; text-align: center; transition: var(--transition-base);
@@ -79,6 +121,7 @@
         .stat-box:hover { border-color: var(--primary-color); box-shadow: var(--shadow-glow); transform: translateY(-2px); }
         .stat-box .num { font-size: 2rem; font-weight: 800; color: var(--primary-color); display: block; }
         .stat-box .lbl { font-size: .78rem; color: var(--text-tertiary); margin-top: 6px; display: block; text-transform: uppercase; letter-spacing: .5px; }
+        @media (max-width: 768px) { .stat-box { padding: 14px 10px; } .stat-box .num { font-size: 1.5rem; } .stat-box .lbl { font-size: .68rem; } }
 
         .hist-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
         .hist-table th {
@@ -89,22 +132,24 @@
         .hist-table td { padding: 13px 14px; border-bottom: 1px solid var(--border-light); color: var(--text-primary); vertical-align: middle; }
         .hist-table tr:last-child td { border-bottom: none; }
         .hist-table tr:hover td { background: var(--bg-tertiary); }
+        @media (max-width: 768px) { .hist-table { font-size: .8rem; } .hist-table th, .hist-table td { padding: 9px 10px; } }
+        @media (max-width: 375px) { .hist-table { font-size: .74rem; } .hist-table th, .hist-table td { padding: 8px 6px; } }
 
         .pill { display: inline-block; padding: 4px 10px; border-radius: var(--radius-full); font-size: .75rem; font-weight: 600; }
         .pill-moto  { background: rgba(0,163,255,.12); color: var(--info-color); border: 1px solid rgba(0,163,255,.2); }
         .pill-carro { background: rgba(0,196,140,.12); color: var(--success-color); border: 1px solid rgba(0,196,140,.2); }
 
         .addr-cell { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary); font-size: .83rem; }
+        @media (max-width: 768px) { .addr-cell { max-width: 90px; } }
+        @media (max-width: 375px) { .addr-cell { max-width: 70px; } }
+
         .badge-valor { font-weight: 700; color: var(--success-color); }
         .num-pedido  { font-weight: 700; color: var(--primary-color); font-size: .85rem; }
-        .badge-status {
-            display: inline-block; padding: 3px 10px; border-radius: var(--radius-full);
-            font-size: .72rem; font-weight: 700;
-            background: rgba(0,196,140,.12); color: var(--success-color); border: 1px solid rgba(0,196,140,.2);
-        }
+        .badge-status { display: inline-block; padding: 3px 10px; border-radius: var(--radius-full); font-size: .72rem; font-weight: 700; background: rgba(0,196,140,.12); color: var(--success-color); border: 1px solid rgba(0,196,140,.2); }
 
         .perfil-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         @media (max-width: 600px) { .perfil-form .form-row { grid-template-columns: 1fr; } }
+
         .fg { display: flex; flex-direction: column; gap: 7px; }
         .fg label { font-size: .8rem; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .4px; }
         .fg input {
@@ -112,8 +157,9 @@
             border: 1.5px solid var(--border-medium); border-radius: var(--radius-sm);
             font-size: .95rem; color: var(--text-primary); transition: var(--transition-fast);
         }
-        .fg input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-glow); background: var(--bg-elevated); }
+        .fg input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-glow); }
         .fg input[readonly] { opacity: .5; cursor: not-allowed; }
+
         .btn-salvar {
             background: var(--gradient-primary); color: white; border: none;
             padding: 12px 28px; border-radius: var(--radius-full); font-size: .95rem; font-weight: 600;
@@ -150,43 +196,21 @@
     <header>
         <div class="container">
             <nav class="navbar">
-                <a href="index.html" class="logo" style="text-decoration:none;">
-                    <img src="img/logo.jpeg" alt="N&G EXPRESS" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid var(--primary-color);">
-                        <div class="logo-text" style="text-decoration:none;">
-                            <div class="logo-text-main" style="text-decoration:none;">N&G <span>EXPRESS</span></div>
-                                <div class="logo-text-sub">ENTREGAS RÁPIDAS</div>
-                        </div>
+                <a href="index.html" class="logo">
+                    <img src="img/logo.jpeg" alt="N&G EXPRESS">
+                    <div class="logo-text">
+                        <div class="logo-text-main">N&G <span>EXPRESS</span></div>
+                        <div class="logo-text-sub">ENTREGAS RÁPIDAS</div>
+                    </div>
                 </a>
-
-                <button class="mobile-menu-btn" aria-label="Menu">
-                    <i class="bi bi-list"></i>
-                </button>
-
+                <button class="mobile-menu-btn" aria-label="Menu"><i class="bi bi-list"></i></button>
                 <ul class="nav-links">
                     <li><a href="index.html">Início</a></li>
                     <li><a href="novo-pedido.html" class="btn">Novo Pedido</a></li>
-
-                    <li class="login-item">
-                        <a href="#" onclick="abrirModalLogin(); return false;">
-                            <i class="bi bi-box-arrow-in-right"></i> Entrar
-                        </a>
-                    </li>
-
-                    <li class="perfil-item" style="display:none;">
-                        <a href="dashboard.html">
-                            <i class="bi bi-person-circle"></i> <span id="menu-perfil-nome">Perfil</span>
-                        </a>
-                    </li>
-                    <li class="perfil-item" style="display:none;">
-                        <a href="dashboard.html">
-                            <i class="bi bi-speedometer2"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="perfil-item" style="display:none;">
-                        <a href="#" onclick="fazerLogout(); return false;" class="nav-logout">
-                            <i class="bi bi-box-arrow-right"></i> Sair
-                        </a>
-                    </li>
+                    <li class="login-item"><a href="#" onclick="abrirModalLogin(); return false;"><i class="bi bi-box-arrow-in-right"></i> Entrar</a></li>
+                    <li class="perfil-item" style="display:none;"><a href="dashboard.html"><i class="bi bi-person-circle"></i> <span id="menu-perfil-nome">Perfil</span></a></li>
+                    <li class="perfil-item" style="display:none;"><a href="dashboard.html"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                    <li class="perfil-item" style="display:none;"><a href="#" onclick="fazerLogout(); return false;" class="nav-logout"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
                 </ul>
             </nav>
         </div>
@@ -206,26 +230,18 @@
                 <aside class="dash-sidebar">
                     <div class="dash-profile">
                         <div class="dash-avatar"><i class="bi bi-person-fill"></i></div>
-                        <h3 id="dash-nome">Carregando...</h3>
-                        <p id="dash-email">—</p>
+                        <div>
+                            <h3 id="dash-nome">Carregando...</h3>
+                            <p id="dash-email">—</p>
+                        </div>
                     </div>
                     <nav class="dash-nav">
-                        <a href="#" class="active" onclick="mostrarTab('inicio', this); return false;">
-                            <i class="bi bi-speedometer2"></i> Início
-                        </a>
-                        <a href="#" onclick="mostrarTab('historico', this); return false;">
-                            <i class="bi bi-clock-history"></i> Histórico
-                        </a>
-                        <a href="#" onclick="mostrarTab('perfil', this); return false;">
-                            <i class="bi bi-person-gear"></i> Meu Perfil
-                        </a>
+                        <a href="#" class="active" onclick="mostrarTab('inicio', this); return false;"><i class="bi bi-speedometer2"></i> Início</a>
+                        <a href="#" onclick="mostrarTab('historico', this); return false;"><i class="bi bi-clock-history"></i> Histórico</a>
+                        <a href="#" onclick="mostrarTab('perfil', this); return false;"><i class="bi bi-person-gear"></i> Perfil</a>
                         <div class="dash-nav-divider"></div>
-                        <a href="novo-pedido.html">
-                            <i class="bi bi-plus-circle"></i> Novo Pedido
-                        </a>
-                        <a href="#" class="logout-link" onclick="fazerLogout(); return false;">
-                            <i class="bi bi-box-arrow-right"></i> Sair
-                        </a>
+                        <a href="novo-pedido.html"><i class="bi bi-plus-circle"></i> Novo Pedido</a>
+                        <a href="#" class="logout-link" onclick="fazerLogout(); return false;"><i class="bi bi-box-arrow-right"></i> Sair</a>
                     </nav>
                 </aside>
 
@@ -237,31 +253,16 @@
                         </div>
                         <div class="dash-card-body">
                             <div class="stats-row">
-                                <div class="stat-box">
-                                    <span class="num" id="stat-total">—</span>
-                                    <span class="lbl">Total de pedidos</span>
-                                </div>
-                                <div class="stat-box">
-                                    <span class="num" id="stat-valor">—</span>
-                                    <span class="lbl">Total gasto</span>
-                                </div>
-                                <div class="stat-box">
-                                    <span class="num" id="stat-ultimo">—</span>
-                                    <span class="lbl">Último pedido</span>
-                                </div>
+                                <div class="stat-box"><span class="num" id="stat-total">—</span><span class="lbl">Total de pedidos</span></div>
+                                <div class="stat-box"><span class="num" id="stat-valor">—</span><span class="lbl">Total gasto</span></div>
+                                <div class="stat-box"><span class="num" id="stat-ultimo">—</span><span class="lbl">Último pedido</span></div>
                             </div>
                             <div style="margin-top:28px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                                <h4 style="margin:0;color:var(--text-primary);font-size:.88rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">
-                                    Últimos pedidos
-                                </h4>
-                                <a href="#" class="ver-mais-link" onclick="mostrarTab('historico', null); return false;">
-                                    Ver todos <i class="bi bi-arrow-right"></i>
-                                </a>
+                                <h4 style="margin:0;color:var(--text-primary);font-size:.88rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Últimos pedidos</h4>
+                                <a href="#" class="ver-mais-link" onclick="mostrarTab('historico', null); return false;">Ver todos <i class="bi bi-arrow-right"></i></a>
                             </div>
                             <div id="ultimos-pedidos-wrap" style="overflow-x:auto;">
-                                <div class="empty-state">
-                                    <span class="loading-spinner"></span> Carregando...
-                                </div>
+                                <div class="empty-state"><span class="loading-spinner"></span> Carregando...</div>
                             </div>
                         </div>
                     </div>
@@ -271,23 +272,11 @@
                             <h3><i class="bi bi-clock-history" style="color:var(--primary-color)"></i> Histórico de Pedidos</h3>
                             <span id="hist-count" style="font-size:.82rem;color:var(--text-tertiary);"></span>
                         </div>
-                        <div style="overflow-x:auto;">
+                        <div style="overflow-x:auto;max-height:480px;overflow-y:auto;">
                             <table class="hist-table">
-                                <thead>
-                                    <tr>
-                                        <th>Pedido</th>
-                                        <th>Veículo</th>
-                                        <th>Coleta</th>
-                                        <th>Entrega</th>
-                                        <th>Valor</th>
-                                        <th>Data</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
+                                <thead><tr><th>Pedido</th><th>Veículo</th><th>Coleta</th><th>Entrega</th><th>Valor</th><th>Data</th><th>Status</th></tr></thead>
                                 <tbody id="hist-tbody">
-                                    <tr class="loading-row">
-                                        <td colspan="7"><span class="loading-spinner"></span> Carregando histórico...</td>
-                                    </tr>
+                                    <tr class="loading-row"><td colspan="7"><span class="loading-spinner"></span> Carregando histórico...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -300,28 +289,14 @@
                         <div class="dash-card-body">
                             <form class="perfil-form" onsubmit="salvarPerfil(event)">
                                 <div class="form-row">
-                                    <div class="fg">
-                                        <label>Nome completo</label>
-                                        <input type="text" id="perfil-nome" placeholder="Seu nome" required>
-                                    </div>
-                                    <div class="fg">
-                                        <label>E-mail</label>
-                                        <input type="email" id="perfil-email" placeholder="email@exemplo.com" readonly>
-                                    </div>
+                                    <div class="fg"><label>Nome completo</label><input type="text" id="perfil-nome" placeholder="Seu nome" required></div>
+                                    <div class="fg"><label>E-mail</label><input type="email" id="perfil-email" placeholder="email@exemplo.com" readonly></div>
                                 </div>
                                 <div class="form-row" style="margin-top:16px;">
-                                    <div class="fg">
-                                        <label>Telefone / WhatsApp</label>
-                                        <input type="tel" id="perfil-telefone" placeholder="(47) 99999-9999">
-                                    </div>
-                                    <div class="fg">
-                                        <label>Nova senha (em branco = não alterar)</label>
-                                        <input type="password" id="perfil-senha" placeholder="••••••" minlength="6">
-                                    </div>
+                                    <div class="fg"><label>Telefone / WhatsApp</label><input type="tel" id="perfil-telefone" placeholder="(47) 99999-9999"></div>
+                                    <div class="fg"><label>Nova senha (em branco = não alterar)</label><input type="password" id="perfil-senha" placeholder="••••••" minlength="6"></div>
                                 </div>
-                                <button type="submit" class="btn-salvar">
-                                    <i class="bi bi-check-circle"></i> Salvar alterações
-                                </button>
+                                <button type="submit" class="btn-salvar"><i class="bi bi-check-circle"></i> Salvar alterações</button>
                             </form>
                         </div>
                     </div>
@@ -337,19 +312,11 @@
             <h2><i class="bi bi-box-arrow-in-right"></i> Login</h2>
             <form onsubmit="fazerLogin(event)">
                 <div class="form-section">
-                    <div class="form-group">
-                        <label for="login-email">E-mail</label>
-                        <input type="email" id="login-email" placeholder="seu@email.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="login-senha">Senha</label>
-                        <input type="password" id="login-senha" placeholder="******" required>
-                    </div>
+                    <div class="form-group"><label for="login-email">E-mail</label><input type="email" id="login-email" placeholder="seu@email.com" required></div>
+                    <div class="form-group"><label for="login-senha">Senha</label><input type="password" id="login-senha" placeholder="******" required></div>
                     <div class="form-group" style="display:flex;align-items:center;gap:8px;margin-top:-8px;">
                         <input type="checkbox" id="lembrar-email" style="width:auto;cursor:pointer;">
-                        <label for="lembrar-email" style="margin:0;font-size:.9rem;cursor:pointer;color:var(--text-secondary);">
-                            Lembrar meu e-mail
-                        </label>
+                        <label for="lembrar-email" style="margin:0;font-size:.9rem;cursor:pointer;color:var(--text-secondary);">Lembrar meu e-mail</label>
                     </div>
                     <button type="submit" class="btn" style="width:100%;">Entrar</button>
                 </div>
@@ -367,14 +334,12 @@
     let orcamentosCache = [];
 
     function mostrarTab(tab, el) {
-        ['inicio','historico','perfil'].forEach(t => {
-            const d = document.getElementById('tab-' + t);
-            if (d) d.style.display = 'none';
-        });
+        ['inicio','historico','perfil'].forEach(t => { const d = document.getElementById('tab-' + t); if (d) d.style.display = 'none'; });
         const alvo = document.getElementById('tab-' + tab);
         if (alvo) alvo.style.display = 'block';
         document.querySelectorAll('.dash-nav a').forEach(a => a.classList.remove('active'));
         if (el) el.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function formatarData(str) {
@@ -384,9 +349,7 @@
         return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
     }
 
-    function formatarValor(v) {
-        return 'R$ ' + parseFloat(v || 0).toFixed(2).replace('.', ',');
-    }
+    function formatarValor(v) { return 'R$ ' + parseFloat(v || 0).toFixed(2).replace('.', ','); }
 
     function linhaTabela(o, comStatus) {
         return `<tr>
@@ -402,11 +365,7 @@
 
     function renderizarTabela(tbody, orcamentos, limite, comStatus) {
         if (!orcamentos || orcamentos.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="${comStatus ? 7 : 6}">
-                <div class="empty-state">
-                    <i class="bi bi-inbox"></i>
-                    <p>Nenhum pedido ainda.<br><a href="novo-pedido.html">Fazer primeiro pedido!</a></p>
-                </div></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="${comStatus ? 7 : 6}"><div class="empty-state"><i class="bi bi-inbox"></i><p>Nenhum pedido ainda.<br><a href="novo-pedido.html">Fazer primeiro pedido!</a></p></div></td></tr>`;
             return;
         }
         const lista = limite ? orcamentos.slice(0, limite) : orcamentos;
@@ -415,31 +374,20 @@
 
     function renderizarTabelaResumida(container, orcamentos) {
         if (!orcamentos || orcamentos.length === 0) {
-            container.innerHTML = `<div class="empty-state">
-                <i class="bi bi-inbox"></i>
-                <p>Nenhum pedido ainda. <a href="novo-pedido.html">Fazer primeiro pedido</a></p>
-            </div>`;
+            container.innerHTML = `<div class="empty-state"><i class="bi bi-inbox"></i><p>Nenhum pedido ainda. <a href="novo-pedido.html">Fazer primeiro pedido</a></p></div>`;
             return;
         }
-        const lista = orcamentos.slice(0, 5);
         container.innerHTML = `
             <table class="hist-table">
-                <thead><tr>
-                    <th>Pedido</th><th>Veículo</th>
-                    <th>Coleta</th><th>Entrega</th>
-                    <th>Valor</th><th>Data</th>
-                </tr></thead>
-                <tbody>${lista.map(o => linhaTabela(o, false)).join('')}</tbody>
+                <thead><tr><th>Pedido</th><th>Veículo</th><th>Coleta</th><th>Entrega</th><th>Valor</th><th>Data</th></tr></thead>
+                <tbody>${orcamentos.slice(0, 5).map(o => linhaTabela(o, false)).join('')}</tbody>
             </table>`;
     }
 
     function renderizarEstatisticas(orcamentos) {
         document.getElementById('stat-total').textContent = orcamentos.length;
-        document.getElementById('stat-valor').textContent = formatarValor(
-            orcamentos.reduce((acc, o) => acc + parseFloat(o.valor_total || 0), 0)
-        );
-        document.getElementById('stat-ultimo').textContent = orcamentos[0]
-            ? formatarData(orcamentos[0].data_orcamento).split(' ')[0] : '—';
+        document.getElementById('stat-valor').textContent = formatarValor(orcamentos.reduce((acc, o) => acc + parseFloat(o.valor_total || 0), 0));
+        document.getElementById('stat-ultimo').textContent = orcamentos[0] ? formatarData(orcamentos[0].data_orcamento).split(' ')[0] : '—';
     }
 
     function preencherPerfil(usuario) {
@@ -470,60 +418,40 @@
             try {
                 const r = await fetch(`${API_BASE_URL}/usuarios/verificar.php`);
                 const d = await respostaSegura(r);
-                if (d.logado && d.usuario) {
-                    usuario = d.usuario;
-                    sessionStorage.setItem('usuario', JSON.stringify(usuario));
-                } else {
-                    window.location.href = 'index.html'; return;
-                }
-            } catch {
-                window.location.href = 'index.html'; return;
-            }
+                if (d.logado && d.usuario) { usuario = d.usuario; sessionStorage.setItem('usuario', JSON.stringify(usuario)); }
+                else { window.location.href = 'index.html'; return; }
+            } catch { window.location.href = 'index.html'; return; }
         }
 
         preencherPerfil(usuario);
 
         try {
-            const r = await fetch(`${API_BASE_URL}/orcamentos/historico.php?uid=${usuario.id}`, {
-                credentials: 'include'
-            });
+            const r = await fetch(`${API_BASE_URL}/orcamentos/historico.php?uid=${usuario.id}`, { credentials: 'include' });
             const d = await respostaSegura(r);
             if (d._erroJSON || !d.success) throw new Error(d.message || 'Erro ao carregar histórico');
-
             orcamentosCache = d.orcamentos || [];
             renderizarEstatisticas(orcamentosCache);
             renderizarTabelaResumida(document.getElementById('ultimos-pedidos-wrap'), orcamentosCache);
             renderizarTabela(document.getElementById('hist-tbody'), orcamentosCache, null, true);
             document.getElementById('hist-count').textContent = `${orcamentosCache.length} pedido(s)`;
-
         } catch (e) {
             console.warn('Histórico:', e.message);
-            document.getElementById('ultimos-pedidos-wrap').innerHTML = `
-                <div class="empty-state">
-                    <i class="bi bi-inbox"></i>
-                    <p>Nenhum pedido encontrado. <a href="novo-pedido.html">Fazer primeiro pedido</a></p>
-                </div>`;
-            document.getElementById('hist-tbody').innerHTML = `
-                <tr class="loading-row"><td colspan="7">Nenhum pedido encontrado</td></tr>`;
+            document.getElementById('ultimos-pedidos-wrap').innerHTML = `<div class="empty-state"><i class="bi bi-inbox"></i><p>Nenhum pedido encontrado. <a href="novo-pedido.html">Fazer primeiro pedido</a></p></div>`;
+            document.getElementById('hist-tbody').innerHTML = `<tr class="loading-row"><td colspan="7">Nenhum pedido encontrado</td></tr>`;
         }
     }
 
     async function salvarPerfil(e) {
         e.preventDefault();
-        const nome     = document.getElementById('perfil-nome').value.trim();
+        const nome = document.getElementById('perfil-nome').value.trim();
         const telefone = document.getElementById('perfil-telefone').value.trim();
-        const senha    = document.getElementById('perfil-senha').value;
-
+        const senha = document.getElementById('perfil-senha').value;
         const btn = e.target.querySelector('.btn-salvar');
         const orig = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="loading-spinner"></span> Salvando...';
-
+        btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span> Salvando...';
         try {
             const r = await fetch(`${API_BASE_URL}/usuarios/atualizar.php`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
                 body: JSON.stringify({ nome, telefone, senha: senha || null })
             });
             const d = await respostaSegura(r);
@@ -534,15 +462,9 @@
                 sessionStorage.setItem('usuario', JSON.stringify(u));
                 document.getElementById('dash-nome').textContent = nome;
                 document.getElementById('perfil-senha').value = '';
-            } else {
-                window.mostrarToast(d.message || 'Erro ao salvar', 'error');
-            }
-        } catch {
-            window.mostrarToast('Erro ao conectar com o servidor', 'error');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = orig;
-        }
+            } else { window.mostrarToast(d.message || 'Erro ao salvar', 'error'); }
+        } catch { window.mostrarToast('Erro ao conectar com o servidor', 'error'); }
+        finally { btn.disabled = false; btn.innerHTML = orig; }
     }
 
     carregarDashboard();

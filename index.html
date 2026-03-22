@@ -11,18 +11,28 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://js.api.here.com/v3/3.1/mapsjs-ui.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .logo, .logo:hover, .logo:focus, .logo:visited, .logo * { text-decoration: none !important; }
+        .logo img {
+            width: 48px; height: 48px; border-radius: 50%; object-fit: cover;
+            box-shadow: 0 2px 12px rgba(0,0,0,.4); transition: transform .2s;
+        }
+        .logo:hover img { transform: scale(1.06); }
+        @media (max-width: 768px) { .logo img { width: 40px; height: 40px; } }
+        @media (max-width: 375px) { .logo img { width: 36px; height: 36px; } }
+    </style>
 </head>
 <body>
 
     <header>
         <div class="container">
             <nav class="navbar">
-                <a href="index.html" class="logo" style="text-decoration:none;">
-                    <img src="img/logo.jpeg" alt="N&G EXPRESS" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid var(--primary-color);">
-                        <div class="logo-text" style="text-decoration:none;">
-                        <div class="logo-text-main" style="text-decoration:none;">N&G <span>EXPRESS</span></div>
+                <a href="index.html" class="logo">
+                    <img src="img/logo.jpeg" alt="N&G EXPRESS">
+                    <div class="logo-text">
+                        <div class="logo-text-main">N&G <span>EXPRESS</span></div>
                         <div class="logo-text-sub">ENTREGAS RÁPIDAS</div>
-                        </div>
+                    </div>
                 </a>
 
                 <button class="mobile-menu-btn" aria-label="Menu">
@@ -35,7 +45,6 @@
                     <li><a href="#about">Sobre</a></li>
                     <li><a href="#contact">Contato</a></li>
 
-                    <!-- Deslogado -->
                     <li class="login-item">
                         <a href="#" onclick="abrirModalLogin(); return false;">
                             <i class="bi bi-box-arrow-in-right"></i> Entrar
@@ -47,7 +56,6 @@
                         </a>
                     </li>
 
-                    <!-- Logado -->
                     <li class="perfil-item" style="display:none;">
                         <a href="dashboard.html">
                             <i class="bi bi-person-circle"></i> <span id="menu-perfil-nome">Perfil</span>
@@ -114,9 +122,7 @@
             <p class="section-subtitle">Soluções completas em entregas para sua empresa ou necessidade pessoal</p>
             <div class="services-grid">
                 <div class="service-card fade-in">
-                    <div class="service-img">
-                        <img src="img/slide3.jpeg" alt="Serviço de motoboy">
-                    </div>
+                    <div class="service-img"><img src="img/slide3.jpeg" alt="Serviço de motoboy"></div>
                     <div class="service-content">
                         <span class="service-badge"><i class="bi bi-bicycle"></i> Moto</span>
                         <h3>Entregas de Motoboy</h3>
@@ -125,9 +131,7 @@
                     </div>
                 </div>
                 <div class="service-card fade-in delay-1">
-                    <div class="service-img">
-                        <img src="img/entregaDeCarro.jpeg" alt="Serviço de Carro">
-                    </div>
+                    <div class="service-img"><img src="img/entregaDeCarro.jpeg" alt="Serviço de Carro"></div>
                     <div class="service-content">
                         <span class="service-badge"><i class="bi bi-car-front"></i> Carro</span>
                         <h3>Entregas de Carro</h3>
@@ -148,29 +152,20 @@
                 </div>
                 <div class="about-text fade-in delay-1">
                     <h2>N&G EXPRESS - Sua entrega em boas mãos</h2>
-                    <p>Fundada em 2016, a N&G EXPRESS se tornou referência em serviços de entregas rápidas em Balneário Camboriú e região. Nossa missão é proporcionar soluções logísticas ágeis e confiáveis.</p>
+                    <p>Fundada em 2016, a N&G EXPRESS se tornou referência em serviços de entregas rápidas em Balneário Camboriú e região.</p>
                     <p>Com uma frota moderna de motos e carros, e uma equipe de profissionais treinados, garantimos que suas encomendas cheguem ao destino com segurança e no prazo combinado.</p>
                     <div class="features">
                         <div class="feature-item">
                             <div class="feature-icon"><i class="bi bi-check-circle-fill"></i></div>
-                            <div>
-                                <h4>Rastreamento em Tempo Real</h4>
-                                <p>Acompanhe sua entrega do início ao fim.</p>
-                            </div>
+                            <div><h4>Rastreamento em Tempo Real</h4><p>Acompanhe sua entrega do início ao fim.</p></div>
                         </div>
                         <div class="feature-item">
                             <div class="feature-icon"><i class="bi bi-shield-check"></i></div>
-                            <div>
-                                <h4>Segurança Garantida</h4>
-                                <p>Todos nossos colaboradores são treinados e certificados.</p>
-                            </div>
+                            <div><h4>Segurança Garantida</h4><p>Todos nossos colaboradores são treinados e certificados.</p></div>
                         </div>
                         <div class="feature-item">
                             <div class="feature-icon"><i class="bi bi-headset"></i></div>
-                            <div>
-                                <h4>Suporte 24/7</h4>
-                                <p>Nossa central de atendimento está sempre disponível.</p>
-                            </div>
+                            <div><h4>Suporte 24/7</h4><p>Nossa central de atendimento está sempre disponível.</p></div>
                         </div>
                     </div>
                 </div>
@@ -181,7 +176,7 @@
     <section class="cta">
         <div class="container">
             <h2 class="section-title">Precisa de uma entrega urgente?</h2>
-            <p>Não importa o tamanho ou a distância, nossa equipe está pronta para atender sua necessidade com eficiência e profissionalismo.</p>
+            <p>Não importa o tamanho ou a distância, nossa equipe está pronta para atender sua necessidade.</p>
             <a href="novo-pedido.html" class="btn">Solicitar Serviço Agora</a>
         </div>
     </section>
@@ -194,31 +189,19 @@
                     <h3>Informações de Contato</h3>
                     <div class="contact-item">
                         <div class="contact-icon"><i class="bi bi-geo-alt-fill"></i></div>
-                        <div>
-                            <h4>Endereço</h4>
-                            <p>Rua Olga Bernardes Amorim, 101, Centro, Camboriú - SC</p>
-                        </div>
+                        <div><h4>Endereço</h4><p>Rua Olga Bernardes Amorim, 101, Centro, Camboriú - SC</p></div>
                     </div>
                     <div class="contact-item">
                         <div class="contact-icon"><i class="bi bi-telephone-fill"></i></div>
-                        <div>
-                            <h4>Telefone</h4>
-                            <p>(47) 9.9912-3260</p>
-                        </div>
+                        <div><h4>Telefone</h4><p>(47) 9.9912-3260</p></div>
                     </div>
                     <div class="contact-item">
                         <div class="contact-icon"><i class="bi bi-envelope-fill"></i></div>
-                        <div>
-                            <h4>E-mail</h4>
-                            <p>comercial.ngexpress@gmail.com</p>
-                        </div>
+                        <div><h4>E-mail</h4><p>comercial.ngexpress@gmail.com</p></div>
                     </div>
                     <div class="contact-item">
                         <div class="contact-icon"><i class="bi bi-clock-fill"></i></div>
-                        <div>
-                            <h4>Horário de Funcionamento</h4>
-                            <p>Seg-Sex: 9h-18h<br>Sáb: 9h-16h</p>
-                        </div>
+                        <div><h4>Horário de Funcionamento</h4><p>Seg-Sex: 9h-18h<br>Sáb: 9h-16h</p></div>
                     </div>
                 </div>
             </div>
@@ -253,7 +236,6 @@
                         <li class="login-item"><a href="#" onclick="abrirModalLogin(); return false;">Entrar</a></li>
                         <li class="login-item"><a href="#" onclick="abrirModalCadastro(); return false;">Cadastrar</a></li>
                         <li class="perfil-item" style="display:none;"><a href="dashboard.html">Dashboard</a></li>
-                        <li class="perfil-item" style="display:none;"><a href="historico.html">Histórico</a></li>
                         <li class="perfil-item" style="display:none;"><a href="perfil.html">Meu Perfil</a></li>
                     </ul>
                 </div>
@@ -270,7 +252,6 @@
         <span class="whatsapp-tooltip">Fale diretamente comigo!</span>
     </a>
 
-    <!-- Modal de Login -->
     <div class="modal" id="login-modal">
         <div class="modal-content" style="max-width:400px;">
             <span class="close-modal" onclick="fecharModal('login-modal')">&times;</span>
@@ -287,54 +268,27 @@
                     </div>
                     <div class="form-group" style="display:flex;align-items:center;gap:8px;margin-top:-8px;">
                         <input type="checkbox" id="lembrar-email" style="width:auto;cursor:pointer;">
-                        <label for="lembrar-email" style="margin:0;font-size:.9rem;cursor:pointer;color:var(--text-secondary);">
-                            Lembrar meu e-mail
-                        </label>
+                        <label for="lembrar-email" style="margin:0;font-size:.9rem;cursor:pointer;color:var(--text-secondary);">Lembrar meu e-mail</label>
                     </div>
-                    <button type="submit" class="btn" style="width:100%;">
-                        <i class="bi bi-box-arrow-in-right"></i> Entrar
-                    </button>
-                    <p style="text-align:center;margin-top:15px;">
-                        Não tem conta?
-                        <a href="#" onclick="abrirModalCadastro(); return false;" style="color:var(--primary-color);">
-                            Cadastre-se
-                        </a>
-                    </p>
+                    <button type="submit" class="btn" style="width:100%;"><i class="bi bi-box-arrow-in-right"></i> Entrar</button>
+                    <p style="text-align:center;margin-top:15px;">Não tem conta? <a href="#" onclick="abrirModalCadastro(); return false;" style="color:var(--primary-color);">Cadastre-se</a></p>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal de Cadastro -->
     <div class="modal" id="cadastro-modal">
         <div class="modal-content" style="max-width:500px;">
             <span class="close-modal" onclick="fecharModal('cadastro-modal')">&times;</span>
             <h2><i class="bi bi-person-plus"></i> Cadastro</h2>
             <form onsubmit="fazerCadastro(event)">
                 <div class="form-section">
-                    <div class="form-group">
-                        <label for="cadastro-nome">Nome Completo</label>
-                        <input type="text" id="cadastro-nome" placeholder="Seu nome" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="cadastro-email">E-mail</label>
-                        <input type="email" id="cadastro-email" placeholder="seu@email.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="cadastro-telefone">Telefone/WhatsApp</label>
-                        <input type="tel" id="cadastro-telefone" placeholder="(47) 99999-9999" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="cadastro-senha">Senha (mínimo 6 caracteres)</label>
-                        <input type="password" id="cadastro-senha" minlength="6" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="cadastro-confirmar-senha">Confirmar Senha</label>
-                        <input type="password" id="cadastro-confirmar-senha" minlength="6" required>
-                    </div>
-                    <button type="submit" class="btn" style="width:100%;">
-                        <i class="bi bi-check-circle"></i> Cadastrar
-                    </button>
+                    <div class="form-group"><label for="cadastro-nome">Nome Completo</label><input type="text" id="cadastro-nome" placeholder="Seu nome" required></div>
+                    <div class="form-group"><label for="cadastro-email">E-mail</label><input type="email" id="cadastro-email" placeholder="seu@email.com" required></div>
+                    <div class="form-group"><label for="cadastro-telefone">Telefone/WhatsApp</label><input type="tel" id="cadastro-telefone" placeholder="(47) 99999-9999" required></div>
+                    <div class="form-group"><label for="cadastro-senha">Senha (mínimo 6 caracteres)</label><input type="password" id="cadastro-senha" minlength="6" required></div>
+                    <div class="form-group"><label for="cadastro-confirmar-senha">Confirmar Senha</label><input type="password" id="cadastro-confirmar-senha" minlength="6" required></div>
+                    <button type="submit" class="btn" style="width:100%;"><i class="bi bi-check-circle"></i> Cadastrar</button>
                 </div>
             </form>
         </div>
