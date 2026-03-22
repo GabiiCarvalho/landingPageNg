@@ -1611,3 +1611,23 @@ footer::before {
         font-size: 1rem;
     }
 }
+
+.btn,
+.btn:hover,
+.btn:focus,
+.btn:visited,
+.btn:active,
+a.btn,
+a.btn:hover,
+a.btn:focus,
+a.btn:visited,
+a.btn:active,
+.saiba-mais-btn,
+.saiba-mais-btn:hover,
+.saiba-mais-btn:focus,
+.saiba-mais-btn:visited,
+.saiba-mais-btn:active,
+.nav-links a.btn,
+.nav-links a.btn:hover {
+    text-decoration: none !important;
+}
