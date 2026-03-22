@@ -336,6 +336,34 @@
 
         .logo img { width: 36px; height: 36px; }
     }
+
+    /* Fix overflow mobile */
+@media (max-width: 768px) {
+    .admin-page .container { padding: 0 12px; }
+    .admin-main { gap: 16px; }
+    .admin-card { overflow: hidden; }
+    .admin-card-body { padding: 14px 12px; overflow: hidden; }
+    .veiculo-bars { gap: 10px; }
+    .veiculo-bar-item { min-width: 0; flex: 1; padding: 12px 8px; }
+    .veiculo-bar-item .vb-num { font-size: 1.5rem; }
+    .veiculo-bar-item .vb-label { font-size: .72rem; }
+    .stat-box { padding: 14px 8px; overflow: hidden; }
+    .stat-box .num { font-size: 1.4rem; word-break: break-all; }
+    .stat-box .lbl { font-size: .62rem; letter-spacing: 0; }
+    #admin-ultimas-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+
+@media (max-width: 480px) {
+    .admin-page .container { padding: 0 10px; }
+    .stat-box .num { font-size: 1.25rem; }
+    .stat-box .lbl { font-size: .6rem; }
+}
+
+@media (max-width: 375px) {
+    .admin-page .container { padding: 0 8px; }
+    .stat-box { padding: 12px 6px; }
+    .stat-box .num { font-size: 1.15rem; }
+}
 </style>
 </head>
 <body>
