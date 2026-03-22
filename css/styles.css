@@ -1631,3 +1631,14 @@ a.btn:active,
 .nav-links a.btn:hover {
     text-decoration: none !important;
 }
+
+/* FIX EMAIL OVERFLOW MOBILE*/
+.contact-item p, .contact-item h4 {
+    word-break: break-word;
+    overflow-wrap: break-word;
+    min-height: 0;
+}
+
+.contact-item {
+    overflow: hidden;
+}
