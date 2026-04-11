@@ -15,6 +15,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $request_uri = $_SERVER['REQUEST_URI'];
 $path = parse_url($request_uri, PHP_URL_PATH);
 
+// Log para debug
+error_log("Requisição: " . $path);
+
 // Roteamento das APIs
 if (strpos($path, '/api/') === 0) {
     // Tenta encontrar o arquivo

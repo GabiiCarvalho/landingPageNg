@@ -18,7 +18,8 @@ RUN chown -R www-data:www-data /var/www/html && \
 
 # Criar script de inicialização
 RUN echo '#!/bin/bash\n\
-echo "🚀 Iniciando servidor PHP..."\n\
+echo "🚀 Iniciando servidor PHP N&G Express..."\n\
+echo "📡 Rodando na porta: ${PORT:-8080}"\n\
 php -S 0.0.0.0:${PORT:-8080} -t /var/www/html /var/www/html/router.php' > /start.sh && \
     chmod +x /start.sh
 
