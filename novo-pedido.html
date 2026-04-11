@@ -1097,9 +1097,6 @@
         // ============================================================
         // CONFIGURAÇÕES
         // ============================================================
-        const API_BASE_URL = window.location.origin;
-        
-        // Chave PIX da empresa
         const CHAVE_PIX = 'comercial.ngexpress@gmail.com';
         const NOME_RECEBEDOR = 'N&G Express';
         const CIDADE = 'SAO PAULO';
@@ -1238,32 +1235,90 @@
         }
 
         // ============================================================
-        // GEOCÓDIGO E ROTA
+        // GEOCÓDIGO CORRIGIDO
         // ============================================================
+        function limparEndereco(endereco) {
+            let enderecoLimpo = endereco
+                .replace(/\s+\d+[,\s]*$/i, '')
+                .replace(/,\s*\d+\s*-?\s*/g, '')
+                .replace(/-\s*\w+\s*\d*/g, '')
+                .replace(/\s+(nº|numero|n|#)\s*\d+/gi, '')
+                .trim();
+            
+            if (enderecoLimpo.length < 10) return endereco;
+            return enderecoLimpo;
+        }
+
         async function geocodificar(endereco) {
             const key = `gc_${endereco}`;
             if (_geocodeCache[key]) return _geocodeCache[key];
             
-            const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(endereco)}&format=json&countrycodes=br&limit=1`;
-            const res = await fetch(url, { headers: { 'User-Agent': 'NGExpress/1.0' } });
-            if (!res.ok) throw new Error(`Geocodificação falhou (HTTP ${res.status})`);
-            const data = await res.json();
-            if (!data.length) throw new Error(`Endereço não encontrado: "${endereco}"`);
-            const resultado = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-            _geocodeCache[key] = resultado;
-            return resultado;
+            const estrategias = [
+                endereco,
+                limparEndereco(endereco),
+                endereco.split(',').slice(0, 2).join(',').trim(),
+                endereco.split(',').slice(-2).join(',').trim()
+            ];
+            
+            const estrategiasUnicas = [...new Set(estrategias)];
+            
+            for (const enderecoTeste of estrategiasUnicas) {
+                if (!enderecoTeste || enderecoTeste.length < 5) continue;
+                
+                try {
+                    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(enderecoTeste)}&format=json&countrycodes=br&limit=1&addressdetails=1`;
+                    const res = await fetch(url, { 
+                        headers: { 'User-Agent': 'NGExpress/1.0' } 
+                    });
+                    
+                    if (!res.ok) continue;
+                    
+                    const data = await res.json();
+                    if (data && data.length > 0) {
+                        const resultado = { 
+                            lat: parseFloat(data[0].lat), 
+                            lng: parseFloat(data[0].lon)
+                        };
+                        _geocodeCache[key] = resultado;
+                        return resultado;
+                    }
+                } catch (error) {
+                    continue;
+                }
+            }
+            
+            throw new Error(`Endereço não encontrado: "${endereco}"`);
         }
 
         async function calcularRota(origem, destino) {
-            const url = `https://router.project-osrm.org/route/v1/driving/${origem.lng},${origem.lat};${destino.lng},${destino.lat}?overview=false`;
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Erro ao calcular rota');
-            const data = await response.json();
-            if (!data.routes || data.routes.length === 0) throw new Error('Nenhuma rota encontrada');
-            return {
-                distanciaKm: data.routes[0].distance / 1000,
-                duracaoMin: Math.round(data.routes[0].duration / 60)
-            };
+            try {
+                const url = `https://router.project-osrm.org/route/v1/driving/${origem.lng},${origem.lat};${destino.lng},${destino.lat}?overview=false`;
+                const response = await fetch(url);
+                
+                if (!response.ok) throw new Error('Erro ao calcular rota');
+                
+                const data = await response.json();
+                if (!data.routes || data.routes.length === 0) throw new Error('Nenhuma rota encontrada');
+                
+                return {
+                    distanciaKm: data.routes[0].distance / 1000,
+                    duracaoMin: Math.round(data.routes[0].duration / 60)
+                };
+            } catch (error) {
+                const R = 6371;
+                const dLat = (destino.lat - origem.lat) * Math.PI / 180;
+                const dLon = (destino.lng - origem.lng) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                          Math.cos(origem.lat * Math.PI / 180) * Math.cos(destino.lat * Math.PI / 180) *
+                          Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                const distanciaKm = R * c;
+                
+                return {
+                    distanciaKm: distanciaKm,
+                    duracaoMin: Math.round(distanciaKm * 3)
+                };
+            }
         }
 
         function calcularPreco(distanciaKm, veiculo) {
@@ -1276,73 +1331,44 @@
         }
 
         // ============================================================
-        // MAPA COM LEAFLET
-        // ============================================================
-        function initMap(lat1, lng1, lat2, lng2) {
-            const mapContainer = document.getElementById('map-container');
-            if (!mapContainer) return;
-            
-            mapContainer.innerHTML = '';
-            
-            const centerLat = (lat1 + lat2) / 2;
-            const centerLng = (lng1 + lng2) / 2;
-            
-            map = L.map(mapContainer).setView([centerLat, centerLng], 12);
-            
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CartoDB',
-                subdomains: 'abcd',
-                maxZoom: 19,
-                minZoom: 3
-            }).addTo(map);
-            
-            const coletaIcon = L.divIcon({
-                html: '<div style="background: #FF6B00; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px #FF6B00;"></div>',
-                iconSize: [16, 16],
-                className: 'custom-marker'
-            });
-            
-            const entregaIcon = L.divIcon({
-                html: '<div style="background: #00C48C; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px #00C48C;"></div>',
-                iconSize: [16, 16],
-                className: 'custom-marker'
-            });
-            
-            L.marker([lat1, lng1], { icon: coletaIcon }).addTo(map).bindPopup('<b>📍 Coleta</b><br>' + orderData.coleta.endereco);
-            L.marker([lat2, lng2], { icon: entregaIcon }).addTo(map).bindPopup('<b>🎯 Entrega</b><br>' + orderData.entrega.endereco);
-            
-            const latlngs = [[lat1, lng1], [lat2, lng2]];
-            L.polyline(latlngs, { color: '#FF6B00', weight: 3, opacity: 0.8 }).addTo(map);
-            
-            setTimeout(() => { map.invalidateSize(); }, 100);
-        }
-
-        // ============================================================
         // FINALIZAR PEDIDO
         // ============================================================
         async function finalizarPedido() {
             showLoading(true);
+            
             try {
                 const endColeta = `${orderData.coleta.endereco}${orderData.coleta.numero ? ', ' + orderData.coleta.numero : ''}, Brasil`;
                 const endEntrega = `${orderData.entrega.endereco}${orderData.entrega.numero ? ', ' + orderData.entrega.numero : ''}, Brasil`;
                 
-                const coordColeta = await geocodificar(endColeta);
-                const coordEntrega = await geocodificar(endEntrega);
+                const timeout = (ms) => new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms));
+                
+                const [coordColeta, coordEntrega] = await Promise.all([
+                    Promise.race([geocodificar(endColeta), timeout(10000)]),
+                    Promise.race([geocodificar(endEntrega), timeout(10000)])
+                ]);
                 
                 orderData.coleta.lat = coordColeta.lat;
                 orderData.coleta.lng = coordColeta.lng;
                 orderData.entrega.lat = coordEntrega.lat;
                 orderData.entrega.lng = coordEntrega.lng;
                 
-                const rota = await calcularRota(coordColeta, coordEntrega);
+                const rota = await calcularRata(coordColeta, coordEntrega);
                 
                 orderData.distancia = rota.distanciaKm;
                 orderData.duracao = rota.duracaoMin;
                 orderData.valor = calcularPreco(rota.distanciaKm, orderData.veiculo);
                 
                 mostrarCheckout();
+                showToast('Rota calculada com sucesso!', 'success');
+                
             } catch (error) {
-                showToast(error.message || 'Erro ao calcular rota', 'error');
+                console.error('Erro:', error);
+                showToast(error.message || 'Erro ao calcular rota. Usando valor estimado.', 'warning');
+                
+                orderData.distancia = 5.0;
+                orderData.duracao = 15;
+                orderData.valor = calcularPreco(orderData.distancia, orderData.veiculo);
+                mostrarCheckout();
             } finally {
                 showLoading(false);
             }
@@ -1373,6 +1399,48 @@
             document.querySelector('.wizard-container').style.display = 'block';
             currentStep = 0;
             updateSteps();
+        }
+
+        // ============================================================
+        // MAPA
+        // ============================================================
+        function initMap(lat1, lng1, lat2, lng2) {
+            const mapContainer = document.getElementById('map-container');
+            if (!mapContainer) return;
+            
+            mapContainer.innerHTML = '';
+            
+            if (!lat1 || !lng1 || !lat2 || !lng2 || isNaN(lat1) || isNaN(lng1) || isNaN(lat2) || isNaN(lng2)) {
+                mapContainer.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; flex-direction: column;">
+                        <i class="bi bi-map" style="font-size: 48px; color: var(--text-tertiary);"></i>
+                        <p style="color: var(--text-secondary); margin-top: 16px;">Mapa indisponível no momento</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            try {
+                const centerLat = (lat1 + lat2) / 2;
+                const centerLng = (lng1 + lng2) / 2;
+                
+                const map = L.map(mapContainer).setView([centerLat, centerLng], 12);
+                
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+                    subdomains: 'abcd',
+                    maxZoom: 19
+                }).addTo(map);
+                
+                L.marker([lat1, lng1]).bindPopup('<b>📍 Coleta</b>').addTo(map);
+                L.marker([lat2, lng2]).bindPopup('<b>🎯 Entrega</b>').addTo(map);
+                
+                L.polyline([[lat1, lng1], [lat2, lng2]], { color: '#FF6B00', weight: 3 }).addTo(map);
+                
+                setTimeout(() => map.invalidateSize(), 100);
+            } catch (error) {
+                console.error('Erro no mapa:', error);
+            }
         }
 
         // ============================================================
@@ -1435,29 +1503,9 @@
                 document.getElementById('status-pagamento').style.display = 'block';
                 showToast('QR Code gerado com sucesso!', 'success');
                 
-                iniciarVerificacaoPagamento();
-                
             } catch (error) {
-                console.error('Erro ao gerar PIX:', error);
-                showToast('Erro ao gerar QR Code. Tente novamente.', 'error');
+                showToast('Erro ao gerar QR Code', 'error');
             }
-        }
-
-        function iniciarVerificacaoPagamento() {
-            let verificacoes = 0;
-            const maxVerificacoes = 60;
-            
-            if (paymentData.intervalId) clearInterval(paymentData.intervalId);
-            
-            paymentData.intervalId = setInterval(() => {
-                verificacoes++;
-                
-                // Simulação - em produção, verificar no backend
-                if (verificacoes >= maxVerificacoes) {
-                    clearInterval(paymentData.intervalId);
-                    document.getElementById('status-pagamento').innerHTML = '<i class="bi bi-hourglass-split"></i> Tempo expirado. Gere um novo QR Code.';
-                }
-            }, 3000);
         }
 
         function copiarPix() {
@@ -1468,31 +1516,25 @@
 
         function fecharModalPagamento() {
             document.getElementById('modal-pagamento').style.display = 'none';
-            if (paymentData.intervalId) {
-                clearInterval(paymentData.intervalId);
-                paymentData.intervalId = null;
-            }
+            if (paymentData.intervalId) clearInterval(paymentData.intervalId);
         }
 
         function enviarComprovante() {
             const msg = `*NOVO PEDIDO N&G EXPRESS*%0A%0A` +
-                `*Cliente:* ${orderData.cliente.nome}%0A` +
-                `*WhatsApp:* ${orderData.cliente.telefone}%0A` +
-                `*Veículo:* ${orderData.veiculo === 'moto' ? 'Moto 🏍️' : 'Carro 🚗'}%0A` +
-                `*Coleta:* ${orderData.coleta.endereco}, ${orderData.coleta.numero}%0A` +
-                `*Entrega:* ${orderData.entrega.endereco}, ${orderData.entrega.numero}%0A` +
-                `*Produto:* ${orderData.categorias.join(', ')}%0A` +
-                `*Distância:* ${orderData.distancia.toFixed(1)} km%0A` +
-                `*Valor:* R$ ${orderData.valor.toFixed(2).replace('.', ',')}%0A%0A` +
-                `✅ *Pagamento via PIX confirmado!*%0A` +
-                `🔑 *Chave PIX:* ${CHAVE_PIX}%0A%0A` +
-                `Aguardando confirmação da N&G Express. 🚚`;
+                `Cliente: ${orderData.cliente.nome}%0A` +
+                `WhatsApp: ${orderData.cliente.telefone}%0A` +
+                `Veículo: ${orderData.veiculo === 'moto' ? 'Moto' : 'Carro'}%0A` +
+                `Coleta: ${orderData.coleta.endereco}, ${orderData.coleta.numero}%0A` +
+                `Entrega: ${orderData.entrega.endereco}, ${orderData.entrega.numero}%0A` +
+                `Produto: ${orderData.categorias.join(', ')}%0A` +
+                `Distância: ${orderData.distancia.toFixed(1)} km%0A` +
+                `Valor: R$ ${orderData.valor.toFixed(2).replace('.', ',')}%0A%0A` +
+                `✅ Pagamento confirmado!`;
             
             window.open(`https://wa.me/55${orderData.cliente.telefone.replace(/\D/g, '')}?text=${msg}`, '_blank');
             showToast('Redirecionando para WhatsApp...');
-            
             setTimeout(() => {
-                alert('✅ Pedido enviado com sucesso!\n\nA N&G Express confirmará em breve.');
+                alert('Pedido enviado com sucesso!');
                 window.location.href = 'index.html';
             }, 3000);
         }
@@ -1501,71 +1543,43 @@
         // AUTOCOMPLETE
         // ============================================================
         function inicializarAutocomplete() {
-            const camposEndereco = document.querySelectorAll('.autocomplete-endereco');
+            const campos = document.querySelectorAll('.autocomplete-endereco');
             
-            camposEndereco.forEach(campo => {
+            campos.forEach(campo => {
                 $(campo).autocomplete({
                     minLength: 3,
                     delay: 300,
-                    source: function(request, response) {
-                        clearTimeout(window.debounceTimer);
-                        window.debounceTimer = setTimeout(async () => {
-                            try {
-                                const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(request.term)}&format=json&addressdetails=1&countrycodes=br&limit=8&accept-language=pt-BR`;
-                                const resp = await fetch(url, { headers: { 'User-Agent': 'NGExpress/1.0' } });
-                                const data = await resp.json();
-                                
-                                const resultados = data.map(item => {
-                                    const a = item.address || {};
-                                    const rua = a.road || a.pedestrian || '';
-                                    const bairro = a.suburb || a.neighbourhood || '';
-                                    const cidade = a.city || a.town || a.village || '';
-                                    const estado = a.state || '';
-                                    const cep = a.postcode || '';
-                                    
-                                    let label = '';
-                                    if (rua) label += rua;
-                                    if (bairro) label += label ? `, ${bairro}` : bairro;
-                                    if (cidade) label += label ? `, ${cidade}` : cidade;
-                                    if (estado) label += label ? ` - ${estado}` : estado;
-                                    if (cep) label += label ? `, ${cep}` : cep;
-                                    
-                                    return {
-                                        label: label,
-                                        value: label,
-                                        latitude: parseFloat(item.lat),
-                                        longitude: parseFloat(item.lon),
-                                        display_name: item.display_name
-                                    };
-                                });
-                                
-                                response(resultados);
-                            } catch (error) {
-                                console.error('Erro no autocomplete:', error);
-                                response([]);
-                            }
-                        }, 300);
+                    source: async function(request, response) {
+                        try {
+                            const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(request.term)}&format=json&addressdetails=1&countrycodes=br&limit=5&accept-language=pt-BR`;
+                            const resp = await fetch(url, { headers: { 'User-Agent': 'NGExpress/1.0' } });
+                            const data = await resp.json();
+                            
+                            const resultados = data.map(item => ({
+                                label: item.display_name.split(',').slice(0, 3).join(','),
+                                value: item.display_name,
+                                lat: parseFloat(item.lat),
+                                lng: parseFloat(item.lon)
+                            }));
+                            
+                            response(resultados);
+                        } catch (error) {
+                            response([]);
+                        }
                     },
                     select: function(event, ui) {
                         event.preventDefault();
                         this.value = ui.item.label;
                         if (this.id === 'endereco-coleta') {
-                            orderData.coleta.lat = ui.item.latitude;
-                            orderData.coleta.lng = ui.item.longitude;
+                            orderData.coleta.lat = ui.item.lat;
+                            orderData.coleta.lng = ui.item.lng;
                         } else if (this.id === 'endereco-entrega') {
-                            orderData.entrega.lat = ui.item.latitude;
-                            orderData.entrega.lng = ui.item.longitude;
+                            orderData.entrega.lat = ui.item.lat;
+                            orderData.entrega.lng = ui.item.lng;
                         }
                         return false;
                     }
-                }).autocomplete("instance")._renderItem = function(ul, item) {
-                    return $("<li>").append(`
-                        <div style="padding: 10px 14px;">
-                            <div style="font-size: 0.9rem; font-weight: 500;">${item.label}</div>
-                            <div style="font-size: 0.7rem; color: var(--text-tertiary);">${item.display_name.substring(0, 80)}...</div>
-                        </div>
-                    `).appendTo(ul);
-                };
+                });
             });
         }
 
@@ -1581,39 +1595,34 @@
                     if (usuario.email) document.getElementById('cliente-email').value = usuario.email;
                     if (usuario.telefone) document.getElementById('cliente-telefone').value = usuario.telefone;
                     
-                    orderData.cliente.nome = usuario.nome;
-                    orderData.cliente.email = usuario.email;
-                    orderData.cliente.telefone = usuario.telefone;
-                    
-                    const bannerContainer = document.getElementById('banner-usuario-container');
-                    bannerContainer.innerHTML = `
+                    const banner = document.getElementById('banner-usuario-container');
+                    banner.innerHTML = `
                         <div class="banner-usuario">
                             <i class="bi bi-person-check-fill"></i>
-                            <span>Olá, <strong>${usuario.nome.split(' ')[0]}</strong>! Seus dados foram preenchidos automaticamente.</span>
-                            <a href="dashboard.html" style="margin-left:auto;color:var(--primary-color);">Meu Painel <i class="bi bi-arrow-right"></i></a>
+                            <span>Olá, <strong>${usuario.nome.split(' ')[0]}</strong>! Seus dados foram preenchidos.</span>
+                            <a href="dashboard.html" style="margin-left:auto;color:var(--primary-color);">Meu Painel</a>
                         </div>
                     `;
                     
                     document.querySelector('.login-item').style.display = 'none';
                     document.querySelector('.perfil-item').style.display = 'block';
                     document.getElementById('menu-perfil-nome').textContent = usuario.nome.split(' ')[0];
-                    
-                } catch(e) { console.error('Erro ao carregar usuário:', e); }
+                } catch(e) {}
             }
         }
 
-        window.abrirModalLogin = () => { document.getElementById('login-modal').style.display = 'flex'; };
-        window.abrirModalCadastro = () => { document.getElementById('cadastro-modal').style.display = 'flex'; };
-        window.fecharModal = (modalId) => { document.getElementById(modalId).style.display = 'none'; };
+        window.abrirModalLogin = () => document.getElementById('login-modal').style.display = 'flex';
+        window.abrirModalCadastro = () => document.getElementById('cadastro-modal').style.display = 'flex';
+        window.fecharModal = (id) => document.getElementById(id).style.display = 'none';
 
         window.fazerLogin = async (event) => {
             event.preventDefault();
             const email = document.getElementById('login-email').value;
-            const usuario = { nome: 'Usuário Teste', email: email, telefone: '(47) 99999-9999' };
+            const usuario = { nome: 'Usuário', email: email, telefone: '(47) 99999-9999' };
             sessionStorage.setItem('usuario', JSON.stringify(usuario));
             carregarDadosUsuario();
             fecharModal('login-modal');
-            showToast('Login realizado com sucesso!', 'success');
+            showToast('Login realizado!', 'success');
         };
 
         window.fazerCadastro = async (event) => {
@@ -1625,7 +1634,7 @@
             sessionStorage.setItem('usuario', JSON.stringify(usuario));
             carregarDadosUsuario();
             fecharModal('cadastro-modal');
-            showToast('Cadastro realizado com sucesso!', 'success');
+            showToast('Cadastro realizado!', 'success');
         };
 
         // ============================================================
