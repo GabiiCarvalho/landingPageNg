@@ -10,6 +10,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <!-- Leaflet Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         /* ===== TEMA DARK MODERNO - N&G EXPRESS ===== */
         :root {
@@ -45,7 +48,6 @@
             --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
             --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
             --shadow-glow: 0 0 30px rgba(255, 107, 0, 0.15);
-            --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.3);
             --radius-sm: 8px;
             --radius-md: 16px;
             --radius-lg: 24px;
@@ -59,7 +61,6 @@
             --blur-lg: blur(20px);
             --gradient-primary: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             --gradient-glow: linear-gradient(135deg, rgba(255, 107, 0, 0.2), rgba(0, 51, 102, 0.2));
-            --gradient-dark: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
         }
 
         * {
@@ -100,6 +101,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 15px 0;
+            flex-wrap: wrap;
         }
 
         .logo {
@@ -162,6 +164,7 @@
             display: flex;
             gap: 2rem;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .nav-links a {
@@ -174,6 +177,10 @@
 
         .nav-links a:hover {
             color: var(--primary-color);
+        }
+
+        .login-item, .perfil-item {
+            cursor: pointer;
         }
 
         /* Page Header */
@@ -459,10 +466,6 @@
             text-decoration: none;
         }
 
-        .btn-primary {
-            background: var(--gradient-primary);
-        }
-
         .btn-secondary {
             background: var(--bg-elevated);
             color: var(--text-primary);
@@ -524,7 +527,7 @@
         }
 
         .map-container {
-            height: 250px;
+            height: 300px;
             background: var(--bg-tertiary);
             border-radius: var(--radius-lg);
             margin: 20px 0;
@@ -532,7 +535,7 @@
             border: 1px solid var(--border-medium);
         }
 
-        /* Modal */
+        /* Modal Pagamento */
         .modal {
             display: none;
             position: fixed;
@@ -672,6 +675,19 @@
             }
         }
 
+        /* Banner Usuário */
+        .banner-usuario {
+            background: var(--gradient-glow);
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-md);
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-primary);
+        }
+
         /* Autocomplete */
         .ui-autocomplete {
             background: var(--bg-elevated);
@@ -701,43 +717,7 @@
             color: var(--primary-color);
         }
 
-        /* ===== RESPONSIVIDADE COMPLETA ===== */
-        
-        /* Tela 1200px - Desktop Grande */
-        @media (max-width: 1200px) {
-            .container {
-                max-width: 1100px;
-                padding: 0 20px;
-            }
-            .section-title {
-                font-size: 2.3rem;
-            }
-        }
-
-        /* Tela 992px - Desktop */
-        @media (max-width: 992px) {
-            .container {
-                max-width: 960px;
-                padding: 0 20px;
-            }
-            .section-title {
-                font-size: 2rem;
-            }
-            .section-subtitle {
-                font-size: 1rem;
-            }
-            .step-content {
-                padding: 25px;
-            }
-            .vehicle-option label, .category-option label {
-                padding: 20px;
-            }
-            .vehicle-option label i, .category-option label i {
-                font-size: 2rem;
-            }
-        }
-
-        /* Tela 768px - Tablet */
+        /* Responsividade */
         @media (max-width: 768px) {
             .container {
                 padding: 0 16px;
@@ -747,428 +727,48 @@
                 gap: 15px;
             }
             .nav-links {
-                flex-wrap: wrap;
                 justify-content: center;
                 gap: 15px;
-            }
-            .nav-links a {
-                font-size: 0.85rem;
-            }
-            .page-header {
-                padding: 40px 0;
-            }
-            .section-title {
-                font-size: 1.8rem;
-            }
-            .steps-indicator {
-                padding: 15px 20px;
-            }
-            .step-number {
-                width: 34px;
-                height: 34px;
-                font-size: 0.85rem;
-            }
-            .step-label {
-                font-size: 0.65rem;
-            }
-            .step-content {
-                padding: 20px;
-            }
-            .form-section h3 {
-                font-size: 1.1rem;
-                margin-bottom: 18px;
-            }
-            .form-group input,
-            .form-group textarea {
-                padding: 12px 15px;
-                font-size: 0.9rem;
-            }
-            .endereco-row {
-                grid-template-columns: 1fr 90px;
-                gap: 10px;
-            }
-            .vehicle-selector, .category-selector {
-                gap: 15px;
-            }
-            .vehicle-option, .category-option {
-                min-width: 120px;
-            }
-            .vehicle-option label, .category-option label {
-                padding: 16px;
-            }
-            .vehicle-option label i, .category-option label i {
-                font-size: 1.8rem;
-            }
-            .vehicle-option label span, .category-option label span {
-                font-size: 0.85rem;
-            }
-            .radio-group {
-                gap: 15px;
-            }
-            .radio-group label {
-                padding: 10px 16px;
-                font-size: 0.85rem;
-            }
-            .navigation-buttons {
-                padding: 15px 20px;
-            }
-            .btn {
-                padding: 10px 20px;
-                font-size: 0.85rem;
-            }
-            .resumo-card {
-                padding: 18px;
-            }
-            .resumo-item {
-                font-size: 0.85rem;
-            }
-            .resumo-total {
-                font-size: 1.4rem;
-            }
-            .map-container {
-                height: 200px;
-            }
-            .modal-content {
-                padding: 20px;
-                width: 95%;
-            }
-        }
-
-        /* Tela 576px - Mobile Grande */
-        @media (max-width: 576px) {
-            .container {
-                padding: 0 12px;
-            }
-            .logo {
-                padding: 6px 12px;
-            }
-            .logo-icon {
-                width: 30px;
-                height: 30px;
-            }
-            .logo-icon i {
-                font-size: 16px;
-            }
-            .logo-text-main {
-                font-size: 1.1rem;
-            }
-            .logo-text-sub {
-                font-size: 0.6rem;
-            }
-            .section-title {
-                font-size: 1.5rem;
-            }
-            .section-subtitle {
-                font-size: 0.85rem;
-            }
-            .steps-indicator {
-                padding: 12px 15px;
-            }
-            .step-number {
-                width: 30px;
-                height: 30px;
-                font-size: 0.75rem;
             }
             .step-label {
                 display: none;
             }
+            .step-number {
+                width: 32px;
+                height: 32px;
+                font-size: 0.8rem;
+            }
             .step-content {
-                padding: 16px;
-            }
-            .form-section h3 {
-                font-size: 1rem;
-                margin-bottom: 15px;
-            }
-            .form-group {
-                margin-bottom: 18px;
-            }
-            .form-group label {
-                font-size: 0.85rem;
-                margin-bottom: 6px;
-            }
-            .form-group input,
-            .form-group textarea {
-                padding: 10px 12px;
-                font-size: 0.85rem;
+                padding: 20px;
             }
             .endereco-row {
-                grid-template-columns: 1fr 70px;
-                gap: 8px;
+                grid-template-columns: 1fr;
+                gap: 10px;
             }
             .vehicle-selector, .category-selector {
                 flex-direction: column;
-                gap: 12px;
-            }
-            .vehicle-option, .category-option {
-                min-width: auto;
-            }
-            .vehicle-option label, .category-option label {
-                flex-direction: row;
-                padding: 12px 16px;
-                gap: 16px;
-                justify-content: flex-start;
-            }
-            .vehicle-option label i, .category-option label i {
-                font-size: 1.5rem;
-                margin-bottom: 0;
-            }
-            .vehicle-option label span, .category-option label span {
-                font-size: 0.9rem;
-            }
-            .vehicle-option label small, .category-option label small {
-                display: none;
-            }
-            .radio-group {
-                flex-direction: column;
-                gap: 10px;
-            }
-            .radio-group label {
-                width: 100%;
-                justify-content: center;
             }
             .navigation-buttons {
                 flex-direction: column-reverse;
                 gap: 12px;
-                padding: 15px;
             }
             .navigation-buttons .btn {
                 width: 100%;
             }
-            .btn {
-                padding: 10px 16px;
-                font-size: 0.85rem;
-            }
-            .resumo-card {
-                padding: 15px;
-            }
-            .resumo-item {
-                flex-direction: column;
-                gap: 5px;
-                text-align: center;
-            }
-            .resumo-total {
-                font-size: 1.2rem;
-            }
-            .map-container {
-                height: 180px;
-            }
-            .qr-container canvas, .qr-container img {
-                width: 150px;
-                height: 150px;
-            }
-            .modal-content {
-                padding: 16px;
-            }
-            .modal-content h3 {
-                font-size: 1.1rem;
-            }
-            #modal-valor {
-                font-size: 1.3rem;
-            }
-            .toast {
-                font-size: 0.75rem;
-                padding: 8px 16px;
-                bottom: 20px;
-            }
         }
 
-        /* Tela 480px - Mobile Médio */
         @media (max-width: 480px) {
-            .container {
-                padding: 0 10px;
-            }
-            .page-header {
-                padding: 30px 0;
-            }
             .section-title {
-                font-size: 1.3rem;
-            }
-            .steps-indicator {
-                padding: 10px 12px;
-            }
-            .step-number {
-                width: 28px;
-                height: 28px;
-                font-size: 0.7rem;
-            }
-            .step-content {
-                padding: 14px;
+                font-size: 1.5rem;
             }
             .form-section h3 {
-                font-size: 0.95rem;
-                gap: 8px;
-            }
-            .form-group input,
-            .form-group textarea {
-                padding: 8px 12px;
-                font-size: 0.8rem;
-            }
-            .endereco-row {
-                grid-template-columns: 1fr 60px;
-                gap: 6px;
-            }
-            .vehicle-option label, .category-option label {
-                padding: 10px 14px;
-            }
-            .vehicle-option label i, .category-option label i {
-                font-size: 1.3rem;
-            }
-            .vehicle-option label span, .category-option label span {
-                font-size: 0.85rem;
-            }
-            .resumo-item {
-                font-size: 0.8rem;
-            }
-            .resumo-total {
                 font-size: 1.1rem;
             }
-            .map-container {
-                height: 160px;
-            }
-        }
-
-        /* Tela 368px - Mobile Pequeno */
-        @media (max-width: 368px) {
-            .container {
-                padding: 0 8px;
-            }
-            .logo {
-                padding: 5px 10px;
-            }
-            .logo-icon {
-                width: 26px;
-                height: 26px;
-                margin-right: 8px;
-            }
-            .logo-icon i {
-                font-size: 14px;
-            }
-            .logo-text-main {
-                font-size: 0.95rem;
-            }
-            .logo-text-sub {
-                font-size: 0.55rem;
-            }
-            .nav-links {
-                gap: 10px;
-            }
-            .nav-links a {
-                font-size: 0.75rem;
-            }
-            .section-title {
-                font-size: 1.2rem;
-            }
-            .section-subtitle {
-                font-size: 0.75rem;
-            }
-            .steps-indicator {
-                padding: 8px 10px;
-            }
-            .step-number {
-                width: 26px;
-                height: 26px;
-                font-size: 0.65rem;
-            }
-            .step-content {
-                padding: 12px;
-            }
-            .form-section {
-                margin-bottom: 20px;
-            }
-            .form-section h3 {
-                font-size: 0.9rem;
-                margin-bottom: 12px;
-            }
-            .form-group {
-                margin-bottom: 14px;
-            }
-            .form-group label {
-                font-size: 0.75rem;
-            }
             .form-group input,
             .form-group textarea {
-                padding: 8px 10px;
-                font-size: 0.75rem;
+                padding: 10px 12px;
+                font-size: 0.85rem;
             }
-            .endereco-row {
-                grid-template-columns: 1fr 55px;
-                gap: 5px;
-            }
-            .endereco-row input {
-                font-size: 0.75rem;
-                padding: 8px 8px;
-            }
-            .vehicle-option label, .category-option label {
-                padding: 8px 12px;
-            }
-            .vehicle-option label i, .category-option label i {
-                font-size: 1.2rem;
-            }
-            .vehicle-option label span, .category-option label span {
-                font-size: 0.8rem;
-            }
-            .radio-group label {
-                padding: 8px 12px;
-                font-size: 0.75rem;
-            }
-            .btn {
-                padding: 8px 14px;
-                font-size: 0.75rem;
-                gap: 8px;
-            }
-            .resumo-card {
-                padding: 12px;
-            }
-            .resumo-item {
-                font-size: 0.7rem;
-                padding: 8px 0;
-            }
-            .resumo-total {
-                font-size: 1rem;
-            }
-            .map-container {
-                height: 140px;
-            }
-            .modal-content {
-                padding: 14px;
-            }
-            .qr-container canvas, .qr-container img {
-                width: 120px;
-                height: 120px;
-            }
-            .pix-code {
-                font-size: 0.55rem;
-                padding: 8px;
-            }
-        }
-
-        /* Tela 320px - Mínimo seguro */
-        @media (max-width: 320px) {
-            .container {
-                padding: 0 6px;
-            }
-            .section-title {
-                font-size: 1rem;
-            }
-            .step-number {
-                width: 24px;
-                height: 24px;
-                font-size: 0.6rem;
-            }
-            .form-group input,
-            .form-group textarea {
-                padding: 6px 8px;
-                font-size: 0.7rem;
-            }
-            .btn {
-                padding: 6px 12px;
-                font-size: 0.7rem;
-            }
-        }
-
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -1188,6 +788,12 @@
                     <li><a href="index.html#services">Serviços</a></li>
                     <li><a href="index.html#about">Sobre</a></li>
                     <li><a href="index.html#contact">Contato</a></li>
+                    <li class="perfil-item" style="display:none;">
+                        <a href="dashboard.html"><i class="bi bi-person-circle"></i> <span id="menu-perfil-nome">Perfil</span></a>
+                    </li>
+                    <li class="login-item">
+                        <a href="#" onclick="abrirModalLogin(); return false;">Entrar</a>
+                    </li>
                 </ul>
             </nav>
         </div>
@@ -1211,10 +817,11 @@
                 <div class="step" data-step="5"><div class="step-number">6</div><div class="step-label">Categoria</div></div>
             </div>
 
-            <!-- Etapa 1 -->
+            <!-- Etapa 1 - Dados do Cliente -->
             <div class="step-content active" data-step="0">
                 <div class="form-section">
                     <h3><i class="bi bi-person"></i> Seus dados</h3>
+                    <div id="banner-usuario-container"></div>
                     <div class="form-group">
                         <label>Nome Completo *</label>
                         <input type="text" id="cliente-nome" placeholder="Digite seu nome completo">
@@ -1230,7 +837,7 @@
                 </div>
             </div>
 
-            <!-- Etapa 2 -->
+            <!-- Etapa 2 - Tipo de Veículo -->
             <div class="step-content" data-step="1">
                 <div class="form-section">
                     <h3><i class="bi bi-truck"></i> Tipo de Veículo</h3>
@@ -1255,7 +862,7 @@
                 </div>
             </div>
 
-            <!-- Etapa 3 -->
+            <!-- Etapa 3 - Local de Coleta -->
             <div class="step-content" data-step="2">
                 <div class="form-section">
                     <h3><i class="bi bi-geo-alt"></i> Local de Coleta</h3>
@@ -1276,7 +883,7 @@
                 </div>
             </div>
 
-            <!-- Etapa 4 -->
+            <!-- Etapa 4 - Local de Entrega -->
             <div class="step-content" data-step="3">
                 <div class="form-section">
                     <h3><i class="bi bi-geo-alt-fill"></i> Local de Entrega</h3>
@@ -1297,7 +904,7 @@
                 </div>
             </div>
 
-            <!-- Etapa 5 -->
+            <!-- Etapa 5 - Quem vai receber -->
             <div class="step-content" data-step="4">
                 <div class="form-section">
                     <h3><i class="bi bi-person-check"></i> Quem receberá?</h3>
@@ -1318,7 +925,7 @@
                 </div>
             </div>
 
-            <!-- Etapa 6 -->
+            <!-- Etapa 6 - Categoria do Produto -->
             <div class="step-content" data-step="5">
                 <div class="form-section">
                     <h3><i class="bi bi-box"></i> Tipo de Produto</h3>
@@ -1361,7 +968,7 @@
             </div>
         </div>
 
-        <!-- Checkout -->
+        <!-- Tela de Checkout com Resumo e Pagamento -->
         <div id="checkout-screen" style="display: none;">
             <div class="wizard-container">
                 <div class="step-content" style="display: block;">
@@ -1399,18 +1006,81 @@
         </div>
     </div>
 
-    <!-- Modal Pagamento -->
+    <!-- Modal de Pagamento PIX -->
     <div id="modal-pagamento" class="modal">
         <div class="modal-content">
-            <h3 style="margin-bottom: 15px;"><i class="bi bi-pix"></i> Pagamento PIX</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0;"><i class="bi bi-pix"></i> Pagamento PIX</h3>
+                <button onclick="fecharModalPagamento()" style="background: none; border: none; color: var(--text-tertiary); font-size: 24px; cursor: pointer;">&times;</button>
+            </div>
             <div style="text-align: center; font-size: 1.8rem; font-weight: bold; color: var(--primary-color);" id="modal-valor">R$ 0,00</div>
             <div class="qr-container" id="qr-container"></div>
-            <div class="pix-code" id="pix-codigo" onclick="copiarPix()">Carregando...</div>
-            <p style="font-size: 0.75rem; text-align: center; margin-top: 10px;">📱 Escaneie o QR Code ou copie o código</p>
+            <div class="pix-code" id="pix-codigo" onclick="copiarPix()">Clique para copiar o código PIX</div>
+            <p style="font-size: 0.75rem; text-align: center; margin-top: 10px;">📱 Escaneie o QR Code ou copie o código e pague no seu banco</p>
             <div style="display: flex; gap: 12px; margin-top: 20px;">
                 <button class="btn btn-secondary" style="flex:1;" onclick="fecharModalPagamento()">Cancelar</button>
                 <button class="btn btn-primary" style="flex:1;" id="btn-enviar-comprovante"><i class="bi bi-whatsapp"></i> Enviar Comprovante</button>
             </div>
+            <div id="status-pagamento" style="margin-top: 15px; text-align: center; font-size: 0.8rem; color: var(--text-tertiary); display: none;">
+                <i class="bi bi-hourglass-split"></i> Aguardando pagamento...
+            </div>
+        </div>
+    </div>
+
+    <!-- Modais de Login/Cadastro -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content" style="max-width:400px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;"><i class="bi bi-box-arrow-in-right"></i> Login</h2>
+                <button onclick="fecharModal('login-modal')" style="background: none; border: none; color: var(--text-tertiary); font-size: 24px; cursor: pointer;">&times;</button>
+            </div>
+            <form onsubmit="fazerLogin(event)">
+                <div class="form-group">
+                    <label for="login-email">E-mail</label>
+                    <input type="email" id="login-email" placeholder="seu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-senha">Senha</label>
+                    <input type="password" id="login-senha" placeholder="******" required>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="lembrar-email"> Lembrar e-mail</label>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;"><i class="bi bi-box-arrow-in-right"></i> Entrar</button>
+                <p style="text-align:center;margin-top:15px;">Não tem conta? <a href="#" onclick="abrirModalCadastro();return false;">Cadastre-se</a></p>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="cadastro-modal">
+        <div class="modal-content" style="max-width:500px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;"><i class="bi bi-person-plus"></i> Cadastro</h2>
+                <button onclick="fecharModal('cadastro-modal')" style="background: none; border: none; color: var(--text-tertiary); font-size: 24px; cursor: pointer;">&times;</button>
+            </div>
+            <form onsubmit="fazerCadastro(event)">
+                <div class="form-group">
+                    <label for="cadastro-nome">Nome Completo</label>
+                    <input type="text" id="cadastro-nome" placeholder="Seu nome" required>
+                </div>
+                <div class="form-group">
+                    <label for="cadastro-email">E-mail</label>
+                    <input type="email" id="cadastro-email" placeholder="seu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="cadastro-telefone">Telefone/WhatsApp</label>
+                    <input type="tel" id="cadastro-telefone" placeholder="(47) 99999-9999" required>
+                </div>
+                <div class="form-group">
+                    <label for="cadastro-senha">Senha (mínimo 6 caracteres)</label>
+                    <input type="password" id="cadastro-senha" minlength="6" required>
+                </div>
+                <div class="form-group">
+                    <label for="cadastro-confirmar-senha">Confirmar Senha</label>
+                    <input type="password" id="cadastro-confirmar-senha" minlength="6" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;"><i class="bi bi-check-circle"></i> Cadastrar</button>
+            </form>
         </div>
     </div>
 
@@ -1424,9 +1094,15 @@
     <div id="toast" class="toast"></div>
 
     <script>
-        // Configurações
-        const HERE_API_KEY = 'O8E5nipilq9UhVMoh75UR3RxE0J3zvC1DCXR-DZVL6I';
-        const API_BASE_URL = 'https://landingpageng-production.up.railway.app/api';
+        // ============================================================
+        // CONFIGURAÇÕES
+        // ============================================================
+        const API_BASE_URL = window.location.origin;
+        
+        // Chave PIX da empresa
+        const CHAVE_PIX = 'comercial.ngexpress@gmail.com';
+        const NOME_RECEBEDOR = 'N&G Express';
+        const CIDADE = 'SAO PAULO';
         
         const PRICING_CONFIG = {
             valorMinimoAte7km: { moto: 15.00, carro: 50.00 },
@@ -1435,8 +1111,13 @@
             valorMaximo: 500.00
         };
 
+        // ============================================================
+        // VARIÁVEIS GLOBAIS
+        // ============================================================
         let currentStep = 0;
         const totalSteps = 6;
+        let map = null;
+        
         let orderData = {
             cliente: { nome: '', telefone: '', email: '' },
             veiculo: 'moto',
@@ -1450,9 +1131,12 @@
             duracao: 0
         };
         
-        let paymentData = { paymentId: null, qrCode: null, pixCode: null };
-        let debounceTimer = null;
+        let paymentData = { paymentId: null, qrCode: null, pixCode: null, intervalId: null };
+        let _geocodeCache = {};
 
+        // ============================================================
+        // FUNÇÕES AUXILIARES
+        // ============================================================
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             toast.textContent = message;
@@ -1553,7 +1237,269 @@
             }
         }
 
-        // Autocomplete
+        // ============================================================
+        // GEOCÓDIGO E ROTA
+        // ============================================================
+        async function geocodificar(endereco) {
+            const key = `gc_${endereco}`;
+            if (_geocodeCache[key]) return _geocodeCache[key];
+            
+            const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(endereco)}&format=json&countrycodes=br&limit=1`;
+            const res = await fetch(url, { headers: { 'User-Agent': 'NGExpress/1.0' } });
+            if (!res.ok) throw new Error(`Geocodificação falhou (HTTP ${res.status})`);
+            const data = await res.json();
+            if (!data.length) throw new Error(`Endereço não encontrado: "${endereco}"`);
+            const resultado = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+            _geocodeCache[key] = resultado;
+            return resultado;
+        }
+
+        async function calcularRota(origem, destino) {
+            const url = `https://router.project-osrm.org/route/v1/driving/${origem.lng},${origem.lat};${destino.lng},${destino.lat}?overview=false`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Erro ao calcular rota');
+            const data = await response.json();
+            if (!data.routes || data.routes.length === 0) throw new Error('Nenhuma rota encontrada');
+            return {
+                distanciaKm: data.routes[0].distance / 1000,
+                duracaoMin: Math.round(data.routes[0].duration / 60)
+            };
+        }
+
+        function calcularPreco(distanciaKm, veiculo) {
+            const config = PRICING_CONFIG;
+            const valorMin = config.valorMinimoAte7km[veiculo];
+            const porKm = config.valorPorKm[veiculo];
+            if (distanciaKm <= config.limiteKmMinimo) return valorMin;
+            let preco = distanciaKm * porKm;
+            return Math.min(Math.round(preco * 100) / 100, config.valorMaximo);
+        }
+
+        // ============================================================
+        // MAPA COM LEAFLET
+        // ============================================================
+        function initMap(lat1, lng1, lat2, lng2) {
+            const mapContainer = document.getElementById('map-container');
+            if (!mapContainer) return;
+            
+            mapContainer.innerHTML = '';
+            
+            const centerLat = (lat1 + lat2) / 2;
+            const centerLng = (lng1 + lng2) / 2;
+            
+            map = L.map(mapContainer).setView([centerLat, centerLng], 12);
+            
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CartoDB',
+                subdomains: 'abcd',
+                maxZoom: 19,
+                minZoom: 3
+            }).addTo(map);
+            
+            const coletaIcon = L.divIcon({
+                html: '<div style="background: #FF6B00; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px #FF6B00;"></div>',
+                iconSize: [16, 16],
+                className: 'custom-marker'
+            });
+            
+            const entregaIcon = L.divIcon({
+                html: '<div style="background: #00C48C; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px #00C48C;"></div>',
+                iconSize: [16, 16],
+                className: 'custom-marker'
+            });
+            
+            L.marker([lat1, lng1], { icon: coletaIcon }).addTo(map).bindPopup('<b>📍 Coleta</b><br>' + orderData.coleta.endereco);
+            L.marker([lat2, lng2], { icon: entregaIcon }).addTo(map).bindPopup('<b>🎯 Entrega</b><br>' + orderData.entrega.endereco);
+            
+            const latlngs = [[lat1, lng1], [lat2, lng2]];
+            L.polyline(latlngs, { color: '#FF6B00', weight: 3, opacity: 0.8 }).addTo(map);
+            
+            setTimeout(() => { map.invalidateSize(); }, 100);
+        }
+
+        // ============================================================
+        // FINALIZAR PEDIDO
+        // ============================================================
+        async function finalizarPedido() {
+            showLoading(true);
+            try {
+                const endColeta = `${orderData.coleta.endereco}${orderData.coleta.numero ? ', ' + orderData.coleta.numero : ''}, Brasil`;
+                const endEntrega = `${orderData.entrega.endereco}${orderData.entrega.numero ? ', ' + orderData.entrega.numero : ''}, Brasil`;
+                
+                const coordColeta = await geocodificar(endColeta);
+                const coordEntrega = await geocodificar(endEntrega);
+                
+                orderData.coleta.lat = coordColeta.lat;
+                orderData.coleta.lng = coordColeta.lng;
+                orderData.entrega.lat = coordEntrega.lat;
+                orderData.entrega.lng = coordEntrega.lng;
+                
+                const rota = await calcularRota(coordColeta, coordEntrega);
+                
+                orderData.distancia = rota.distanciaKm;
+                orderData.duracao = rota.duracaoMin;
+                orderData.valor = calcularPreco(rota.distanciaKm, orderData.veiculo);
+                
+                mostrarCheckout();
+            } catch (error) {
+                showToast(error.message || 'Erro ao calcular rota', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function mostrarCheckout() {
+            document.querySelector('.wizard-container').style.display = 'none';
+            document.getElementById('checkout-screen').style.display = 'block';
+            
+            document.getElementById('resumo-nome').textContent = orderData.cliente.nome;
+            document.getElementById('resumo-telefone').textContent = orderData.cliente.telefone;
+            document.getElementById('resumo-veiculo').textContent = orderData.veiculo === 'moto' ? 'Moto 🏍️' : 'Carro 🚗';
+            document.getElementById('resumo-coleta').textContent = `${orderData.coleta.endereco}, ${orderData.coleta.numero}`;
+            document.getElementById('resumo-entrega').textContent = `${orderData.entrega.endereco}, ${orderData.entrega.numero}`;
+            document.getElementById('resumo-receptor').textContent = orderData.receptor.nome;
+            document.getElementById('resumo-categorias').textContent = orderData.categorias.length ? orderData.categorias.join(', ') : 'Não especificado';
+            document.getElementById('distancia-final').textContent = `${orderData.distancia.toFixed(1)} km`;
+            document.getElementById('tempo-final').textContent = `${orderData.duracao} min`;
+            document.getElementById('valor-final').textContent = `R$ ${orderData.valor.toFixed(2).replace('.', ',')}`;
+            
+            if (orderData.coleta.lat && orderData.coleta.lng && orderData.entrega.lat && orderData.entrega.lng) {
+                initMap(orderData.coleta.lat, orderData.coleta.lng, orderData.entrega.lat, orderData.entrega.lng);
+            }
+        }
+
+        function cancelarPedido() {
+            document.getElementById('checkout-screen').style.display = 'none';
+            document.querySelector('.wizard-container').style.display = 'block';
+            currentStep = 0;
+            updateSteps();
+        }
+
+        // ============================================================
+        // PAGAMENTO PIX
+        // ============================================================
+        function calcularCRC16(payload) {
+            let crc = 0xFFFF;
+            for (let i = 0; i < payload.length; i++) {
+                crc ^= payload.charCodeAt(i) << 8;
+                for (let j = 0; j < 8; j++) {
+                    crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
+                }
+            }
+            return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+        }
+
+        function gerarPayloadPIX(valor, descricao) {
+            const valorFormatado = valor.toFixed(2).replace('.', '');
+            const descricaoFormatada = descricao || `Entrega N&G Express #${Date.now().toString().slice(-6)}`;
+            
+            let payload = '000201';
+            payload += '26';
+            payload += '0014br.gov.bcb.pix';
+            payload += `01${String(CHAVE_PIX.length).padStart(2, '0')}${CHAVE_PIX}`;
+            payload += '52040000';
+            payload += '5303986';
+            payload += `54${String(valorFormatado.length).padStart(2, '0')}${valorFormatado}`;
+            payload += '5802BR';
+            payload += `59${String(NOME_RECEBEDOR.length).padStart(2, '0')}${NOME_RECEBEDOR}`;
+            payload += `60${String(CIDADE.length).padStart(2, '0')}${CIDADE}`;
+            payload += `6205${String(descricaoFormatada.length).padStart(2, '0')}${descricaoFormatada}`;
+            payload += '6304';
+            
+            const crc = calcularCRC16(payload);
+            return payload + crc;
+        }
+
+        async function gerarPagamento() {
+            document.getElementById('modal-pagamento').style.display = 'flex';
+            document.getElementById('modal-valor').textContent = `R$ ${orderData.valor.toFixed(2).replace('.', ',')}`;
+            
+            try {
+                const pixPayload = gerarPayloadPIX(orderData.valor, `Entrega ${orderData.cliente.nome}`);
+                paymentData.pixCode = pixPayload;
+                paymentData.paymentId = `pix_${Date.now()}`;
+                
+                const qrContainer = document.getElementById('qr-container');
+                qrContainer.innerHTML = '';
+                
+                new QRCode(qrContainer, {
+                    text: pixPayload,
+                    width: 200,
+                    height: 200,
+                    colorDark: "#FF6B00",
+                    colorLight: "#1A1A24",
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+                
+                document.getElementById('pix-codigo').textContent = pixPayload;
+                document.getElementById('status-pagamento').style.display = 'block';
+                showToast('QR Code gerado com sucesso!', 'success');
+                
+                iniciarVerificacaoPagamento();
+                
+            } catch (error) {
+                console.error('Erro ao gerar PIX:', error);
+                showToast('Erro ao gerar QR Code. Tente novamente.', 'error');
+            }
+        }
+
+        function iniciarVerificacaoPagamento() {
+            let verificacoes = 0;
+            const maxVerificacoes = 60;
+            
+            if (paymentData.intervalId) clearInterval(paymentData.intervalId);
+            
+            paymentData.intervalId = setInterval(() => {
+                verificacoes++;
+                
+                // Simulação - em produção, verificar no backend
+                if (verificacoes >= maxVerificacoes) {
+                    clearInterval(paymentData.intervalId);
+                    document.getElementById('status-pagamento').innerHTML = '<i class="bi bi-hourglass-split"></i> Tempo expirado. Gere um novo QR Code.';
+                }
+            }, 3000);
+        }
+
+        function copiarPix() {
+            if (!paymentData.pixCode) return;
+            navigator.clipboard.writeText(paymentData.pixCode);
+            showToast('Código PIX copiado!');
+        }
+
+        function fecharModalPagamento() {
+            document.getElementById('modal-pagamento').style.display = 'none';
+            if (paymentData.intervalId) {
+                clearInterval(paymentData.intervalId);
+                paymentData.intervalId = null;
+            }
+        }
+
+        function enviarComprovante() {
+            const msg = `*NOVO PEDIDO N&G EXPRESS*%0A%0A` +
+                `*Cliente:* ${orderData.cliente.nome}%0A` +
+                `*WhatsApp:* ${orderData.cliente.telefone}%0A` +
+                `*Veículo:* ${orderData.veiculo === 'moto' ? 'Moto 🏍️' : 'Carro 🚗'}%0A` +
+                `*Coleta:* ${orderData.coleta.endereco}, ${orderData.coleta.numero}%0A` +
+                `*Entrega:* ${orderData.entrega.endereco}, ${orderData.entrega.numero}%0A` +
+                `*Produto:* ${orderData.categorias.join(', ')}%0A` +
+                `*Distância:* ${orderData.distancia.toFixed(1)} km%0A` +
+                `*Valor:* R$ ${orderData.valor.toFixed(2).replace('.', ',')}%0A%0A` +
+                `✅ *Pagamento via PIX confirmado!*%0A` +
+                `🔑 *Chave PIX:* ${CHAVE_PIX}%0A%0A` +
+                `Aguardando confirmação da N&G Express. 🚚`;
+            
+            window.open(`https://wa.me/55${orderData.cliente.telefone.replace(/\D/g, '')}?text=${msg}`, '_blank');
+            showToast('Redirecionando para WhatsApp...');
+            
+            setTimeout(() => {
+                alert('✅ Pedido enviado com sucesso!\n\nA N&G Express confirmará em breve.');
+                window.location.href = 'index.html';
+            }, 3000);
+        }
+
+        // ============================================================
+        // AUTOCOMPLETE
+        // ============================================================
         function inicializarAutocomplete() {
             const camposEndereco = document.querySelectorAll('.autocomplete-endereco');
             
@@ -1562,13 +1508,11 @@
                     minLength: 3,
                     delay: 300,
                     source: function(request, response) {
-                        clearTimeout(debounceTimer);
-                        debounceTimer = setTimeout(async () => {
+                        clearTimeout(window.debounceTimer);
+                        window.debounceTimer = setTimeout(async () => {
                             try {
                                 const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(request.term)}&format=json&addressdetails=1&countrycodes=br&limit=8&accept-language=pt-BR`;
-                                const resp = await fetch(url, {
-                                    headers: { 'User-Agent': 'NGExpress/1.0' }
-                                });
+                                const resp = await fetch(url, { headers: { 'User-Agent': 'NGExpress/1.0' } });
                                 const data = await resp.json();
                                 
                                 const resultados = data.map(item => {
@@ -1625,166 +1569,83 @@
             });
         }
 
-        async function geocodificarHERE(enderecoCompleto) {
-            const url = `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(enderecoCompleto)}&apiKey=${HERE_API_KEY}&country=BRA`;
-            const response = await fetch(url);
-            const data = await response.json();
-            if (!data.items || data.items.length === 0) {
-                throw new Error(`Endereço não encontrado: ${enderecoCompleto}`);
+        // ============================================================
+        // LOGIN E PREENCHIMENTO
+        // ============================================================
+        function carregarDadosUsuario() {
+            const usuarioSalvo = sessionStorage.getItem('usuario');
+            if (usuarioSalvo) {
+                try {
+                    const usuario = JSON.parse(usuarioSalvo);
+                    if (usuario.nome) document.getElementById('cliente-nome').value = usuario.nome;
+                    if (usuario.email) document.getElementById('cliente-email').value = usuario.email;
+                    if (usuario.telefone) document.getElementById('cliente-telefone').value = usuario.telefone;
+                    
+                    orderData.cliente.nome = usuario.nome;
+                    orderData.cliente.email = usuario.email;
+                    orderData.cliente.telefone = usuario.telefone;
+                    
+                    const bannerContainer = document.getElementById('banner-usuario-container');
+                    bannerContainer.innerHTML = `
+                        <div class="banner-usuario">
+                            <i class="bi bi-person-check-fill"></i>
+                            <span>Olá, <strong>${usuario.nome.split(' ')[0]}</strong>! Seus dados foram preenchidos automaticamente.</span>
+                            <a href="dashboard.html" style="margin-left:auto;color:var(--primary-color);">Meu Painel <i class="bi bi-arrow-right"></i></a>
+                        </div>
+                    `;
+                    
+                    document.querySelector('.login-item').style.display = 'none';
+                    document.querySelector('.perfil-item').style.display = 'block';
+                    document.getElementById('menu-perfil-nome').textContent = usuario.nome.split(' ')[0];
+                    
+                } catch(e) { console.error('Erro ao carregar usuário:', e); }
             }
-            return { lat: data.items[0].position.lat, lng: data.items[0].position.lng };
         }
 
-        async function calcularRotaHERE(origem, destino) {
-            const url = `https://router.hereapi.com/v8/routes?transportMode=car&origin=${origem.lat},${origem.lng}&destination=${destino.lat},${destino.lng}&return=summary&apikey=${HERE_API_KEY}`;
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Erro ao calcular rota');
-            const data = await response.json();
-            const section = data.routes?.[0]?.sections?.[0];
-            if (!section) throw new Error('Nenhuma rota encontrada');
-            return {
-                distanciaKm: section.summary.length / 1000,
-                duracaoMin: Math.round(section.summary.duration / 60)
-            };
-        }
+        window.abrirModalLogin = () => { document.getElementById('login-modal').style.display = 'flex'; };
+        window.abrirModalCadastro = () => { document.getElementById('cadastro-modal').style.display = 'flex'; };
+        window.fecharModal = (modalId) => { document.getElementById(modalId).style.display = 'none'; };
 
-        function calcularPreco(distanciaKm, veiculo) {
-            const config = PRICING_CONFIG;
-            const valorMin = config.valorMinimoAte7km[veiculo];
-            const porKm = config.valorPorKm[veiculo];
-            if (distanciaKm <= config.limiteKmMinimo) return valorMin;
-            let preco = distanciaKm * porKm;
-            return Math.min(Math.round(preco * 100) / 100, config.valorMaximo);
-        }
+        window.fazerLogin = async (event) => {
+            event.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const usuario = { nome: 'Usuário Teste', email: email, telefone: '(47) 99999-9999' };
+            sessionStorage.setItem('usuario', JSON.stringify(usuario));
+            carregarDadosUsuario();
+            fecharModal('login-modal');
+            showToast('Login realizado com sucesso!', 'success');
+        };
 
-        async function finalizarPedido() {
-            showLoading(true);
-            try {
-                const endColeta = `${orderData.coleta.endereco}${orderData.coleta.numero ? ', ' + orderData.coleta.numero : ''}, Brasil`;
-                const endEntrega = `${orderData.entrega.endereco}${orderData.entrega.numero ? ', ' + orderData.entrega.numero : ''}, Brasil`;
-                
-                let coordColeta, coordEntrega;
-                
-                if (orderData.coleta.lat && orderData.coleta.lng) {
-                    coordColeta = { lat: orderData.coleta.lat, lng: orderData.coleta.lng };
-                } else {
-                    coordColeta = await geocodificarHERE(endColeta);
+        window.fazerCadastro = async (event) => {
+            event.preventDefault();
+            const nome = document.getElementById('cadastro-nome').value;
+            const email = document.getElementById('cadastro-email').value;
+            const telefone = document.getElementById('cadastro-telefone').value;
+            const usuario = { nome: nome, email: email, telefone: telefone };
+            sessionStorage.setItem('usuario', JSON.stringify(usuario));
+            carregarDadosUsuario();
+            fecharModal('cadastro-modal');
+            showToast('Cadastro realizado com sucesso!', 'success');
+        };
+
+        // ============================================================
+        // MÁSCARA TELEFONE
+        // ============================================================
+        function mascaraTelefone(input) {
+            if (!input) return;
+            input.addEventListener('input', function(e) {
+                let v = e.target.value.replace(/\D/g, '');
+                if (v.length <= 11) {
+                    v = v.replace(/^(\d{2})(\d)/g, '($1) $2');
+                    v = v.replace(/(\d{5})(\d)/, '$1-$2');
+                    e.target.value = v;
                 }
-                
-                if (orderData.entrega.lat && orderData.entrega.lng) {
-                    coordEntrega = { lat: orderData.entrega.lat, lng: orderData.entrega.lng };
-                } else {
-                    coordEntrega = await geocodificarHERE(endEntrega);
-                }
-                
-                orderData.coleta.lat = coordColeta.lat;
-                orderData.coleta.lng = coordColeta.lng;
-                orderData.entrega.lat = coordEntrega.lat;
-                orderData.entrega.lng = coordEntrega.lng;
-                
-                const rota = await calcularRotaHERE(coordColeta, coordEntrega);
-                
-                orderData.distancia = rota.distanciaKm;
-                orderData.duracao = rota.duracaoMin;
-                orderData.valor = calcularPreco(rota.distanciaKm, orderData.veiculo);
-                
-                mostrarCheckout();
-            } catch (error) {
-                showToast(error.message || 'Erro ao calcular rota', 'error');
-            } finally {
-                showLoading(false);
-            }
+            });
         }
 
-        function mostrarCheckout() {
-            document.querySelector('.wizard-container').style.display = 'none';
-            document.getElementById('checkout-screen').style.display = 'block';
-            
-            document.getElementById('resumo-nome').textContent = orderData.cliente.nome;
-            document.getElementById('resumo-telefone').textContent = orderData.cliente.telefone;
-            document.getElementById('resumo-veiculo').textContent = orderData.veiculo === 'moto' ? 'Moto 🏍️' : 'Carro 🚗';
-            document.getElementById('resumo-coleta').textContent = `${orderData.coleta.endereco}, ${orderData.coleta.numero}`;
-            document.getElementById('resumo-entrega').textContent = `${orderData.entrega.endereco}, ${orderData.entrega.numero}`;
-            document.getElementById('resumo-receptor').textContent = orderData.receptor.nome;
-            document.getElementById('resumo-categorias').textContent = orderData.categorias.length ? orderData.categorias.join(', ') : 'Não especificado';
-            document.getElementById('distancia-final').textContent = `${orderData.distancia.toFixed(1)} km`;
-            document.getElementById('tempo-final').textContent = `${orderData.duracao} min`;
-            document.getElementById('valor-final').textContent = `R$ ${orderData.valor.toFixed(2).replace('.', ',')}`;
-            
-            const mapDiv = document.getElementById('map-container');
-            mapDiv.innerHTML = `<iframe width="100%" height="100%" frameborder="0" style="border:0" src="https://image.maps.ls.hereapi.com/mia/1.6/route?apiKey=${HERE_API_KEY}&waypoint0=${orderData.coleta.lat},${orderData.coleta.lng}&waypoint1=${orderData.entrega.lat},${orderData.entrega.lng}&h=250&w=600&z=12"></iframe>`;
-        }
-
-        function cancelarPedido() {
-            document.getElementById('checkout-screen').style.display = 'none';
-            document.querySelector('.wizard-container').style.display = 'block';
-            currentStep = 0;
-            updateSteps();
-        }
-
-        async function gerarPagamento() {
-            document.getElementById('modal-pagamento').style.display = 'flex';
-            document.getElementById('modal-valor').textContent = `R$ ${orderData.valor.toFixed(2).replace('.', ',')}`;
-            
-            try {
-                const response = await fetch(`${API_BASE_URL}/pix/criar`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        convId: `pedido_${Date.now()}`,
-                        valor: orderData.valor,
-                        nomeCliente: orderData.cliente.nome
-                    })
-                });
-                
-                if (!response.ok) throw new Error('Erro ao gerar pagamento');
-                const data = await response.json();
-                
-                paymentData.paymentId = data.paymentId;
-                paymentData.qrCode = data.qrCode;
-                paymentData.pixCode = data.qrCode;
-                
-                const qrContainer = document.getElementById('qr-container');
-                qrContainer.innerHTML = '';
-                new QRCode(qrContainer, {
-                    text: data.qrCode,
-                    width: 200,
-                    height: 200,
-                    colorDark: "#FF6B00",
-                    colorLight: "#1A1A24"
-                });
-                document.getElementById('pix-codigo').textContent = data.qrCode;
-            } catch (error) {
-                showToast('Erro ao gerar pagamento', 'error');
-            }
-        }
-
-        function copiarPix() {
-            if (!paymentData.pixCode) return;
-            navigator.clipboard.writeText(paymentData.pixCode);
-            showToast('Código PIX copiado!');
-        }
-
-        function fecharModalPagamento() {
-            document.getElementById('modal-pagamento').style.display = 'none';
-        }
-
-        function enviarComprovante() {
-            const msg = `*NOVO PEDIDO N&G EXPRESS*%0A%0A` +
-                `Cliente: ${orderData.cliente.nome}%0A` +
-                `WhatsApp: ${orderData.cliente.telefone}%0A` +
-                `Veículo: ${orderData.veiculo === 'moto' ? 'Moto' : 'Carro'}%0A` +
-                `Coleta: ${orderData.coleta.endereco}, ${orderData.coleta.numero}%0A` +
-                `Entrega: ${orderData.entrega.endereco}, ${orderData.entrega.numero}%0A` +
-                `Produto: ${orderData.categorias.join(', ')}%0A` +
-                `Valor: R$ ${orderData.valor.toFixed(2).replace('.', ',')}%0A%0A` +
-                `✅ Pagamento confirmado!`;
-            
-            window.open(`https://wa.me/55${orderData.cliente.telefone.replace(/\D/g, '')}?text=${msg}`, '_blank');
-            setTimeout(() => alert('Pedido enviado!'), 2000);
-        }
-
-        // Eventos
+        // ============================================================
+        // INICIALIZAÇÃO
+        // ============================================================
         document.getElementById('btn-avancar').addEventListener('click', avancar);
         document.getElementById('btn-voltar').addEventListener('click', voltar);
         document.getElementById('btn-cancelar').addEventListener('click', cancelarPedido);
@@ -1797,24 +1658,12 @@
             });
         });
         
-        // Máscara telefone
-        function mascaraTelefone(input) {
-            input.addEventListener('input', function(e) {
-                let v = e.target.value.replace(/\D/g, '');
-                if (v.length <= 11) {
-                    v = v.replace(/^(\d{2})(\d)/g, '($1) $2');
-                    v = v.replace(/(\d{5})(\d)/, '$1-$2');
-                    e.target.value = v;
-                }
-            });
-        }
-        
         mascaraTelefone(document.getElementById('cliente-telefone'));
-        if (document.getElementById('receptor-telefone')) {
-            mascaraTelefone(document.getElementById('receptor-telefone'));
-        }
+        mascaraTelefone(document.getElementById('receptor-telefone'));
+        mascaraTelefone(document.getElementById('cadastro-telefone'));
         
         inicializarAutocomplete();
+        carregarDadosUsuario();
         updateSteps();
     </script>
 </body>
