@@ -1,5 +1,5 @@
 <?php
-// config/database.php
+// api/config/database.php
 header("Access-Control-Allow-Origin: https://ng-express.netlify.app");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
@@ -18,6 +18,9 @@ $dbname = getenv('MYSQLDATABASE') ?: 'railway';
 $username = getenv('MYSQLUSER') ?: 'root';
 $password = getenv('MYSQLPASSWORD') ?: '';
 
+// Log para debug
+error_log("Conectando ao MySQL: host=$host, port=$port, db=$dbname, user=$username");
+
 try {
     $pdo = new PDO(
         "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4",
@@ -30,8 +33,9 @@ try {
             PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
         ]
     );
+    error_log("✅ Conexão com MySQL estabelecida com sucesso!");
 } catch(PDOException $e) {
-    error_log("Erro de conexão com banco: " . $e->getMessage());
+    error_log("❌ Erro de conexão com banco: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false, 

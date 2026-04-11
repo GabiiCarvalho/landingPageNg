@@ -1,1 +1,11 @@
-{}
+{
+    "name": "ng-express/backend",
+    "description": "Backend N&G Express com Mercado Pago PIX",
+    "type": "project",
+    "require": {
+        "php": ">=7.4"
+    },
+    "scripts": {
+        "start": "php -S 0.0.0.0:$PORT -t public"
+    }
+}
