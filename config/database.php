@@ -11,10 +11,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Configuração do banco de dados via variáveis de ambiente
-$host = getenv('MYSQLHOST') ?: 'localhost';
+// Configuração do banco de dados via variáveis de ambiente do Railway
+$host = getenv('MYSQLHOST') ?: 'mysql.railway.internal';
 $port = getenv('MYSQLPORT') ?: '3306';
-$dbname = getenv('MYSQLDATABASE') ?: 'ng_express_db';
+$dbname = getenv('MYSQLDATABASE') ?: 'railway';
 $username = getenv('MYSQLUSER') ?: 'root';
 $password = getenv('MYSQLPASSWORD') ?: '';
 

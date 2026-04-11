@@ -1,6 +1,5 @@
 <?php
 // api/pix/criar.php
-require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../mercadopago.php';
 
 session_start();
@@ -26,6 +25,7 @@ if ($valor <= 0) {
 $emailCliente = 'cliente@ngexpress.com.br';
 if (isset($_SESSION['usuario_id'])) {
     try {
+        global $pdo;
         $stmt = $pdo->prepare("SELECT email FROM usuarios WHERE id = ?");
         $stmt->execute([$_SESSION['usuario_id']]);
         $user = $stmt->fetch();
@@ -37,31 +37,10 @@ if (isset($_SESSION['usuario_id'])) {
     }
 }
 
-// Criar pagamento no Mercado Pago
+// Criar pagamento
 $resultado = criarPagamentoPIX($valor, $descricao, $convId, $emailCliente, $nomeCliente);
 
 if ($resultado['success']) {
-    // Salvar no banco de dados
-    try {
-        $stmt = $pdo->prepare("
-            INSERT INTO pagamentos_pix (
-                payment_id, conv_id, valor, qr_code, qr_code_base64, 
-                status, cliente_nome, cliente_email, data_criacao
-            ) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, NOW())
-        ");
-        $stmt->execute([
-            $resultado['paymentId'],
-            $convId,
-            $valor,
-            $resultado['qrCode'],
-            $resultado['qrCodeBase64'],
-            $nomeCliente,
-            $emailCliente
-        ]);
-    } catch (PDOException $e) {
-        error_log("Erro ao salvar pagamento: " . $e->getMessage());
-    }
-    
     echo json_encode([
         'success' => true,
         'paymentId' => $resultado['paymentId'],
