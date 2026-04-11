@@ -1,130 +1,129 @@
-// server.js - Servidor para geração de QR Code PIX
+// server.js - Servidor para geração de QR Code PIX com Mercado Pago
 require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const crypto = require('crypto');
+const https = require('https');
+const { v4: uuid } = require('uuid');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configurações do PIX
-const PIX_CONFIG = {
-    chavePix: 'comercial.ngexpress@gmail.com',
-    nomeRecebedor: 'N&G Express',
-    cidade: 'SAO PAULO',
-    descricaoPadrao: 'Entrega N&G Express'
-};
+// Configurações do Mercado Pago
+const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+
+console.log('🔑 MP_ACCESS_TOKEN:', MP_ACCESS_TOKEN ? '✅ Configurado' : '❌ NÃO CONFIGURADO');
+console.log('🌐 BASE_URL:', BASE_URL);
 
 app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname)));
 
-// Função para calcular CRC16 do payload PIX
-function calcularCRC16(payload) {
-    let crc = 0xFFFF;
-    for (let i = 0; i < payload.length; i++) {
-        crc ^= payload.charCodeAt(i) << 8;
-        for (let j = 0; j < 8; j++) {
-            crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
-        }
-    }
-    return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
-}
-
-// Função para gerar payload PIX estático
-function gerarPayloadPIX(valor, descricao, convId) {
-    const { chavePix, nomeRecebedor, cidade } = PIX_CONFIG;
-    const valorFormatado = valor.toFixed(2).replace('.', '');
-    const descricaoFormatada = descricao || `${PIX_CONFIG.descricaoPadrao} #${convId?.slice(-6) || Date.now().toString().slice(-6)}`;
-    
-    // Montagem do payload PIX conforme padrão BR Code
-    let payload = '000201'; // Payload Format Indicator
-    payload += '26'; // Merchant Account Information
-    payload += '0014br.gov.bcb.pix'; // GUI
-    payload += `01${String(chavePix.length).padStart(2, '0')}${chavePix}`; // Chave PIX
-    payload += '52040000'; // Merchant Category Code
-    payload += '5303986'; // Transaction Currency (BRL)
-    payload += `54${String(valorFormatado.length).padStart(2, '0')}${valorFormatado}`; // Transaction Amount
-    payload += '5802BR'; // Country Code
-    payload += `59${String(nomeRecebedor.length).padStart(2, '0')}${nomeRecebedor}`; // Merchant Name
-    payload += `60${String(cidade.length).padStart(2, '0')}${cidade}`; // Merchant City
-    payload += `62${String(descricaoFormatada.length + 5).padStart(2, '0')}05${String(descricaoFormatada.length).padStart(2, '0')}${descricaoFormatada}`; // Additional Data Field
-    payload += '6304'; // CRC16 Field
-    
-    const crc = calcularCRC16(payload);
-    return payload + crc;
-}
-
-// Rota principal
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'pagamento.html'));
-});
-
-// Rota para gerar QR Code PIX
-app.post('/api/pix/criar', async (req, res) => {
-    const { convId, valor, nomeCliente, descricao } = req.body;
-    
-    // Validações
-    if (!valor || valor <= 0) {
-        return res.status(400).json({ 
-            success: false, 
-            erro: 'Valor do pagamento é obrigatório' 
-        });
-    }
-    
-    try {
-        // Gerar payload PIX
-        const pixPayload = gerarPayloadPIX(
-            parseFloat(valor), 
-            descricao || `Entrega ${nomeCliente || 'Cliente'} #${convId?.slice(-6) || Date.now().toString().slice(-6)}`,
-            convId
-        );
-        
-        // Gerar QR Code (aqui você pode integrar com API de QR Code se quiser)
-        // Por enquanto retornamos apenas o payload e o frontend gera o QR
-        
-        const response = {
-            success: true,
-            paymentId: `pix_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-            qrCode: pixPayload,
-            qrCodeBase64: null, // Será gerado pelo frontend
-            valor: parseFloat(valor),
-            convId: convId || `pedido_${Date.now()}`,
-            expiracao: new Date(Date.now() + 3600000).toISOString() // 1 hora
+// Função para fazer requisições ao Mercado Pago
+function mpRequest(method, endpoint, body) {
+    return new Promise((resolve, reject) => {
+        const data = body ? JSON.stringify(body) : null;
+        const options = {
+            hostname: 'api.mercadopago.com',
+            path: endpoint,
+            method: method,
+            headers: {
+                'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
+                'Content-Type': 'application/json',
+                'X-Idempotency-Key': uuid(),
+            }
         };
+        if (data) options.headers['Content-Length'] = Buffer.byteLength(data);
         
-        console.log(`✅ PIX gerado para ${nomeCliente || 'Cliente'} - Valor: R$ ${valor}`);
-        res.json(response);
-        
-    } catch (error) {
-        console.error('❌ Erro ao gerar PIX:', error);
-        res.status(500).json({ 
-            success: false, 
-            erro: 'Erro ao gerar pagamento PIX. Tente novamente.' 
+        const req = https.request(options, (res) => {
+            let raw = '';
+            res.on('data', chunk => raw += chunk);
+            res.on('end', () => {
+                try {
+                    resolve({ status: res.statusCode, body: JSON.parse(raw) });
+                } catch (e) {
+                    reject(new Error('Resposta inválida do Mercado Pago: ' + raw.slice(0, 200)));
+                }
+            });
         });
+        req.on('error', reject);
+        if (data) req.write(data);
+        req.end();
+    });
+}
+
+// Rota para gerar QR Code PIX via Mercado Pago
+app.post('/api/pix/criar', async (req, res) => {
+    const { convId, valor, nomeCliente } = req.body;
+    
+    if (!valor || valor <= 0) {
+        return res.status(400).json({ erro: 'Valor do pagamento é obrigatório' });
+    }
+
+    try {
+        const mpBody = {
+            transaction_amount: parseFloat(parseFloat(valor).toFixed(2)),
+            description: `Entrega N&G Express #${convId?.slice(-6) || Date.now().toString().slice(-6)}`,
+            payment_method_id: 'pix',
+            payer: {
+                email: 'cliente@ngexpress.com.br',
+                first_name: nomeCliente || 'Cliente',
+                last_name: 'NGExpress',
+                identification: { type: 'CPF', number: '00000000000' }
+            },
+            external_reference: convId || `pedido_${Date.now()}`
+        };
+
+        console.log('📤 Criando PIX no Mercado Pago:', JSON.stringify(mpBody));
+        
+        const resp = await mpRequest('POST', '/v1/payments', mpBody);
+        console.log('📥 Resposta MP:', resp.status);
+
+        if (resp.status !== 201) {
+            return res.status(502).json({ 
+                erro: 'Erro no Mercado Pago', 
+                detalhe: resp.body 
+            });
+        }
+
+        const pix = resp.body.point_of_interaction?.transaction_data;
+        if (!pix?.qr_code) {
+            return res.status(502).json({ erro: 'MP não retornou QR Code PIX' });
+        }
+
+        res.json({
+            success: true,
+            paymentId: resp.body.id,
+            qrCode: pix.qr_code,
+            qrCodeBase64: pix.qr_code_base64 || null,
+            valor: resp.body.transaction_amount
+        });
+
+    } catch (err) {
+        console.error('❌ Erro criar PIX:', err.message);
+        res.status(500).json({ erro: err.message });
     }
 });
 
-// Rota para verificar status do pagamento (simulada)
+// Rota para consultar status do pagamento
 app.get('/api/pix/status/:paymentId', async (req, res) => {
     const { paymentId } = req.params;
     
-    // Simulação - em produção, isso viria do banco de dados ou webhook do Mercado Pago
-    // Por enquanto, retorna sempre como pendente
-    
-    res.json({
-        status: 'pending',
-        paymentId: paymentId,
-        message: 'Aguardando pagamento'
-    });
-});
-
-// Rota para webhook (simulada - em produção integrar com Mercado Pago)
-app.post('/api/pix/webhook', async (req, res) => {
-    console.log('📨 Webhook recebido:', req.body);
-    res.sendStatus(200);
+    try {
+        const resp = await mpRequest('GET', `/v1/payments/${paymentId}`, null);
+        if (resp.status !== 200) {
+            return res.status(502).json({ erro: 'Erro ao consultar MP' });
+        }
+        res.json({ 
+            status: resp.body.status, 
+            valor: resp.body.transaction_amount,
+            paymentId: paymentId
+        });
+    } catch (err) {
+        res.status(500).json({ erro: err.message });
+    }
 });
 
 // Rota health check
@@ -132,11 +131,13 @@ app.get('/api/health', (req, res) => {
     res.json({
         status: 'online',
         timestamp: new Date().toISOString(),
-        pixConfig: {
-            chave: PIX_CONFIG.chavePix,
-            nome: PIX_CONFIG.nomeRecebedor
-        }
+        mpConfigured: !!MP_ACCESS_TOKEN
     });
+});
+
+// Servir arquivos estáticos
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'novo-pedido.html'));
 });
 
 // Iniciar servidor
@@ -147,7 +148,6 @@ app.listen(PORT, () => {
     console.log(`💳 Endpoint PIX: http://localhost:${PORT}/api/pix/criar`);
     console.log(`🔧 Health Check: http://localhost:${PORT}/api/health`);
     console.log('');
-    console.log(`🔑 Chave PIX: ${PIX_CONFIG.chavePix}`);
-    console.log(`🏢 Recebedor: ${PIX_CONFIG.nomeRecebedor}`);
+    console.log(`🔑 MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN ? '✅ Configurado' : '❌ NÃO CONFIGURADO'}`);
     console.log('');
 });
