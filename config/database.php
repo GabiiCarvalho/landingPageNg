@@ -1,25 +1,29 @@
 <?php
 // api/config/database.php
-header("Access-Control-Allow-Origin: https://ng-express.netlify.app");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-header("Access-Control-Allow-Credentials: true");
-header("Content-Type: application/json; charset=UTF-8");
+
+// CORS só deve ser emitido uma vez; o router.php já cuida disso,
+// mas mantemos aqui como fallback para chamadas diretas.
+if (!headers_sent()) {
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    $allowed = 'https://ng-express.netlify.app';
+    if ($origin === $allowed || empty($origin)) {
+        header("Access-Control-Allow-Origin: $allowed");
+    }
+    header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization");
+    header("Access-Control-Allow-Credentials: true");
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-// Configuração do banco de dados via variáveis de ambiente do Railway
-$host = getenv('MYSQLHOST') ?: 'mysql.railway.internal';
-$port = getenv('MYSQLPORT') ?: '3306';
-$dbname = getenv('MYSQLDATABASE') ?: 'railway';
-$username = getenv('MYSQLUSER') ?: 'root';
+$host     = getenv('MYSQLHOST')     ?: 'mysql.railway.internal';
+$port     = getenv('MYSQLPORT')     ?: '3306';
+$dbname   = getenv('MYSQLDATABASE') ?: 'railway';
+$username = getenv('MYSQLUSER')     ?: 'root';
 $password = getenv('MYSQLPASSWORD') ?: '';
-
-// Log para debug
-error_log("Conectando ao MySQL: host=$host, port=$port, db=$dbname, user=$username");
 
 try {
     $pdo = new PDO(
@@ -27,21 +31,19 @@ try {
         $username,
         $password,
         [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_PERSISTENT => true,
-            PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
+            PDO::ATTR_PERSISTENT         => false, // evita conexões zumbi no Railway
+            PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4",
         ]
     );
-    error_log("✅ Conexão com MySQL estabelecida com sucesso!");
-} catch(PDOException $e) {
-    error_log("❌ Erro de conexão com banco: " . $e->getMessage());
+} catch (PDOException $e) {
     http_response_code(500);
+    header('Content-Type: application/json');
     echo json_encode([
-        'success' => false, 
+        'success' => false,
         'message' => 'Erro de conexão com o banco de dados',
-        'error' => $e->getMessage()
+        'error'   => $e->getMessage(),
     ]);
     exit;
 }
-?>
