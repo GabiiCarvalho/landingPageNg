@@ -689,135 +689,88 @@ async function gerarPagamento() {
 
     document.getElementById('modal-pagamento').style.display = 'flex';
     document.getElementById('modal-valor').textContent = `R$ ${orderData.valor.toFixed(2).replace('.', ',')}`;
-    document.getElementById('status-pagamento').textContent = '';
-    document.getElementById('pix-codigo').textContent = 'Clique para copiar o código PIX';
-
+    
     const qrContainer = document.getElementById('qr-container');
     qrContainer.innerHTML = `
-        <div id="qr-loading" style="text-align:center;color:var(--text-secondary);">
-            <div class="spinner" style="margin:0 auto 12px;"></div>
+        <div id="qr-loading" style="text-align:center;">
+            <div class="spinner"></div>
             <span>Gerando QR Code...</span>
         </div>`;
 
     try {
         const convId = `pedido_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-        const response = await fetch(`${API_BASE_URL}/api/pix/criar.php`, {
-            method:  'POST',
+        const response = await fetch('/api/pix/criar', {
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                convId:      convId,
-                valor:       orderData.valor,
+                convId: convId,
+                valor: orderData.valor,
                 nomeCliente: orderData.cliente.nome,
-                descricao:   `Entrega N&G Express — ${orderData.coleta.endereco} → ${orderData.entrega.endereco}`
+                descricao: `Entrega N&G Express`
             })
         });
-
-        const contentType = response.headers.get('content-type');
-        
-        if (!response.ok) {
-            let errorMsg = `HTTP ${response.status}`;
-            if (contentType?.includes('application/json')) {
-                const errorData = await response.json();
-                errorMsg = errorData.erro || errorData.message || errorMsg;
-            } else {
-                const text = await response.text();
-                console.error('Resposta não-JSON:', text.substring(0, 500));
-                errorMsg = 'Servidor retornou resposta inválida';
-            }
-            throw new Error(errorMsg);
-        }
-
-        if (!contentType?.includes('application/json')) {
-            const text = await response.text();
-            console.error('Esperado JSON, recebido:', text.substring(0, 500));
-            throw new Error('API retornou formato inválido (esperado JSON)');
-        }
 
         const data = await response.json();
 
         if (!data.success) {
-            throw new Error(data.erro || data.message || 'Erro ao gerar pagamento');
+            throw new Error(data.erro || 'Erro ao gerar pagamento');
         }
 
         paymentData.paymentId = data.paymentId;
         qrContainer.innerHTML = '';
 
-        // CORREÇÃO PRINCIPAL: Verificar se o QR Code é uma string PIX válida
-        let qrCodeText = data.qrCode || data.qrCodeBase64 || '';
-        
-        // Se veio como base64, converte para imagem
+        // 🔑 MÉTODO 1: Usar Base64 (mais fácil e confiável)
         if (data.qrCodeBase64) {
             const img = document.createElement('img');
             img.src = `data:image/png;base64,${data.qrCodeBase64}`;
             img.style.cssText = 'width:200px;height:200px;border-radius:12px;';
             img.alt = 'QR Code PIX';
-            img.onerror = () => {
-                qrContainer.innerHTML = '<div style="color:var(--danger-color);text-align:center;">Erro ao carregar QR Code. Use o código abaixo.</div>';
-            };
             qrContainer.appendChild(img);
         } 
-        // Se veio como texto PIX (começa com padrão PIX)
-        else if (qrCodeText && typeof qrCodeText === 'string' && qrCodeText.length > 20) {
-            // Verifica se parece com um código PIX válido
-            const isValidPix = qrCodeText.includes('br.gov.bcb.pix') || 
-                               qrCodeText.startsWith('000201') ||
-                               qrCodeText.length > 50;
-            
-            if (isValidPix) {
-                try {
-                    // Limpa o container e tenta gerar QR Code
-                    qrContainer.innerHTML = '';
-                    new QRCode(qrContainer, {
-                        text: qrCodeText,
-                        width: 200,
-                        height: 200,
-                        colorDark: '#FF6B00',
-                        colorLight: '#1A1A24',
-                        correctLevel: QRCode.CorrectLevel.H
-                    });
-                } catch (qrErr) {
-                    console.error('Erro QRCode.js:', qrErr);
-                    // Fallback: mostra o código para copiar
-                    qrContainer.innerHTML = `<div style="text-align:center;padding:20px;">
-                        <i class="bi bi-qr-code" style="font-size:3rem;color:var(--primary-color);"></i>
-                        <p style="font-size:0.8rem;margin-top:8px;">Use o código abaixo para pagar</p>
-                    </div>`;
-                }
-            } else {
-                throw new Error('String PIX inválida ou mal formatada');
-            }
+        // 🔑 MÉTODO 2: Usar a string qr_code para gerar via biblioteca
+        else if (data.qrCode && data.qrCode.length > 20) {
+            // Usa a biblioteca QRCode.js que você já tem
+            new QRCode(qrContainer, {
+                text: data.qrCode,
+                width: 200,
+                height: 200,
+                colorDark: '#FF6B00',
+                colorLight: '#1A1A24',
+                correctLevel: QRCode.CorrectLevel.H
+            });
         } 
         else {
-            throw new Error('QR Code não retornado pelo servidor');
+            throw new Error('QR Code não disponível');
         }
 
-        // Exibe o código PIX para cópia manual
-        const pixCodeElement = document.getElementById('pix-codigo');
-        if (qrCodeText && qrCodeText.length > 10) {
-            pixCodeElement.textContent = qrCodeText.length > 100 ? qrCodeText.substring(0, 100) + '...' : qrCodeText;
-            pixCodeElement.setAttribute('data-full-pix', qrCodeText);
-        } else {
-            pixCodeElement.textContent = 'Código PIX disponível no QR Code';
+        // Salva o código PIX para cópia manual
+        if (data.qrCode) {
+            const pixCodeElement = document.getElementById('pix-codigo');
+            pixCodeElement.textContent = data.qrCode.length > 80 
+                ? data.qrCode.substring(0, 80) + '...' 
+                : data.qrCode;
+            pixCodeElement.setAttribute('data-full-pix', data.qrCode);
         }
+
+        document.getElementById('status-pagamento').innerHTML = 
+            '<span style="color:var(--success-color)">✅ QR Code gerado! Escaneie com o app do seu banco.</span>';
         
-        document.getElementById('status-pagamento').innerHTML =
-            '<span style="color:var(--text-tertiary)"><i class="bi bi-qr-code"></i> Escaneie o QR Code ou copie o código</span>';
-
         showToast('QR Code gerado com sucesso!', 'success');
+        
+        // Iniciar verificação automática
         iniciarVerificacaoPagamento(data.paymentId);
 
     } catch (err) {
-        console.error('Erro PIX detalhado:', err);
-        qrContainer.innerHTML = `<div style="text-align:center;color:var(--danger-color);padding:20px;">
-            <i class="bi bi-exclamation-triangle" style="font-size:2rem;display:block;margin-bottom:8px;"></i>
-            <span>${err.message}</span>
-            <button class="btn btn-secondary" style="margin-top:12px;padding:8px 16px;" onclick="gerarPagamento()">
-                <i class="bi bi-arrow-repeat"></i> Tentar novamente
-            </button>
-        </div>`;
-        document.getElementById('status-pagamento').innerHTML =
-            `<span style="color:var(--danger-color)"><i class="bi bi-exclamation-circle"></i> ${err.message}</span>`;
+        console.error('Erro:', err);
+        qrContainer.innerHTML = `
+            <div style="text-align:center;color:var(--danger-color);padding:20px;">
+                <i class="bi bi-exclamation-triangle"></i>
+                <p>${err.message}</p>
+                <button class="btn btn-secondary" onclick="gerarPagamento()">
+                    Tentar novamente
+                </button>
+            </div>`;
         showToast(err.message, 'error');
     }
 }
