@@ -193,7 +193,6 @@
             <div class="step" data-step="5"><div class="step-number">6</div><div class="step-label">Categoria</div></div>
         </div>
 
-        <!-- Etapa 1: Dados -->
         <div class="step-content active" data-step="0">
             <div class="form-section">
                 <h3><i class="bi bi-person"></i> Seus dados</h3>
@@ -213,7 +212,6 @@
             </div>
         </div>
 
-        <!-- Etapa 2: Veículo -->
         <div class="step-content" data-step="1">
             <div class="form-section">
                 <h3><i class="bi bi-truck"></i> Tipo de Veículo</h3>
@@ -230,7 +228,6 @@
             </div>
         </div>
 
-        <!-- Etapa 3: Coleta -->
         <div class="step-content" data-step="2">
             <div class="form-section">
                 <h3><i class="bi bi-geo-alt"></i> Local de Coleta</h3>
@@ -248,7 +245,6 @@
             </div>
         </div>
 
-        <!-- Etapa 4: Entrega -->
         <div class="step-content" data-step="3">
             <div class="form-section">
                 <h3><i class="bi bi-geo-alt-fill"></i> Local de Entrega</h3>
@@ -266,7 +262,6 @@
             </div>
         </div>
 
-        <!-- Etapa 5: Receptor -->
         <div class="step-content" data-step="4">
             <div class="form-section">
                 <h3><i class="bi bi-person-check"></i> Quem receberá?</h3>
@@ -287,7 +282,6 @@
             </div>
         </div>
 
-        <!-- Etapa 6: Categoria -->
         <div class="step-content" data-step="5">
             <div class="form-section">
                 <h3><i class="bi bi-box"></i> Tipo de Produto</h3>
@@ -312,7 +306,6 @@
         </div>
     </div>
 
-    <!-- Checkout (sem mapa) -->
     <div id="checkout-screen" style="display:none;">
         <div class="wizard-container">
             <div class="step-content" style="display:block;">
@@ -353,7 +346,6 @@
     </div>
 </div>
 
-<!-- Modal PIX -->
 <div id="modal-pagamento" class="modal">
     <div class="modal-content">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
@@ -378,7 +370,6 @@
     </div>
 </div>
 
-<!-- Modal Login -->
 <div class="modal" id="login-modal">
     <div class="modal-content" style="max-width:400px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
@@ -395,7 +386,6 @@
     </div>
 </div>
 
-<!-- Modal Cadastro -->
 <div class="modal" id="cadastro-modal">
     <div class="modal-content" style="max-width:500px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
@@ -423,7 +413,7 @@
 
 <script>
 // =============================================================
-// CONFIGURAÇÃO — aponta para o Railway
+// CONFIGURAÇÃO
 // =============================================================
 const API_BASE_URL = 'https://landingpageng-production.up.railway.app';
 
@@ -631,39 +621,26 @@ async function calcularRotaBackground(endColeta, endEntrega) {
         let distKm, duracaoMin;
         let routeSuccess = false;
         
-        const corsProxies = [
-            'https://cors-anywhere.herokuapp.com/',
-            'https://api.allorigins.win/raw?url=',
-            ''
-        ];
-        
-        for (const proxy of corsProxies) {
-            if (routeSuccess) break;
-            try {
-                const url = `${proxy}https://router.project-osrm.org/route/v1/driving/${coordColeta.lng},${coordColeta.lat};${coordEntrega.lng},${coordEntrega.lat}?overview=false`;
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000);
-                
-                const res = await fetch(url, { 
-                    signal: controller.signal,
-                    headers: proxy ? {} : { 'Origin': window.location.origin }
-                });
-                clearTimeout(timeoutId);
-                
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.routes && data.routes.length > 0) {
-                        distKm = data.routes[0].distance / 1000;
-                        duracaoMin = Math.round(data.routes[0].duration / 60);
-                        routeSuccess = true;
-                        break;
-                    }
+        // Tentativa direta primeiro (pode falhar por CORS)
+        try {
+            const url = `https://router.project-osrm.org/route/v1/driving/${coordColeta.lng},${coordColeta.lat};${coordEntrega.lng},${coordEntrega.lat}?overview=false`;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            const res = await fetch(url, { signal: controller.signal, mode: 'cors' });
+            clearTimeout(timeoutId);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.routes && data.routes.length > 0) {
+                    distKm = data.routes[0].distance / 1000;
+                    duracaoMin = Math.round(data.routes[0].duration / 60);
+                    routeSuccess = true;
                 }
-            } catch (e) {
-                console.warn(`Tentativa com proxy ${proxy || 'direto'} falhou:`, e.message);
             }
+        } catch (e) {
+            console.warn('OSRM direto falhou (CORS):', e.message);
         }
 
+        // Fallback: cálculo baseado em linha reta
         if (!routeSuccess || !distKm) {
             const linhaReta = haversineKm(coordColeta.lat, coordColeta.lng, coordEntrega.lat, coordEntrega.lng);
             distKm = linhaReta * FATOR_ROTA;
@@ -702,7 +679,7 @@ function cancelarPedido() {
 }
 
 // =============================================================
-// PAGAMENTO PIX CORRIGIDO
+// PAGAMENTO PIX CORRIGIDO - COM QR CODE MANUAL
 // =============================================================
 async function gerarPagamento() {
     if (!orderData.valor || orderData.valor <= 0) {
@@ -766,39 +743,66 @@ async function gerarPagamento() {
         paymentData.paymentId = data.paymentId;
         qrContainer.innerHTML = '';
 
+        // CORREÇÃO PRINCIPAL: Verificar se o QR Code é uma string PIX válida
+        let qrCodeText = data.qrCode || data.qrCodeBase64 || '';
+        
+        // Se veio como base64, converte para imagem
         if (data.qrCodeBase64) {
             const img = document.createElement('img');
             img.src = `data:image/png;base64,${data.qrCodeBase64}`;
             img.style.cssText = 'width:200px;height:200px;border-radius:12px;';
+            img.alt = 'QR Code PIX';
             img.onerror = () => {
-                qrContainer.innerHTML = '<div style="color:var(--danger-color)">Erro ao carregar QR Code</div>';
+                qrContainer.innerHTML = '<div style="color:var(--danger-color);text-align:center;">Erro ao carregar QR Code. Use o código abaixo.</div>';
             };
             qrContainer.appendChild(img);
-        } else if (data.qrCode && typeof data.qrCode === 'string' && data.qrCode.length > 10) {
-            try {
-                new QRCode(qrContainer, {
-                    text: data.qrCode,
-                    width: 200,
-                    height: 200,
-                    colorDark: '#FF6B00',
-                    colorLight: '#1A1A24',
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-            } catch (qrErr) {
-                console.error('Erro ao gerar QR Code:', qrErr);
-                qrContainer.innerHTML = `<div style="text-align:center;color:var(--danger-color);">
-                    <i class="bi bi-exclamation-triangle"></i> Erro ao gerar QR Code
-                </div>`;
-                throw new Error('Falha ao gerar QR Code');
+        } 
+        // Se veio como texto PIX (começa com padrão PIX)
+        else if (qrCodeText && typeof qrCodeText === 'string' && qrCodeText.length > 20) {
+            // Verifica se parece com um código PIX válido
+            const isValidPix = qrCodeText.includes('br.gov.bcb.pix') || 
+                               qrCodeText.startsWith('000201') ||
+                               qrCodeText.length > 50;
+            
+            if (isValidPix) {
+                try {
+                    // Limpa o container e tenta gerar QR Code
+                    qrContainer.innerHTML = '';
+                    new QRCode(qrContainer, {
+                        text: qrCodeText,
+                        width: 200,
+                        height: 200,
+                        colorDark: '#FF6B00',
+                        colorLight: '#1A1A24',
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                } catch (qrErr) {
+                    console.error('Erro QRCode.js:', qrErr);
+                    // Fallback: mostra o código para copiar
+                    qrContainer.innerHTML = `<div style="text-align:center;padding:20px;">
+                        <i class="bi bi-qr-code" style="font-size:3rem;color:var(--primary-color);"></i>
+                        <p style="font-size:0.8rem;margin-top:8px;">Use o código abaixo para pagar</p>
+                    </div>`;
+                }
+            } else {
+                throw new Error('String PIX inválida ou mal formatada');
             }
-        } else {
-            throw new Error('QR Code não retornado ou inválido');
+        } 
+        else {
+            throw new Error('QR Code não retornado pelo servidor');
         }
 
-        const codigoPix = data.qrCode || '';
-        document.getElementById('pix-codigo').textContent = codigoPix || 'Código disponível no QR Code';
+        // Exibe o código PIX para cópia manual
+        const pixCodeElement = document.getElementById('pix-codigo');
+        if (qrCodeText && qrCodeText.length > 10) {
+            pixCodeElement.textContent = qrCodeText.length > 100 ? qrCodeText.substring(0, 100) + '...' : qrCodeText;
+            pixCodeElement.setAttribute('data-full-pix', qrCodeText);
+        } else {
+            pixCodeElement.textContent = 'Código PIX disponível no QR Code';
+        }
+        
         document.getElementById('status-pagamento').innerHTML =
-            '<span style="color:var(--text-tertiary)"><i class="bi bi-qr-code"></i> Escaneie ou copie o código</span>';
+            '<span style="color:var(--text-tertiary)"><i class="bi bi-qr-code"></i> Escaneie o QR Code ou copie o código</span>';
 
         showToast('QR Code gerado com sucesso!', 'success');
         iniciarVerificacaoPagamento(data.paymentId);
@@ -874,9 +878,19 @@ function pagamentoConfirmado() {
 }
 
 function copiarPix() {
-    const cod = document.getElementById('pix-codigo').textContent;
-    if (!cod || cod === 'Clique para copiar o código PIX') return;
-    navigator.clipboard.writeText(cod).then(() => showToast('Código PIX copiado!', 'success'));
+    const pixElement = document.getElementById('pix-codigo');
+    let codigo = pixElement.getAttribute('data-full-pix') || pixElement.textContent;
+    
+    if (!codigo || codigo === 'Clique para copiar o código PIX' || codigo.includes('disponível no QR Code')) {
+        showToast('Nenhum código PIX disponível para copiar', 'warning');
+        return;
+    }
+    
+    navigator.clipboard.writeText(codigo).then(() => {
+        showToast('Código PIX copiado!', 'success');
+    }).catch(() => {
+        showToast('Não foi possível copiar o código', 'error');
+    });
 }
 
 function fecharModalPagamento() {
