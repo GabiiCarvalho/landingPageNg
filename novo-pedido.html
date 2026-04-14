@@ -112,9 +112,7 @@
         .resumo-item span:last-child { font-weight:500; text-align:right; }
         .resumo-total { font-size:1.8rem; font-weight:800; color:var(--primary-color); margin-top:16px; text-align:center; }
 
-        /* Distância inline no checkout */
         .distancia-badge { display:inline-flex; align-items:center; gap:8px; background:var(--bg-elevated); border:1px solid var(--border-medium); border-radius:var(--radius-full); padding:8px 16px; font-size:0.85rem; color:var(--text-secondary); margin-top:8px; }
-        .distancia-badge i { color:var(--primary-color); }
 
         .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:var(--blur-md); z-index:2000; justify-content:center; align-items:center; }
         .modal-content { background:var(--bg-secondary); border-radius:var(--radius-xl); max-width:500px; width:90%; padding:30px; border:1px solid var(--border-heavy); animation:modalFadeIn 0.4s ease; }
@@ -139,7 +137,6 @@
         .ui-menu-item { padding:0!important; border-bottom:1px solid var(--border-light); cursor:pointer; color:var(--text-primary); }
         .ui-menu-item:hover, .ui-state-focus { background:var(--gradient-glow)!important; }
 
-        /* Spinner inline para o botão avançar */
         .btn-loading { pointer-events:none; opacity:0.7; }
         .btn-loading i { animation:spin 0.8s linear infinite; }
 
@@ -332,7 +329,6 @@
                     <div class="resumo-item"><span><i class="bi bi-box"></i> Categoria</span><span id="resumo-categorias">-</span></div>
                 </div>
 
-                <!-- Distância calculada em background (não bloqueia o checkout) -->
                 <div class="resumo-card" style="text-align:center;">
                     <div class="resumo-item">
                         <span><i class="bi bi-map"></i> Distância estimada</span>
@@ -427,9 +423,8 @@
 
 <script>
 // =============================================================
-// CONFIGURAÇÃO — aponta para o Railway, não para o Netlify
+// CONFIGURAÇÃO — aponta para o Railway
 // =============================================================
-// ATENÇÃO: troque pela URL real do seu deploy no Railway!
 const API_BASE_URL = 'https://landingpageng-production.up.railway.app';
 
 const PRICING_CONFIG = {
@@ -557,7 +552,7 @@ function collectStepData() {
 async function avancar() {
     if (!collectStepData()) return;
     if (currentStep === totalSteps - 1) {
-        finalizarPedido(); // sem await — não bloqueia o render
+        finalizarPedido();
     } else {
         currentStep++;
         updateSteps();
@@ -569,7 +564,7 @@ function voltar() {
 }
 
 // =============================================================
-// CÁLCULO DE PREÇO (instantâneo, baseado em estimativa)
+// CÁLCULO DE PREÇO
 // =============================================================
 function calcularPreco(distanciaKm, veiculo) {
     const c = PRICING_CONFIG;
@@ -579,7 +574,6 @@ function calcularPreco(distanciaKm, veiculo) {
     return Math.min(Math.round(preco * 100) / 100, c.valorMaximo);
 }
 
-// Estimativa instantânea por distância em linha reta (Haversine)
 function haversineKm(lat1, lon1, lat2, lon2) {
     const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -588,23 +582,18 @@ function haversineKm(lat1, lon1, lat2, lon2) {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-// Fator de desvio de rota vs linha reta (típico urbano ≈ 1.35)
 const FATOR_ROTA = 1.35;
 
 // =============================================================
-// CHECKOUT: exibe instantaneamente com valor estimado,
-//           calcula rota em background e atualiza a UI
+// CHECKOUT
 // =============================================================
 function finalizarPedido() {
-    // Montar endereços completos
     const endColeta  = [orderData.coleta.endereco, orderData.coleta.numero].filter(Boolean).join(', ');
     const endEntrega = [orderData.entrega.endereco, orderData.entrega.numero].filter(Boolean).join(', ');
 
-    // Valor inicial estimado (5 km padrão enquanto calcula)
     const distEstimada = 5.0;
     orderData.valor = calcularPreco(distEstimada, orderData.veiculo);
 
-    // Mostrar checkout imediatamente
     document.getElementById('wizard-container').style.display = 'none';
     document.getElementById('checkout-screen').style.display = 'block';
     document.getElementById('resumo-nome').textContent       = orderData.cliente.nome;
@@ -616,7 +605,6 @@ function finalizarPedido() {
     document.getElementById('resumo-categorias').textContent = orderData.categorias.length ? orderData.categorias.join(', ') : 'Não especificado';
     document.getElementById('valor-final').textContent       = `R$ ${orderData.valor.toFixed(2).replace('.', ',')}`;
 
-    // Calcular rota em background (não bloqueia nada)
     calcularRotaBackground(endColeta + ', Brasil', endEntrega + ', Brasil');
 }
 
@@ -640,44 +628,69 @@ async function calcularRotaBackground(endColeta, endEntrega) {
             geocodificar(endEntrega)
         ]);
 
-        // Tenta OSRM (rota real)
         let distKm, duracaoMin;
-        try {
-            const url = `https://router.project-osrm.org/route/v1/driving/${coordColeta.lng},${coordColeta.lat};${coordEntrega.lng},${coordEntrega.lat}?overview=false`;
-            const res  = await fetch(url);
-            const data = await res.json();
-            if (data.routes && data.routes.length > 0) {
-                distKm     = data.routes[0].distance / 1000;
-                duracaoMin = Math.round(data.routes[0].duration / 60);
+        let routeSuccess = false;
+        
+        const corsProxies = [
+            'https://cors-anywhere.herokuapp.com/',
+            'https://api.allorigins.win/raw?url=',
+            ''
+        ];
+        
+        for (const proxy of corsProxies) {
+            if (routeSuccess) break;
+            try {
+                const url = `${proxy}https://router.project-osrm.org/route/v1/driving/${coordColeta.lng},${coordColeta.lat};${coordEntrega.lng},${coordEntrega.lat}?overview=false`;
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
+                
+                const res = await fetch(url, { 
+                    signal: controller.signal,
+                    headers: proxy ? {} : { 'Origin': window.location.origin }
+                });
+                clearTimeout(timeoutId);
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.routes && data.routes.length > 0) {
+                        distKm = data.routes[0].distance / 1000;
+                        duracaoMin = Math.round(data.routes[0].duration / 60);
+                        routeSuccess = true;
+                        break;
+                    }
+                }
+            } catch (e) {
+                console.warn(`Tentativa com proxy ${proxy || 'direto'} falhou:`, e.message);
             }
-        } catch (_) {}
-
-        // Fallback: Haversine com fator de desvio
-        if (!distKm) {
-            const linhaReta = haversineKm(coordColeta.lat, coordColeta.lng, coordEntrega.lat, coordEntrega.lng);
-            distKm     = linhaReta * FATOR_ROTA;
-            duracaoMin = Math.round(distKm / 30 * 60); // ~30 km/h urbano
         }
 
-        orderData.distanciaKm = distKm;
-        orderData.duracaoMin  = duracaoMin;
-        orderData.valor       = calcularPreco(distKm, orderData.veiculo);
+        if (!routeSuccess || !distKm) {
+            const linhaReta = haversineKm(coordColeta.lat, coordColeta.lng, coordEntrega.lat, coordEntrega.lng);
+            distKm = linhaReta * FATOR_ROTA;
+            duracaoMin = Math.round(distKm / 30 * 60);
+        }
 
-        // Atualiza a UI sem bloquear
-        const elDist  = document.getElementById('distancia-final');
+        distKm = Math.round(distKm * 10) / 10;
+        duracaoMin = Math.round(duracaoMin);
+        
+        orderData.distanciaKm = distKm;
+        orderData.duracaoMin = duracaoMin;
+        orderData.valor = calcularPreco(distKm, orderData.veiculo);
+
+        const elDist = document.getElementById('distancia-final');
         const elTempo = document.getElementById('tempo-final');
         const elValor = document.getElementById('valor-final');
-        const elInfo  = document.getElementById('valor-info');
-        if (elDist)  elDist.textContent  = `${distKm.toFixed(1)} km`;
+        const elInfo = document.getElementById('valor-info');
+        
+        if (elDist) elDist.textContent = `${distKm.toFixed(1)} km`;
         if (elTempo) elTempo.textContent = duracaoMin < 60 ? `${duracaoMin} min` : `${Math.floor(duracaoMin/60)}h ${duracaoMin%60}min`;
         if (elValor) elValor.textContent = `R$ ${orderData.valor.toFixed(2).replace('.', ',')}`;
-        if (elInfo)  elInfo.textContent  = 'Valor calculado com base na rota real';
+        if (elInfo) elInfo.textContent = routeSuccess ? 'Valor calculado com base na rota real' : 'Valor estimado (rota não disponível)';
 
     } catch (err) {
-        // Se falhar, mantém o valor estimado sem travar
+        console.warn('Cálculo de rota background falhou:', err.message);
         const elDist = document.getElementById('distancia-final');
-        if (elDist) elDist.textContent = 'Não foi possível calcular';
-        console.warn('Cálculo de rota background:', err.message);
+        if (elDist) elDist.innerHTML = '<i class="bi bi-question-circle"></i> Não disponível';
     }
 }
 
@@ -689,7 +702,7 @@ function cancelarPedido() {
 }
 
 // =============================================================
-// PAGAMENTO PIX — chama o Railway, não o Netlify
+// PAGAMENTO PIX CORRIGIDO
 // =============================================================
 async function gerarPagamento() {
     if (!orderData.valor || orderData.valor <= 0) {
@@ -702,7 +715,6 @@ async function gerarPagamento() {
     document.getElementById('status-pagamento').textContent = '';
     document.getElementById('pix-codigo').textContent = 'Clique para copiar o código PIX';
 
-    // Garante que o loading aparece
     const qrContainer = document.getElementById('qr-container');
     qrContainer.innerHTML = `
         <div id="qr-loading" style="text-align:center;color:var(--text-secondary);">
@@ -724,10 +736,31 @@ async function gerarPagamento() {
             })
         });
 
+        const contentType = response.headers.get('content-type');
+        
+        if (!response.ok) {
+            let errorMsg = `HTTP ${response.status}`;
+            if (contentType?.includes('application/json')) {
+                const errorData = await response.json();
+                errorMsg = errorData.erro || errorData.message || errorMsg;
+            } else {
+                const text = await response.text();
+                console.error('Resposta não-JSON:', text.substring(0, 500));
+                errorMsg = 'Servidor retornou resposta inválida';
+            }
+            throw new Error(errorMsg);
+        }
+
+        if (!contentType?.includes('application/json')) {
+            const text = await response.text();
+            console.error('Esperado JSON, recebido:', text.substring(0, 500));
+            throw new Error('API retornou formato inválido (esperado JSON)');
+        }
+
         const data = await response.json();
 
         if (!data.success) {
-            throw new Error(data.erro || 'Erro ao gerar pagamento');
+            throw new Error(data.erro || data.message || 'Erro ao gerar pagamento');
         }
 
         paymentData.paymentId = data.paymentId;
@@ -735,23 +768,35 @@ async function gerarPagamento() {
 
         if (data.qrCodeBase64) {
             const img = document.createElement('img');
-            img.src   = `data:image/png;base64,${data.qrCodeBase64}`;
+            img.src = `data:image/png;base64,${data.qrCodeBase64}`;
             img.style.cssText = 'width:200px;height:200px;border-radius:12px;';
+            img.onerror = () => {
+                qrContainer.innerHTML = '<div style="color:var(--danger-color)">Erro ao carregar QR Code</div>';
+            };
             qrContainer.appendChild(img);
-        } else if (data.qrCode) {
-            new QRCode(qrContainer, {
-                text:         data.qrCode,
-                width:        200,
-                height:       200,
-                colorDark:    '#FF6B00',
-                colorLight:   '#1A1A24',
-                correctLevel: QRCode.CorrectLevel.H
-            });
+        } else if (data.qrCode && typeof data.qrCode === 'string' && data.qrCode.length > 10) {
+            try {
+                new QRCode(qrContainer, {
+                    text: data.qrCode,
+                    width: 200,
+                    height: 200,
+                    colorDark: '#FF6B00',
+                    colorLight: '#1A1A24',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            } catch (qrErr) {
+                console.error('Erro ao gerar QR Code:', qrErr);
+                qrContainer.innerHTML = `<div style="text-align:center;color:var(--danger-color);">
+                    <i class="bi bi-exclamation-triangle"></i> Erro ao gerar QR Code
+                </div>`;
+                throw new Error('Falha ao gerar QR Code');
+            }
         } else {
-            throw new Error('QR Code não retornado pelo servidor');
+            throw new Error('QR Code não retornado ou inválido');
         }
 
-        document.getElementById('pix-codigo').textContent = data.qrCode || 'Código gerado';
+        const codigoPix = data.qrCode || '';
+        document.getElementById('pix-codigo').textContent = codigoPix || 'Código disponível no QR Code';
         document.getElementById('status-pagamento').innerHTML =
             '<span style="color:var(--text-tertiary)"><i class="bi bi-qr-code"></i> Escaneie ou copie o código</span>';
 
@@ -759,13 +804,16 @@ async function gerarPagamento() {
         iniciarVerificacaoPagamento(data.paymentId);
 
     } catch (err) {
-        console.error('Erro PIX:', err);
+        console.error('Erro PIX detalhado:', err);
         qrContainer.innerHTML = `<div style="text-align:center;color:var(--danger-color);padding:20px;">
             <i class="bi bi-exclamation-triangle" style="font-size:2rem;display:block;margin-bottom:8px;"></i>
             <span>${err.message}</span>
+            <button class="btn btn-secondary" style="margin-top:12px;padding:8px 16px;" onclick="gerarPagamento()">
+                <i class="bi bi-arrow-repeat"></i> Tentar novamente
+            </button>
         </div>`;
         document.getElementById('status-pagamento').innerHTML =
-            `<span style="color:var(--danger-color)"><i class="bi bi-exclamation-circle"></i> Erro ao gerar QR Code</span>`;
+            `<span style="color:var(--danger-color)"><i class="bi bi-exclamation-circle"></i> ${err.message}</span>`;
         showToast(err.message, 'error');
     }
 }
@@ -799,7 +847,6 @@ function pagamentoConfirmado() {
         '<span style="color:var(--success-color);font-weight:600;"><i class="bi bi-check-circle-fill"></i> Pagamento confirmado!</span>';
     showToast('Pagamento confirmado com sucesso!', 'success');
 
-    // Salvar histórico se logado
     const usuarioRaw = sessionStorage.getItem('usuario');
     if (usuarioRaw) {
         try {
