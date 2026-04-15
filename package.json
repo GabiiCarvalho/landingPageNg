@@ -13,7 +13,12 @@
     "sql.js": "^1.10.3",
     "uuid": "^9.0.1"
   },
-  "keywords": ["delivery", "express", "mercadopago", "pix"],
+  "keywords": [
+    "delivery",
+    "express",
+    "mercadopago",
+    "pix"
+  ],
   "author": "N&G Express",
   "license": "MIT"
 }
