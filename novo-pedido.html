@@ -19,6 +19,7 @@
             --secondary-color: #003366;
             --success-color: #00C48C;
             --danger-color: #FF5C5C;
+            --warning-color: #FFB800;
             --bg-primary: #0A0A0F;
             --bg-secondary: #12121A;
             --bg-tertiary: #1A1A24;
@@ -117,7 +118,7 @@
         .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:var(--blur-md); z-index:2000; justify-content:center; align-items:center; }
         .modal-content { background:var(--bg-secondary); border-radius:var(--radius-xl); max-width:500px; width:90%; padding:30px; border:1px solid var(--border-heavy); animation:modalFadeIn 0.4s ease; }
         @keyframes modalFadeIn { from{opacity:0;transform:translateY(-30px) scale(0.95)} to{opacity:1;transform:translateY(0) scale(1)} }
-        .qr-container { display:flex; justify-content:center; margin:20px 0; min-height:200px; align-items:center; }
+        .qr-container { display:flex; justify-content:center; margin:20px 0; min-height:200px; align-items:center; flex-direction:column; }
         .qr-container canvas, .qr-container img { width:200px; height:200px; border-radius:var(--radius-md); }
         .pix-code { background:var(--bg-tertiary); border:1px dashed var(--border-heavy); border-radius:var(--radius-md); padding:12px; font-size:0.7rem; word-break:break-all; cursor:pointer; text-align:center; color:var(--text-secondary); }
         .pix-code:hover { border-color:var(--primary-color); color:var(--primary-color); }
@@ -131,7 +132,7 @@
         .toast { background:var(--bg-elevated); color:var(--text-primary); padding:12px 24px; border-radius:var(--radius-full); font-size:0.9rem; border:1px solid var(--border-medium); pointer-events:none; }
         .toast-success { border-color:var(--success-color); color:var(--success-color); }
         .toast-error { border-color:var(--danger-color); color:var(--danger-color); }
-        .toast-warning { border-color:#FFB800; color:#FFB800; }
+        .toast-warning { border-color:var(--warning-color); color:var(--warning-color); }
 
         .ui-autocomplete { background:var(--bg-elevated)!important; border:1px solid var(--border-medium)!important; border-radius:var(--radius-md)!important; max-height:280px; overflow-y:auto; z-index:2000!important; box-shadow:var(--shadow-lg)!important; }
         .ui-menu-item { padding:0!important; border-bottom:1px solid var(--border-light); cursor:pointer; color:var(--text-primary); }
@@ -139,6 +140,28 @@
 
         .btn-loading { pointer-events:none; opacity:0.7; }
         .btn-loading i { animation:spin 0.8s linear infinite; }
+
+        .chave-pix-manual {
+            background: rgba(255, 184, 0, 0.1);
+            border: 1px solid var(--warning-color);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-top: 16px;
+            text-align: center;
+        }
+        .chave-pix-manual strong {
+            color: var(--warning-color);
+            font-size: 1.1rem;
+        }
+        .chave-pix-manual code {
+            display: block;
+            background: var(--bg-tertiary);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 8px;
+            word-break: break-all;
+            font-size: 0.8rem;
+        }
 
         @media (max-width:768px) {
             .container { padding:0 16px; }
@@ -218,11 +241,11 @@
                 <div class="vehicle-selector">
                     <div class="vehicle-option">
                         <input type="radio" name="tipo-veiculo" id="veiculo-moto" value="moto" checked>
-                        <label for="veiculo-moto"><i class="bi bi-bicycle"></i><span>Moto</span><small>Até 10kg</small></label>
+                        <label for="veiculo-moto"><i class="bi bi-bicycle"></i><span>Moto</span><small>Até 50kg</small></label>
                     </div>
                     <div class="vehicle-option">
                         <input type="radio" name="tipo-veiculo" id="veiculo-carro" value="carro">
-                        <label for="veiculo-carro"><i class="bi bi-car-front"></i><span>Carro</span><small>Até 50kg</small></label>
+                        <label for="veiculo-carro"><i class="bi bi-car-front"></i><span>Carro</span><small>Até 200kg</small></label>
                     </div>
                 </div>
             </div>
@@ -360,6 +383,11 @@
             </div>
         </div>
         <div class="pix-code" id="pix-codigo" onclick="copiarPix()">Clique para copiar o código PIX</div>
+        <div id="chave-manual-container" style="display:none;" class="chave-pix-manual">
+            <strong>⚠️ Pagamento Manual</strong>
+            <p style="font-size:0.75rem;margin-top:5px;">Use a chave PIX abaixo para fazer o pagamento:</p>
+            <code id="chave-manual">comercial.ngexpress@gmail.com</code>
+        </div>
         <p style="font-size:0.75rem;text-align:center;margin-top:10px;">📱 Escaneie o QR Code ou copie o código e pague no seu banco</p>
         <p style="font-size:0.7rem;text-align:center;margin-top:5px;color:var(--success-color);">✅ Pagamento processado pelo Mercado Pago</p>
         <div style="display:flex;gap:12px;margin-top:20px;">
@@ -415,7 +443,7 @@
 // =============================================================
 // CONFIGURAÇÃO
 // =============================================================
-const API_BASE_URL = 'https://landingpageng-production.up.railway.app';
+const API_BASE_URL = ''; // Usa rotas relativas para o mesmo servidor
 
 const PRICING_CONFIG = {
     valorMinimoAte7km: { moto: 15.00, carro: 50.00 },
@@ -621,7 +649,6 @@ async function calcularRotaBackground(endColeta, endEntrega) {
         let distKm, duracaoMin;
         let routeSuccess = false;
         
-        // Tentativa direta primeiro (pode falhar por CORS)
         try {
             const url = `https://router.project-osrm.org/route/v1/driving/${coordColeta.lng},${coordColeta.lat};${coordEntrega.lng},${coordEntrega.lat}?overview=false`;
             const controller = new AbortController();
@@ -640,7 +667,6 @@ async function calcularRotaBackground(endColeta, endEntrega) {
             console.warn('OSRM direto falhou (CORS):', e.message);
         }
 
-        // Fallback: cálculo baseado em linha reta
         if (!routeSuccess || !distKm) {
             const linhaReta = haversineKm(coordColeta.lat, coordColeta.lng, coordEntrega.lat, coordEntrega.lng);
             distKm = linhaReta * FATOR_ROTA;
@@ -679,7 +705,45 @@ function cancelarPedido() {
 }
 
 // =============================================================
-// PAGAMENTO PIX CORRIGIDO - COM QR CODE MANUAL
+// FUNÇÃO PARA GERAR PAYLOAD PIX MANUAL (FALLBACK)
+// IGUAL AO SEU CÓDIGO QUE FUNCIONOU!
+// =============================================================
+function gerarPayloadPIXManual(valor, descricao) {
+    const chavePix = 'comercial.ngexpress@gmail.com';
+    const nomeRecebedor = 'N&G Express';
+    const cidade = 'SAO PAULO';
+    const valorFormatado = valor.toFixed(2).replace('.', '');
+    
+    let payload = '000201';
+    payload += '26';
+    payload += '0014br.gov.bcb.pix';
+    payload += '01' + String(chavePix.length).padStart(2, '0') + chavePix;
+    payload += '52040000';
+    payload += '5303986';
+    payload += '54' + String(valorFormatado.length).padStart(2, '0') + valorFormatado;
+    payload += '5802BR';
+    payload += '59' + String(nomeRecebedor.length).padStart(2, '0') + nomeRecebedor;
+    payload += '60' + String(cidade.length).padStart(2, '0') + cidade;
+    payload += '6205' + String(descricao.length).padStart(2, '0') + descricao;
+    payload += '6304';
+    
+    function crc16(str) {
+        let crc = 0xFFFF;
+        for (let i = 0; i < str.length; i++) {
+            crc ^= str.charCodeAt(i) << 8;
+            for (let j = 0; j < 8; j++) {
+                crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
+            }
+        }
+        return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+    }
+    
+    const crc = crc16(payload);
+    return payload + crc;
+}
+
+// =============================================================
+// PAGAMENTO PIX CORRIGIDO - COM FALLBACK MANUAL (IGUAL AO SEU CÓDIGO)
 // =============================================================
 async function gerarPagamento() {
     if (!orderData.valor || orderData.valor <= 0) {
@@ -689,6 +753,8 @@ async function gerarPagamento() {
 
     document.getElementById('modal-pagamento').style.display = 'flex';
     document.getElementById('modal-valor').textContent = `R$ ${orderData.valor.toFixed(2).replace('.', ',')}`;
+    document.getElementById('status-pagamento').textContent = '';
+    document.getElementById('chave-manual-container').style.display = 'none';
     
     const qrContainer = document.getElementById('qr-container');
     qrContainer.innerHTML = `
@@ -700,6 +766,7 @@ async function gerarPagamento() {
     try {
         const convId = `pedido_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
+        // TENTA USAR A API DO BACKEND PRIMEIRO
         const response = await fetch('/api/pix/criar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -707,72 +774,131 @@ async function gerarPagamento() {
                 convId: convId,
                 valor: orderData.valor,
                 nomeCliente: orderData.cliente.nome,
-                descricao: `Entrega N&G Express`
+                descricao: `Entrega N&G Express - ${orderData.coleta.endereco} → ${orderData.entrega.endereco}`
             })
         });
 
-        const data = await response.json();
+        let data = null;
+        let apiSucesso = false;
 
-        if (!data.success) {
-            throw new Error(data.erro || 'Erro ao gerar pagamento');
+        if (response.ok) {
+            try {
+                data = await response.json();
+                if (data.success && (data.qrCode || data.qrCodeBase64)) {
+                    apiSucesso = true;
+                    paymentData.paymentId = data.paymentId;
+                    qrContainer.innerHTML = '';
+
+                    if (data.qrCodeBase64) {
+                        const img = document.createElement('img');
+                        img.src = `data:image/png;base64,${data.qrCodeBase64}`;
+                        img.style.cssText = 'width:200px;height:200px;border-radius:12px;';
+                        img.alt = 'QR Code PIX';
+                        qrContainer.appendChild(img);
+                    } else if (data.qrCode && data.qrCode.length > 20) {
+                        new QRCode(qrContainer, {
+                            text: data.qrCode,
+                            width: 200,
+                            height: 200,
+                            colorDark: '#FF6B00',
+                            colorLight: '#1A1A24',
+                            correctLevel: QRCode.CorrectLevel.H
+                        });
+                    }
+
+                    if (data.qrCode) {
+                        const pixCodeElement = document.getElementById('pix-codigo');
+                        pixCodeElement.textContent = data.qrCode.length > 80 
+                            ? data.qrCode.substring(0, 80) + '...' 
+                            : data.qrCode;
+                        pixCodeElement.setAttribute('data-full-pix', data.qrCode);
+                    }
+
+                    document.getElementById('status-pagamento').innerHTML = 
+                        '<span style="color:var(--success-color)">✅ QR Code gerado! Escaneie com o app do seu banco.</span>';
+                    
+                    showToast('QR Code gerado com sucesso!', 'success');
+                    iniciarVerificacaoPagamento(data.paymentId);
+                    return;
+                }
+            } catch (e) {
+                console.warn('Erro ao parsear resposta da API:', e);
+            }
         }
 
-        paymentData.paymentId = data.paymentId;
-        qrContainer.innerHTML = '';
-
-        // 🔑 MÉTODO 1: Usar Base64 (mais fácil e confiável)
-        if (data.qrCodeBase64) {
-            const img = document.createElement('img');
-            img.src = `data:image/png;base64,${data.qrCodeBase64}`;
-            img.style.cssText = 'width:200px;height:200px;border-radius:12px;';
-            img.alt = 'QR Code PIX';
-            qrContainer.appendChild(img);
-        } 
-        // 🔑 MÉTODO 2: Usar a string qr_code para gerar via biblioteca
-        else if (data.qrCode && data.qrCode.length > 20) {
-            // Usa a biblioteca QRCode.js que você já tem
+        // 🔑 FALLBACK MANUAL - IGUAL AO SEU CÓDIGO QUE FUNCIONOU!
+        if (!apiSucesso) {
+            console.log('⚠️ API do backend falhou, usando fallback manual...');
+            
+            const payloadManual = gerarPayloadPIXManual(orderData.valor, `NG${convId.slice(-6)}`);
+            const pixStr = payloadManual;
+            
+            qrContainer.innerHTML = '';
+            
+            // Adiciona instrução
+            const instrucao = document.createElement('div');
+            instrucao.style.cssText = 'text-align:center;margin-bottom:16px;';
+            instrucao.innerHTML = `
+                <i class="bi bi-pix" style="font-size:2.5rem;color:var(--primary-color);"></i>
+                <p style="margin-top:8px;font-size:0.85rem;">Escaneie o QR Code abaixo no seu banco:</p>
+            `;
+            qrContainer.appendChild(instrucao);
+            
+            // Gera QR Code manualmente
             new QRCode(qrContainer, {
-                text: data.qrCode,
+                text: payloadManual,
                 width: 200,
                 height: 200,
                 colorDark: '#FF6B00',
                 colorLight: '#1A1A24',
                 correctLevel: QRCode.CorrectLevel.H
             });
-        } 
-        else {
-            throw new Error('QR Code não disponível');
-        }
-
-        // Salva o código PIX para cópia manual
-        if (data.qrCode) {
+            
+            // Mostra a chave PIX para cópia manual
+            document.getElementById('chave-manual-container').style.display = 'block';
+            document.getElementById('chave-manual').textContent = 'comercial.ngexpress@gmail.com';
+            
             const pixCodeElement = document.getElementById('pix-codigo');
-            pixCodeElement.textContent = data.qrCode.length > 80 
-                ? data.qrCode.substring(0, 80) + '...' 
-                : data.qrCode;
-            pixCodeElement.setAttribute('data-full-pix', data.qrCode);
+            pixCodeElement.textContent = 'comercial.ngexpress@gmail.com';
+            pixCodeElement.setAttribute('data-full-pix', 'comercial.ngexpress@gmail.com');
+            
+            document.getElementById('status-pagamento').innerHTML = 
+                '<span style="color:var(--warning-color)">⚠️ Pagamento manual - Use a chave PIX acima ou escaneie o QR Code</span>';
+            
+            showToast('QR Code gerado manualmente! Use a chave PIX para pagar.', 'warning');
+            
+            // ID manual para referência
+            paymentData.paymentId = 'manual_' + Date.now();
+            
+            // Inicia verificação manual (cliente precisa confirmar)
+            iniciarVerificacaoManual();
         }
-
-        document.getElementById('status-pagamento').innerHTML = 
-            '<span style="color:var(--success-color)">✅ QR Code gerado! Escaneie com o app do seu banco.</span>';
-        
-        showToast('QR Code gerado com sucesso!', 'success');
-        
-        // Iniciar verificação automática
-        iniciarVerificacaoPagamento(data.paymentId);
 
     } catch (err) {
-        console.error('Erro:', err);
+        console.error('Erro PIX detalhado:', err);
         qrContainer.innerHTML = `
             <div style="text-align:center;color:var(--danger-color);padding:20px;">
-                <i class="bi bi-exclamation-triangle"></i>
+                <i class="bi bi-exclamation-triangle" style="font-size:2rem;display:block;margin-bottom:8px;"></i>
                 <p>${err.message}</p>
-                <button class="btn btn-secondary" onclick="gerarPagamento()">
-                    Tentar novamente
+                <button class="btn btn-secondary" style="margin-top:12px;padding:8px 16px;" onclick="gerarPagamento()">
+                    <i class="bi bi-arrow-repeat"></i> Tentar novamente
                 </button>
+                <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border-medium);">
+                    <p style="font-size:0.75rem;">Chave PIX para pagamento manual:</p>
+                    <code style="background:var(--bg-tertiary);padding:8px;display:block;border-radius:8px;word-break:break-all;">
+                        comercial.ngexpress@gmail.com
+                    </code>
+                </div>
             </div>`;
         showToast(err.message, 'error');
     }
+}
+
+function iniciarVerificacaoManual() {
+    // Para pagamento manual, não fazemos polling automático
+    // O cliente precisa enviar o comprovante
+    document.getElementById('status-pagamento').innerHTML += 
+        '<br><span style="color:var(--warning-color)">📎 Após pagar, clique em "Enviar Comprovante" para confirmar seu pedido.</span>';
 }
 
 function iniciarVerificacaoPagamento(paymentId) {
@@ -783,18 +909,20 @@ function iniciarVerificacaoPagamento(paymentId) {
     paymentData.intervalId = setInterval(async () => {
         verificacoes++;
         try {
-            const res  = await fetch(`${API_BASE_URL}/api/pix/status.php?paymentId=${paymentId}`);
-            const data = await res.json();
-            if (data.success && data.status === 'approved') {
-                clearInterval(paymentData.intervalId);
-                pagamentoConfirmado();
+            const res  = await fetch(`/api/pix/status/${paymentId}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.status === 'approved') {
+                    clearInterval(paymentData.intervalId);
+                    pagamentoConfirmado();
+                }
             }
         } catch (e) { console.warn('Verificação status:', e.message); }
 
         if (verificacoes >= maxVerif) {
             clearInterval(paymentData.intervalId);
             document.getElementById('status-pagamento').innerHTML =
-                '<span style="color:var(--text-tertiary)"><i class="bi bi-clock-history"></i> Tempo expirado. Gere um novo QR Code.</span>';
+                '<span style="color:var(--text-tertiary)"><i class="bi bi-clock-history"></i> Tempo expirado. Envie o comprovante manualmente.</span>';
         }
     }, 3000);
 }
@@ -808,8 +936,8 @@ function pagamentoConfirmado() {
     if (usuarioRaw) {
         try {
             const usuario = JSON.parse(usuarioRaw);
-            fetch(`${API_BASE_URL}/api/orcamentos/salvar.php`, {
-                method:  'POST',
+            fetch('/api/orcamentos/salvar', {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     usuario_id:      usuario.id,
@@ -835,8 +963,7 @@ function copiarPix() {
     let codigo = pixElement.getAttribute('data-full-pix') || pixElement.textContent;
     
     if (!codigo || codigo === 'Clique para copiar o código PIX' || codigo.includes('disponível no QR Code')) {
-        showToast('Nenhum código PIX disponível para copiar', 'warning');
-        return;
+        codigo = 'comercial.ngexpress@gmail.com';
     }
     
     navigator.clipboard.writeText(codigo).then(() => {
@@ -877,7 +1004,7 @@ window.fazerLogin = async (e) => {
     const email = document.getElementById('login-email').value;
     const senha = document.getElementById('login-senha').value;
     try {
-        const res  = await fetch(`${API_BASE_URL}/api/usuarios/login.php`, {
+        const res  = await fetch('/api/usuarios/login', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, senha })
         });
@@ -904,7 +1031,7 @@ window.fazerCadastro = async (e) => {
     const conf     = document.getElementById('cadastro-confirmar-senha').value;
     if (senha !== conf) { showToast('As senhas não conferem', 'error'); return; }
     try {
-        const res  = await fetch(`${API_BASE_URL}/api/usuarios/cadastrar.php`, {
+        const res  = await fetch('/api/usuarios/cadastrar', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nome, email, telefone, senha })
         });
