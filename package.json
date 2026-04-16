@@ -1,24 +1,8 @@
 {
-  "name": "ngexpress-netlify",
+  "name": "ngexpress-frontend",
   "version": "1.0.0",
-  "description": "N&G Express - Fullstack no Netlify com Mercado Pago",
-  "type": "module",
+  "description": "N&G Express - Frontend",
   "scripts": {
-    "dev": "netlify dev",
-    "build": "echo 'Build complete'"
-  },
-  "dependencies": {
-    "@netlify/functions": "^2.6.0",
-    "mercadopago": "^2.0.0",
-    "sql.js": "^1.10.3",
-    "uuid": "^9.0.1"
-  },
-  "keywords": [
-    "delivery",
-    "express",
-    "mercadopago",
-    "pix"
-  ],
-  "author": "N&G Express",
-  "license": "MIT"
+    "build": "echo 'Static site - no build needed'"
+  }
 }

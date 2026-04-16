@@ -1,10 +1,19 @@
 <?php
 // api/pix/criar.php
 
+// 🔥 ADICIONE ESTES HEADERS CORS NO INÍCIO 🔥
+header('Access-Control-Allow-Origin: https://ng-express.netlify.app'); // Substitua pelo seu domínio Netlify
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
 header('Content-Type: application/json');
 
+// Responder preflight CORS (requisição OPTIONS)
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
 require_once __DIR__ . '/../mercadopago.php';
-// mercadopago.php já inclui config/database.php, então $pdo está disponível aqui
 
 session_start();
 
@@ -25,7 +34,6 @@ if ($valor <= 0) {
 }
 
 // Obter e-mail do usuário logado
-// CORRIGIDO: $pdo já está no escopo global (não precisa de 'global $pdo' dentro de include)
 $emailCliente = 'cliente@ngexpress.com.br';
 if (isset($_SESSION['usuario_id'])) {
     try {

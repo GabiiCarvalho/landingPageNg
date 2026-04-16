@@ -1,21 +1,8 @@
 [build]
-  # Remove qualquer comando de build customizado
   command = ""
   publish = "."
 
-# Remove a detecção de functions
-[functions]
-  enabled = false
-
-# Configuração para SPA
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-
-# Headers para permitir CORS
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-XSS-Protection = "1; mode=block"
