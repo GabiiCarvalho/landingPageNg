@@ -7,6 +7,7 @@
     <link rel="icon" href="img/logoAba.png" type="image/x-icon">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <!-- QRCode.js - mesma versão do chatbot que funciona -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
@@ -113,15 +114,27 @@
         .resumo-item span:last-child { font-weight:500; text-align:right; }
         .resumo-total { font-size:1.8rem; font-weight:800; color:var(--primary-color); margin-top:16px; text-align:center; }
 
-        .distancia-badge { display:inline-flex; align-items:center; gap:8px; background:var(--bg-elevated); border:1px solid var(--border-medium); border-radius:var(--radius-full); padding:8px 16px; font-size:0.85rem; color:var(--text-secondary); margin-top:8px; }
-
-        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:var(--blur-md); z-index:2000; justify-content:center; align-items:center; }
-        .modal-content { background:var(--bg-secondary); border-radius:var(--radius-xl); max-width:500px; width:90%; padding:30px; border:1px solid var(--border-heavy); animation:modalFadeIn 0.4s ease; }
+        /* ── MODAL PIX ── */
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:var(--blur-md); z-index:2000; justify-content:center; align-items:center; }
+        .modal-content { background:var(--bg-secondary); border-radius:var(--radius-xl); max-width:460px; width:90%; padding:30px; border:1px solid var(--border-heavy); animation:modalFadeIn 0.4s ease; max-height:90vh; overflow-y:auto; }
         @keyframes modalFadeIn { from{opacity:0;transform:translateY(-30px) scale(0.95)} to{opacity:1;transform:translateY(0) scale(1)} }
-        .qr-container { display:flex; justify-content:center; margin:20px 0; min-height:200px; align-items:center; flex-direction:column; }
-        .qr-container canvas, .qr-container img { width:200px; height:200px; border-radius:var(--radius-md); }
-        .pix-code { background:var(--bg-tertiary); border:1px dashed var(--border-heavy); border-radius:var(--radius-md); padding:12px; font-size:0.7rem; word-break:break-all; cursor:pointer; text-align:center; color:var(--text-secondary); }
+
+        /* QR Code container — mesmo estilo do chatbot */
+        .qr-container {
+            display:flex; justify-content:center; align-items:center;
+            flex-direction:column; margin:20px 0; min-height:220px;
+            background:#fff; border-radius:var(--radius-md); padding:16px;
+        }
+        /* Força o canvas/img gerado pelo QRCode.js a ter tamanho certo */
+        .qr-container canvas { width:200px !important; height:200px !important; display:block; }
+        .qr-container img   { width:200px !important; height:200px !important; display:block; border-radius:8px; }
+
+        .pix-code { background:var(--bg-tertiary); border:1px dashed var(--border-heavy); border-radius:var(--radius-md); padding:12px; font-size:0.65rem; word-break:break-all; cursor:pointer; text-align:center; color:var(--text-secondary); margin-top:10px; line-height:1.5; }
         .pix-code:hover { border-color:var(--primary-color); color:var(--primary-color); }
+
+        .chave-pix-manual { background:rgba(255,184,0,0.1); border:1px solid var(--warning-color); border-radius:var(--radius-md); padding:16px; margin-top:16px; text-align:center; }
+        .chave-pix-manual strong { color:var(--warning-color); font-size:1rem; }
+        .chave-pix-manual code { display:block; background:var(--bg-tertiary); padding:10px; border-radius:8px; margin-top:8px; word-break:break-all; font-size:0.8rem; color:#fff; }
 
         .loading-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:var(--blur-md); display:none; justify-content:center; align-items:center; z-index:3000; }
         .loading-spinner { background:var(--bg-secondary); padding:40px; border-radius:var(--radius-xl); text-align:center; border:1px solid var(--border-medium); }
@@ -137,31 +150,6 @@
         .ui-autocomplete { background:var(--bg-elevated)!important; border:1px solid var(--border-medium)!important; border-radius:var(--radius-md)!important; max-height:280px; overflow-y:auto; z-index:2000!important; box-shadow:var(--shadow-lg)!important; }
         .ui-menu-item { padding:0!important; border-bottom:1px solid var(--border-light); cursor:pointer; color:var(--text-primary); }
         .ui-menu-item:hover, .ui-state-focus { background:var(--gradient-glow)!important; }
-
-        .btn-loading { pointer-events:none; opacity:0.7; }
-        .btn-loading i { animation:spin 0.8s linear infinite; }
-
-        .chave-pix-manual {
-            background: rgba(255, 184, 0, 0.1);
-            border: 1px solid var(--warning-color);
-            border-radius: var(--radius-md);
-            padding: 16px;
-            margin-top: 16px;
-            text-align: center;
-        }
-        .chave-pix-manual strong {
-            color: var(--warning-color);
-            font-size: 1.1rem;
-        }
-        .chave-pix-manual code {
-            display: block;
-            background: var(--bg-tertiary);
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 8px;
-            word-break: break-all;
-            font-size: 0.8rem;
-        }
 
         @media (max-width:768px) {
             .container { padding:0 16px; }
@@ -189,10 +177,12 @@
             </a>
             <ul class="nav-links">
                 <li><a href="index.html">Início</a></li>
-                <li><a href="#services">Serviços</a></li>
-                <li><a href="#about">Sobre</a></li>
-                <li><a href="#contact">Contato</a></li>
-                <li class="login-item"><a href="#" onclick="abrirModalLogin();return false;">Entrar</a></li>
+                <li><a href="index.html#services">Serviços</a></li>
+                <li><a href="index.html#about">Sobre</a></li>
+                <li><a href="index.html#contact">Contato</a></li>
+                <li class="login-item"><a href="#" onclick="abrirModalLogin();return false;"><i class="bi bi-box-arrow-in-right"></i> Entrar</a></li>
+                <li class="perfil-item" style="display:none;"><a href="dashboard.html"><i class="bi bi-person-circle"></i> <span id="menu-perfil-nome">Perfil</span></a></li>
+                <li class="perfil-item" style="display:none;"><a href="#" onclick="fazerLogout();return false;"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
             </ul>
         </nav>
     </div>
@@ -216,6 +206,7 @@
             <div class="step" data-step="5"><div class="step-number">6</div><div class="step-label">Categoria</div></div>
         </div>
 
+        <!-- Step 0: Dados -->
         <div class="step-content active" data-step="0">
             <div class="form-section">
                 <h3><i class="bi bi-person"></i> Seus dados</h3>
@@ -235,6 +226,7 @@
             </div>
         </div>
 
+        <!-- Step 1: Veículo -->
         <div class="step-content" data-step="1">
             <div class="form-section">
                 <h3><i class="bi bi-truck"></i> Tipo de Veículo</h3>
@@ -251,6 +243,7 @@
             </div>
         </div>
 
+        <!-- Step 2: Coleta -->
         <div class="step-content" data-step="2">
             <div class="form-section">
                 <h3><i class="bi bi-geo-alt"></i> Local de Coleta</h3>
@@ -268,6 +261,7 @@
             </div>
         </div>
 
+        <!-- Step 3: Entrega -->
         <div class="step-content" data-step="3">
             <div class="form-section">
                 <h3><i class="bi bi-geo-alt-fill"></i> Local de Entrega</h3>
@@ -285,6 +279,7 @@
             </div>
         </div>
 
+        <!-- Step 4: Receptor -->
         <div class="step-content" data-step="4">
             <div class="form-section">
                 <h3><i class="bi bi-person-check"></i> Quem receberá?</h3>
@@ -305,6 +300,7 @@
             </div>
         </div>
 
+        <!-- Step 5: Categoria -->
         <div class="step-content" data-step="5">
             <div class="form-section">
                 <h3><i class="bi bi-box"></i> Tipo de Produto</h3>
@@ -325,10 +321,11 @@
 
         <div class="navigation-buttons">
             <button class="btn btn-secondary" id="btn-voltar" disabled><i class="bi bi-arrow-left"></i> Voltar</button>
-            <button class="btn btn-primary" id="btn-avancar">Avançar <i class="bi bi-arrow-right"></i></button>
+            <button class="btn" id="btn-avancar">Avançar <i class="bi bi-arrow-right"></i></button>
         </div>
     </div>
 
+    <!-- Checkout -->
     <div id="checkout-screen" style="display:none;">
         <div class="wizard-container">
             <div class="step-content" style="display:block;">
@@ -344,22 +341,18 @@
                     <div class="resumo-item"><span><i class="bi bi-person-check"></i> Receptor</span><span id="resumo-receptor">-</span></div>
                     <div class="resumo-item"><span><i class="bi bi-box"></i> Categoria</span><span id="resumo-categorias">-</span></div>
                 </div>
-
                 <div class="resumo-card" style="text-align:center;">
                     <div class="resumo-item">
                         <span><i class="bi bi-map"></i> Distância estimada</span>
-                        <span id="distancia-final"><i class="bi bi-hourglass-split" style="font-size:0.8rem;"></i> calculando...</span>
+                        <span id="distancia-final"><i class="bi bi-hourglass-split"></i> calculando...</span>
                     </div>
                     <div class="resumo-item">
                         <span><i class="bi bi-clock"></i> Tempo estimado</span>
                         <span id="tempo-final">—</span>
                     </div>
                     <div class="resumo-total" id="valor-final">R$ 0,00</div>
-                    <div style="font-size:0.75rem;color:var(--text-tertiary);margin-top:8px;" id="valor-info">
-                        Valor pode ser ajustado após cálculo da rota
-                    </div>
+                    <div style="font-size:0.75rem;color:var(--text-tertiary);margin-top:8px;" id="valor-info">Calculando rota...</div>
                 </div>
-
                 <div class="navigation-buttons" style="margin-top:0;">
                     <button class="btn btn-danger" id="btn-cancelar"><i class="bi bi-x-circle"></i> Cancelar</button>
                     <button class="btn btn-success" id="btn-pagar"><i class="bi bi-qr-code"></i> Pagar via PIX</button>
@@ -369,35 +362,48 @@
     </div>
 </div>
 
+<!-- Modal PIX -->
 <div id="modal-pagamento" class="modal">
     <div class="modal-content">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <h3 style="margin:0;"><i class="bi bi-pix"></i> Pagamento PIX</h3>
-            <button onclick="fecharModalPagamento()" style="background:none;border:none;color:var(--text-tertiary);font-size:24px;cursor:pointer;">&times;</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="margin:0;font-size:1.1rem;"><i class="bi bi-qr-code-scan"></i> Pagamento PIX</h3>
+            <button onclick="fecharModalPagamento()" style="background:none;border:none;color:var(--text-tertiary);font-size:24px;cursor:pointer;line-height:1;">&times;</button>
         </div>
-        <div style="text-align:center;font-size:1.8rem;font-weight:bold;color:var(--primary-color);" id="modal-valor">R$ 0,00</div>
+
+        <!-- Valor em destaque -->
+        <div style="text-align:center;font-size:2rem;font-weight:800;color:var(--primary-color);margin-bottom:8px;" id="modal-valor">R$ 0,00</div>
+        <p style="text-align:center;font-size:0.75rem;color:var(--text-tertiary);margin-bottom:16px;" id="modal-instrucao">Escaneie o QR Code ou copie o código PIX</p>
+
+        <!-- QR Code renderizado aqui — mesmo padrão do chatbot -->
         <div class="qr-container" id="qr-container">
             <div id="qr-loading" style="text-align:center;color:var(--text-secondary);">
                 <div class="spinner" style="margin:0 auto 12px;"></div>
-                <span>Gerando QR Code...</span>
+                <span style="font-size:0.85rem;">Gerando QR Code...</span>
             </div>
         </div>
+
+        <!-- Código PIX copiável -->
         <div class="pix-code" id="pix-codigo" onclick="copiarPix()">Clique para copiar o código PIX</div>
+
+        <!-- Chave manual (fallback visual) -->
         <div id="chave-manual-container" style="display:none;" class="chave-pix-manual">
-            <strong>⚠️ Pagamento Manual</strong>
-            <p style="font-size:0.75rem;margin-top:5px;">Use a chave PIX abaixo para fazer o pagamento:</p>
+            <strong>⚠️ Pagamento via Chave PIX</strong>
+            <p style="font-size:0.75rem;margin-top:5px;color:var(--text-secondary);">Use a chave abaixo ou escaneie o QR Code acima:</p>
             <code id="chave-manual">comercial.ngexpress@gmail.com</code>
         </div>
-        <p style="font-size:0.75rem;text-align:center;margin-top:10px;">📱 Escaneie o QR Code ou copie o código e pague no seu banco</p>
-        <p style="font-size:0.7rem;text-align:center;margin-top:5px;color:var(--success-color);">✅ Pagamento processado pelo Mercado Pago</p>
-        <div style="display:flex;gap:12px;margin-top:20px;">
+
+        <p style="font-size:0.72rem;text-align:center;margin-top:12px;color:var(--text-tertiary);">📱 Abra o app do seu banco → PIX → Ler QR Code</p>
+        <p style="font-size:0.68rem;text-align:center;margin-top:4px;color:var(--success-color);" id="modal-badge">✅ Processado pelo Mercado Pago</p>
+
+        <div style="display:flex;gap:12px;margin-top:16px;">
             <button class="btn btn-secondary" style="flex:1;" onclick="fecharModalPagamento()">Cancelar</button>
-            <button class="btn btn-primary" style="flex:1;" id="btn-enviar-comprovante"><i class="bi bi-whatsapp"></i> Enviar Comprovante</button>
+            <button class="btn" style="flex:1;background:#25d366;" id="btn-enviar-comprovante"><i class="bi bi-whatsapp"></i> Enviei o PIX</button>
         </div>
-        <div id="status-pagamento" style="margin-top:15px;text-align:center;font-size:0.8rem;color:var(--text-tertiary);"></div>
+        <div id="status-pagamento" style="margin-top:12px;text-align:center;font-size:0.78rem;color:var(--text-tertiary);min-height:20px;"></div>
     </div>
 </div>
 
+<!-- Modal Login -->
 <div class="modal" id="login-modal">
     <div class="modal-content" style="max-width:400px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
@@ -407,13 +413,13 @@
         <form onsubmit="fazerLogin(event)">
             <div class="form-group"><label>E-mail</label><input type="email" id="login-email" placeholder="seu@email.com" required></div>
             <div class="form-group"><label>Senha</label><input type="password" id="login-senha" placeholder="******" required></div>
-            <div class="form-group"><label><input type="checkbox" id="lembrar-email"> Lembrar e-mail</label></div>
             <button type="submit" class="btn" style="width:100%;"><i class="bi bi-box-arrow-in-right"></i> Entrar</button>
-            <p style="text-align:center;margin-top:15px;">Não tem conta? <a href="#" onclick="abrirModalCadastro();return false;">Cadastre-se</a></p>
+            <p style="text-align:center;margin-top:15px;font-size:0.9rem;">Não tem conta? <a href="#" onclick="abrirModalCadastro();return false;" style="color:var(--primary-color);">Cadastre-se</a></p>
         </form>
     </div>
 </div>
 
+<!-- Modal Cadastro -->
 <div class="modal" id="cadastro-modal">
     <div class="modal-content" style="max-width:500px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
@@ -432,18 +438,17 @@
 </div>
 
 <div id="loading-overlay" class="loading-overlay">
-    <div class="loading-spinner">
-        <div class="spinner"></div>
-        <p>Processando...</p>
-    </div>
+    <div class="loading-spinner"><div class="spinner"></div><p>Processando...</p></div>
 </div>
 <div id="toast-container"></div>
 
 <script>
 // =============================================================
-// CONFIGURAÇÃO
+// CONFIGURAÇÃO — aponta para o Railway (mesmo server.js do chatbot)
 // =============================================================
-const API_BASE_URL = ''; // Usa rotas relativas para o mesmo servidor
+const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined')
+    ? window.API_BASE_URL.replace('/api', '')   // remove /api se vier do config.js
+    : 'https://landingpageng-production.up.railway.app';
 
 const PRICING_CONFIG = {
     valorMinimoAte7km: { moto: 15.00, carro: 50.00 },
@@ -489,12 +494,8 @@ function showToast(msg, tipo = 'success') {
 }
 window.mostrarToast = showToast;
 
-function showLoading(show) {
-    document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
-}
-
 // =============================================================
-// STEPS
+// WIZARD STEPS
 // =============================================================
 function updateSteps() {
     document.querySelectorAll('.step').forEach((step, idx) => {
@@ -518,21 +519,19 @@ function collectStepData() {
             orderData.cliente.telefone = document.getElementById('cliente-telefone').value.trim();
             orderData.cliente.email    = document.getElementById('cliente-email').value.trim();
             if (!orderData.cliente.nome || !orderData.cliente.telefone || !orderData.cliente.email) {
-                showToast('Preencha nome, telefone e e-mail', 'error');
-                return false;
+                showToast('Preencha nome, telefone e e-mail', 'error'); return false;
             }
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(orderData.cliente.email)) {
-                showToast('E-mail inválido', 'error');
-                return false;
+                showToast('E-mail inválido', 'error'); return false;
             }
             return true;
         case 1:
             orderData.veiculo = document.querySelector('input[name="tipo-veiculo"]:checked').value;
             return true;
         case 2:
-            orderData.coleta.endereco     = document.getElementById('endereco-coleta').value.trim();
-            orderData.coleta.numero       = document.getElementById('numero-coleta').value.trim();
-            orderData.coleta.complemento  = document.getElementById('complemento-coleta').value.trim();
+            orderData.coleta.endereco    = document.getElementById('endereco-coleta').value.trim();
+            orderData.coleta.numero      = document.getElementById('numero-coleta').value.trim();
+            orderData.coleta.complemento = document.getElementById('complemento-coleta').value.trim();
             if (!orderData.coleta.endereco) { showToast('Informe o endereço de coleta', 'error'); return false; }
             return true;
         case 3:
@@ -600,28 +599,26 @@ function haversineKm(lat1, lon1, lat2, lon2) {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-const FATOR_ROTA = 1.35;
-
 // =============================================================
 // CHECKOUT
 // =============================================================
 function finalizarPedido() {
-    const endColeta  = [orderData.coleta.endereco, orderData.coleta.numero].filter(Boolean).join(', ');
+    const endColeta  = [orderData.coleta.endereco,  orderData.coleta.numero].filter(Boolean).join(', ');
     const endEntrega = [orderData.entrega.endereco, orderData.entrega.numero].filter(Boolean).join(', ');
 
-    const distEstimada = 5.0;
-    orderData.valor = calcularPreco(distEstimada, orderData.veiculo);
+    // Valor provisório enquanto calcula a rota
+    orderData.valor = calcularPreco(5.0, orderData.veiculo);
 
-    document.getElementById('wizard-container').style.display = 'none';
-    document.getElementById('checkout-screen').style.display = 'block';
-    document.getElementById('resumo-nome').textContent       = orderData.cliente.nome;
-    document.getElementById('resumo-telefone').textContent   = orderData.cliente.telefone;
-    document.getElementById('resumo-veiculo').textContent    = orderData.veiculo === 'moto' ? 'Moto 🏍️' : 'Carro 🚗';
-    document.getElementById('resumo-coleta').textContent     = endColeta;
-    document.getElementById('resumo-entrega').textContent    = endEntrega;
-    document.getElementById('resumo-receptor').textContent   = orderData.receptor.nome;
-    document.getElementById('resumo-categorias').textContent = orderData.categorias.length ? orderData.categorias.join(', ') : 'Não especificado';
-    document.getElementById('valor-final').textContent       = `R$ ${orderData.valor.toFixed(2).replace('.', ',')}`;
+    document.getElementById('wizard-container').style.display  = 'none';
+    document.getElementById('checkout-screen').style.display   = 'block';
+    document.getElementById('resumo-nome').textContent         = orderData.cliente.nome;
+    document.getElementById('resumo-telefone').textContent     = orderData.cliente.telefone;
+    document.getElementById('resumo-veiculo').textContent      = orderData.veiculo === 'moto' ? 'Moto 🏍️' : 'Carro 🚗';
+    document.getElementById('resumo-coleta').textContent       = endColeta;
+    document.getElementById('resumo-entrega').textContent      = endEntrega;
+    document.getElementById('resumo-receptor').textContent     = orderData.receptor.nome;
+    document.getElementById('resumo-categorias').textContent   = orderData.categorias.length ? orderData.categorias.join(', ') : 'Não especificado';
+    document.getElementById('valor-final').textContent         = `R$ ${orderData.valor.toFixed(2).replace('.', ',')}`;
 
     calcularRotaBackground(endColeta + ', Brasil', endEntrega + ', Brasil');
 }
@@ -642,58 +639,56 @@ async function geocodificar(endereco) {
 async function calcularRotaBackground(endColeta, endEntrega) {
     try {
         const [coordColeta, coordEntrega] = await Promise.all([
-            geocodificar(endColeta),
-            geocodificar(endEntrega)
+            geocodificar(endColeta), geocodificar(endEntrega)
         ]);
 
-        let distKm, duracaoMin;
-        let routeSuccess = false;
-        
+        // Tenta HERE Maps (mesmo que o chatbot usa)
+        let distKm, duracaoMin, rotaOk = false;
+        const hereKey = (typeof window.HERE_API_CONFIG !== 'undefined') ? window.HERE_API_CONFIG.apiKey : 'O8E5nipilq9UhVMoh75UR3RxE0J3zvC1DCXR-DZVL6I';
         try {
-            const url = `https://router.project-osrm.org/route/v1/driving/${coordColeta.lng},${coordColeta.lat};${coordEntrega.lng},${coordEntrega.lat}?overview=false`;
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000);
-            const res = await fetch(url, { signal: controller.signal, mode: 'cors' });
-            clearTimeout(timeoutId);
+            const url = `https://router.hereapi.com/v8/routes?transportMode=car&origin=${coordColeta.lat},${coordColeta.lng}&destination=${coordEntrega.lat},${coordEntrega.lng}&return=summary&apikey=${hereKey}`;
+            const res  = await fetch(url);
             if (res.ok) {
-                const data = await res.json();
-                if (data.routes && data.routes.length > 0) {
-                    distKm = data.routes[0].distance / 1000;
-                    duracaoMin = Math.round(data.routes[0].duration / 60);
-                    routeSuccess = true;
+                const data    = await res.json();
+                const section = data.routes?.[0]?.sections?.[0];
+                if (section) {
+                    distKm     = section.summary.length / 1000;
+                    duracaoMin = Math.round(section.summary.duration / 60);
+                    rotaOk     = true;
                 }
             }
         } catch (e) {
-            console.warn('OSRM direto falhou (CORS):', e.message);
+            console.warn('HERE Maps falhou, usando haversine:', e.message);
         }
 
-        if (!routeSuccess || !distKm) {
-            const linhaReta = haversineKm(coordColeta.lat, coordColeta.lng, coordEntrega.lat, coordEntrega.lng);
-            distKm = linhaReta * FATOR_ROTA;
+        // Fallback: haversine × 1.35
+        if (!rotaOk) {
+            distKm     = haversineKm(coordColeta.lat, coordColeta.lng, coordEntrega.lat, coordEntrega.lng) * 1.35;
             duracaoMin = Math.round(distKm / 30 * 60);
         }
 
-        distKm = Math.round(distKm * 10) / 10;
+        distKm     = Math.round(distKm * 10) / 10;
         duracaoMin = Math.round(duracaoMin);
-        
         orderData.distanciaKm = distKm;
-        orderData.duracaoMin = duracaoMin;
-        orderData.valor = calcularPreco(distKm, orderData.veiculo);
+        orderData.duracaoMin  = duracaoMin;
+        orderData.valor       = calcularPreco(distKm, orderData.veiculo);
 
-        const elDist = document.getElementById('distancia-final');
+        const elDist  = document.getElementById('distancia-final');
         const elTempo = document.getElementById('tempo-final');
         const elValor = document.getElementById('valor-final');
-        const elInfo = document.getElementById('valor-info');
-        
-        if (elDist) elDist.textContent = `${distKm.toFixed(1)} km`;
+        const elInfo  = document.getElementById('valor-info');
+
+        if (elDist)  elDist.textContent  = `${distKm.toFixed(1)} km`;
         if (elTempo) elTempo.textContent = duracaoMin < 60 ? `${duracaoMin} min` : `${Math.floor(duracaoMin/60)}h ${duracaoMin%60}min`;
         if (elValor) elValor.textContent = `R$ ${orderData.valor.toFixed(2).replace('.', ',')}`;
-        if (elInfo) elInfo.textContent = routeSuccess ? 'Valor calculado com base na rota real' : 'Valor estimado (rota não disponível)';
+        if (elInfo)  elInfo.textContent  = rotaOk ? 'Valor calculado com base na rota real' : 'Valor estimado (linha reta × 1.35)';
 
     } catch (err) {
-        console.warn('Cálculo de rota background falhou:', err.message);
+        console.warn('Cálculo de rota falhou:', err.message);
         const elDist = document.getElementById('distancia-final');
+        const elInfo = document.getElementById('valor-info');
         if (elDist) elDist.innerHTML = '<i class="bi bi-question-circle"></i> Não disponível';
+        if (elInfo) elInfo.textContent = 'Valor mínimo aplicado';
     }
 }
 
@@ -705,28 +700,37 @@ function cancelarPedido() {
 }
 
 // =============================================================
-// FUNÇÃO PARA GERAR PAYLOAD PIX MANUAL (FALLBACK)
-// IGUAL AO SEU CÓDIGO QUE FUNCIONOU!
+// ██████╗ ██╗██╗  ██╗     ██████╗  ██████╗
+// ██╔══██╗██║╚██╗██╔╝    ██╔═══██╗██╔════╝
+// ██████╔╝██║ ╚███╔╝     ██║   ██║██║
+// ██╔═══╝ ██║ ██╔██╗     ██║▄▄ ██║██║
+// ██║     ██║██╔╝ ██╗    ╚██████╔╝╚██████╗
+// ╚═╝     ╚═╝╚═╝  ╚═╝     ╚══▀▀═╝  ╚═════╝
+//
+// Igual ao chatbot que funciona — gerarPayloadPIX()
 // =============================================================
-function gerarPayloadPIXManual(valor, descricao) {
-    const chavePix = 'comercial.ngexpress@gmail.com';
+function gerarPayloadPIX(valor, descricao) {
+    const chavePix      = 'comercial.ngexpress@gmail.com';
     const nomeRecebedor = 'N&G Express';
-    const cidade = 'SAO PAULO';
-    const valorFormatado = valor.toFixed(2).replace('.', '');
-    
-    let payload = '000201';
-    payload += '26';
-    payload += '0014br.gov.bcb.pix';
-    payload += '01' + String(chavePix.length).padStart(2, '0') + chavePix;
-    payload += '52040000';
-    payload += '5303986';
-    payload += '54' + String(valorFormatado.length).padStart(2, '0') + valorFormatado;
-    payload += '5802BR';
-    payload += '59' + String(nomeRecebedor.length).padStart(2, '0') + nomeRecebedor;
-    payload += '60' + String(cidade.length).padStart(2, '0') + cidade;
-    payload += '6205' + String(descricao.length).padStart(2, '0') + descricao;
-    payload += '6304';
-    
+    const cidade        = 'SAO PAULO';
+    const valorFmt      = valor.toFixed(2);          // "15.00"
+    const valorLen      = String(valorFmt.length).padStart(2, '0');
+
+    // Monta o payload EMV sem o CRC
+    const payload =
+        '000201' +
+        '26' +
+        '0014br.gov.bcb.pix' +
+        '01' + String(chavePix.length).padStart(2,'0') + chavePix +
+        '52040000' +
+        '5303986' +
+        '54' + valorLen + valorFmt +
+        '5802BR' +
+        '59' + String(nomeRecebedor.length).padStart(2,'0') + nomeRecebedor +
+        '60' + String(cidade.length).padStart(2,'0') + cidade +
+        '6205' + String(descricao.length).padStart(2,'0') + descricao +
+        '6304';
+
     function crc16(str) {
         let crc = 0xFFFF;
         for (let i = 0; i < str.length; i++) {
@@ -737,179 +741,151 @@ function gerarPayloadPIXManual(valor, descricao) {
         }
         return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
     }
-    
-    const crc = crc16(payload);
-    return payload + crc;
+
+    return payload + crc16(payload);
 }
 
 // =============================================================
-// PAGAMENTO PIX CORRIGIDO - COM FALLBACK MANUAL (IGUAL AO SEU CÓDIGO)
+// Renderiza QR Code igual ao chatbot
+// =============================================================
+function renderizarQRCode(container, texto) {
+    container.innerHTML = '';   // limpa spinner ou conteúdo anterior
+    if (typeof QRCode === 'undefined') {
+        container.innerHTML = '<p style="color:red;font-size:0.8rem;">QRCode.js não carregou. Copie o código abaixo.</p>';
+        return;
+    }
+    new QRCode(container, {
+        text:           texto,
+        width:          200,
+        height:         200,
+        colorDark:      '#1b5e20',   // mesmo do chatbot
+        colorLight:     '#ffffff',
+        correctLevel:   QRCode.CorrectLevel.M
+    });
+}
+
+// =============================================================
+// GERAR PAGAMENTO PIX — fluxo idêntico ao chatbot
 // =============================================================
 async function gerarPagamento() {
     if (!orderData.valor || orderData.valor <= 0) {
-        showToast('Valor do pedido não calculado', 'error');
-        return;
+        showToast('Valor do pedido não calculado', 'error'); return;
     }
 
+    // Abre o modal e mostra spinner
     document.getElementById('modal-pagamento').style.display = 'flex';
     document.getElementById('modal-valor').textContent = `R$ ${orderData.valor.toFixed(2).replace('.', ',')}`;
-    document.getElementById('status-pagamento').textContent = '';
+    document.getElementById('status-pagamento').textContent  = '';
     document.getElementById('chave-manual-container').style.display = 'none';
-    
+    document.getElementById('modal-badge').textContent = '✅ Processado pelo Mercado Pago';
+
     const qrContainer = document.getElementById('qr-container');
     qrContainer.innerHTML = `
         <div id="qr-loading" style="text-align:center;">
             <div class="spinner"></div>
-            <span>Gerando QR Code...</span>
+            <span style="font-size:0.85rem;">Gerando QR Code...</span>
         </div>`;
 
-    try {
-        const convId = `pedido_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const convId = `pedido_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-        // TENTA USAR A API DO BACKEND PRIMEIRO
-        const response = await fetch('/api/pix/criar', {
+    try {
+        // 1) Tenta API do Railway (server.js completo do chatbot)
+        const response = await fetch(`${API_BASE_URL}/api/pix/criar`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                convId: convId,
-                valor: orderData.valor,
+                convId:      convId,
+                valor:       orderData.valor,
                 nomeCliente: orderData.cliente.nome,
-                descricao: `Entrega N&G Express - ${orderData.coleta.endereco} → ${orderData.entrega.endereco}`
+                descricao:   `Entrega N&G Express - ${orderData.coleta.endereco} → ${orderData.entrega.endereco}`
             })
         });
 
-        let data = null;
-        let apiSucesso = false;
-
         if (response.ok) {
-            try {
-                data = await response.json();
-                if (data.success && (data.qrCode || data.qrCodeBase64)) {
-                    apiSucesso = true;
-                    paymentData.paymentId = data.paymentId;
+            const dados = await response.json();
+
+            if (dados.success !== false && (dados.qrCode || dados.qrCodeBase64)) {
+                // ── API retornou dados válidos ──
+                paymentData.paymentId = dados.paymentId;
+
+                if (dados.qrCodeBase64) {
+                    // Imagem pronta do Mercado Pago
                     qrContainer.innerHTML = '';
-
-                    if (data.qrCodeBase64) {
-                        const img = document.createElement('img');
-                        img.src = `data:image/png;base64,${data.qrCodeBase64}`;
-                        img.style.cssText = 'width:200px;height:200px;border-radius:12px;';
-                        img.alt = 'QR Code PIX';
-                        qrContainer.appendChild(img);
-                    } else if (data.qrCode && data.qrCode.length > 20) {
-                        new QRCode(qrContainer, {
-                            text: data.qrCode,
-                            width: 200,
-                            height: 200,
-                            colorDark: '#FF6B00',
-                            colorLight: '#1A1A24',
-                            correctLevel: QRCode.CorrectLevel.H
-                        });
-                    }
-
-                    if (data.qrCode) {
-                        const pixCodeElement = document.getElementById('pix-codigo');
-                        pixCodeElement.textContent = data.qrCode.length > 80 
-                            ? data.qrCode.substring(0, 80) + '...' 
-                            : data.qrCode;
-                        pixCodeElement.setAttribute('data-full-pix', data.qrCode);
-                    }
-
-                    document.getElementById('status-pagamento').innerHTML = 
-                        '<span style="color:var(--success-color)">✅ QR Code gerado! Escaneie com o app do seu banco.</span>';
-                    
-                    showToast('QR Code gerado com sucesso!', 'success');
-                    iniciarVerificacaoPagamento(data.paymentId);
-                    return;
+                    const img = document.createElement('img');
+                    img.src = `data:image/png;base64,${dados.qrCodeBase64}`;
+                    img.alt = 'QR Code PIX';
+                    qrContainer.appendChild(img);
+                } else {
+                    // String EMV → gera QR Code via QRCode.js (igual chatbot)
+                    renderizarQRCode(qrContainer, dados.qrCode);
                 }
-            } catch (e) {
-                console.warn('Erro ao parsear resposta da API:', e);
+
+                // Código copiável
+                const pixEl = document.getElementById('pix-codigo');
+                pixEl.textContent = dados.qrCode;
+                pixEl.setAttribute('data-full-pix', dados.qrCode);
+
+                document.getElementById('status-pagamento').innerHTML =
+                    '<span style="color:var(--success-color)">✅ Escaneie o QR Code no app do seu banco</span>';
+                showToast('QR Code gerado!', 'success');
+                iniciarVerificacaoPagamento(dados.paymentId, convId);
+                return; // sucesso — sai aqui
             }
         }
 
-        // 🔑 FALLBACK MANUAL - IGUAL AO SEU CÓDIGO QUE FUNCIONOU!
-        if (!apiSucesso) {
-            console.log('⚠️ API do backend falhou, usando fallback manual...');
-            
-            const payloadManual = gerarPayloadPIXManual(orderData.valor, `NG${convId.slice(-6)}`);
-            const pixStr = payloadManual;
-            
-            qrContainer.innerHTML = '';
-            
-            // Adiciona instrução
-            const instrucao = document.createElement('div');
-            instrucao.style.cssText = 'text-align:center;margin-bottom:16px;';
-            instrucao.innerHTML = `
-                <i class="bi bi-pix" style="font-size:2.5rem;color:var(--primary-color);"></i>
-                <p style="margin-top:8px;font-size:0.85rem;">Escaneie o QR Code abaixo no seu banco:</p>
-            `;
-            qrContainer.appendChild(instrucao);
-            
-            // Gera QR Code manualmente
-            new QRCode(qrContainer, {
-                text: payloadManual,
-                width: 200,
-                height: 200,
-                colorDark: '#FF6B00',
-                colorLight: '#1A1A24',
-                correctLevel: QRCode.CorrectLevel.H
-            });
-            
-            // Mostra a chave PIX para cópia manual
-            document.getElementById('chave-manual-container').style.display = 'block';
-            document.getElementById('chave-manual').textContent = 'comercial.ngexpress@gmail.com';
-            
-            const pixCodeElement = document.getElementById('pix-codigo');
-            pixCodeElement.textContent = 'comercial.ngexpress@gmail.com';
-            pixCodeElement.setAttribute('data-full-pix', 'comercial.ngexpress@gmail.com');
-            
-            document.getElementById('status-pagamento').innerHTML = 
-                '<span style="color:var(--warning-color)">⚠️ Pagamento manual - Use a chave PIX acima ou escaneie o QR Code</span>';
-            
-            showToast('QR Code gerado manualmente! Use a chave PIX para pagar.', 'warning');
-            
-            // ID manual para referência
-            paymentData.paymentId = 'manual_' + Date.now();
-            
-            // Inicia verificação manual (cliente precisa confirmar)
-            iniciarVerificacaoManual();
-        }
+        // 2) Fallback: gera payload PIX local (IGUAL ao chatbot)
+        console.warn('API Railway falhou ou não retornou QR Code. Usando fallback local.');
+        usarFallbackPIX(convId);
 
     } catch (err) {
-        console.error('Erro PIX detalhado:', err);
-        qrContainer.innerHTML = `
-            <div style="text-align:center;color:var(--danger-color);padding:20px;">
-                <i class="bi bi-exclamation-triangle" style="font-size:2rem;display:block;margin-bottom:8px;"></i>
-                <p>${err.message}</p>
-                <button class="btn btn-secondary" style="margin-top:12px;padding:8px 16px;" onclick="gerarPagamento()">
-                    <i class="bi bi-arrow-repeat"></i> Tentar novamente
-                </button>
-                <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border-medium);">
-                    <p style="font-size:0.75rem;">Chave PIX para pagamento manual:</p>
-                    <code style="background:var(--bg-tertiary);padding:8px;display:block;border-radius:8px;word-break:break-all;">
-                        comercial.ngexpress@gmail.com
-                    </code>
-                </div>
-            </div>`;
-        showToast(err.message, 'error');
+        console.error('Erro ao contatar API PIX:', err.message);
+        usarFallbackPIX(convId);
     }
 }
 
-function iniciarVerificacaoManual() {
-    // Para pagamento manual, não fazemos polling automático
-    // O cliente precisa enviar o comprovante
-    document.getElementById('status-pagamento').innerHTML += 
-        '<br><span style="color:var(--warning-color)">📎 Após pagar, clique em "Enviar Comprovante" para confirmar seu pedido.</span>';
+// =============================================================
+// FALLBACK — payload PIX local + QR Code via QRCode.js
+// Identico ao chatbot (exibirPix com qrCode=null)
+// =============================================================
+function usarFallbackPIX(convId) {
+    const descricao = `NG${(convId || Date.now().toString()).slice(-6).toUpperCase()}`;
+    const payload   = gerarPayloadPIX(orderData.valor, descricao);
+
+    const qrContainer = document.getElementById('qr-container');
+    renderizarQRCode(qrContainer, payload);
+
+    // Mostra chave manual como referência adicional
+    document.getElementById('chave-manual-container').style.display = 'block';
+    document.getElementById('chave-manual').textContent = 'comercial.ngexpress@gmail.com';
+
+    // Código copiável = payload EMV completo
+    const pixEl = document.getElementById('pix-codigo');
+    pixEl.textContent = payload.length > 100 ? payload.substring(0, 100) + '...' : payload;
+    pixEl.setAttribute('data-full-pix', payload);
+
+    document.getElementById('modal-badge').textContent     = '⚠️ Pagamento manual — confirme pelo comprovante';
+    document.getElementById('modal-instrucao').textContent = 'Escaneie o QR Code ou use a chave PIX abaixo';
+    document.getElementById('status-pagamento').innerHTML  =
+        '<span style="color:var(--warning-color)">⚠️ Após pagar, clique em "Enviei o PIX" para confirmar</span>';
+
+    paymentData.paymentId = 'manual_' + Date.now();
+    showToast('QR Code gerado! Use a chave PIX para pagar.', 'warning');
 }
 
-function iniciarVerificacaoPagamento(paymentId) {
-    let verificacoes = 0;
-    const maxVerif   = 60;
+// =============================================================
+// VERIFICAÇÃO DE PAGAMENTO
+// =============================================================
+function iniciarVerificacaoPagamento(paymentId, convId) {
+    if (!paymentId || String(paymentId).startsWith('manual_')) return;
+    let tentativas = 0;
+    const maxTent  = 60;
     if (paymentData.intervalId) clearInterval(paymentData.intervalId);
 
     paymentData.intervalId = setInterval(async () => {
-        verificacoes++;
+        tentativas++;
         try {
-            const res  = await fetch(`/api/pix/status/${paymentId}`);
+            // Usa o endpoint /api/pix/status/:convId do server.js do chatbot
+            const res  = await fetch(`${API_BASE_URL}/api/pix/status/${convId}`);
             if (res.ok) {
                 const data = await res.json();
                 if (data.status === 'approved') {
@@ -917,60 +893,38 @@ function iniciarVerificacaoPagamento(paymentId) {
                     pagamentoConfirmado();
                 }
             }
-        } catch (e) { console.warn('Verificação status:', e.message); }
+        } catch (e) { console.warn('Polling status:', e.message); }
 
-        if (verificacoes >= maxVerif) {
+        if (tentativas >= maxTent) {
             clearInterval(paymentData.intervalId);
             document.getElementById('status-pagamento').innerHTML =
-                '<span style="color:var(--text-tertiary)"><i class="bi bi-clock-history"></i> Tempo expirado. Envie o comprovante manualmente.</span>';
+                '<span style="color:var(--text-tertiary)">⌛ Tempo esgotado. Envie o comprovante manualmente.</span>';
         }
     }, 3000);
 }
 
 function pagamentoConfirmado() {
     document.getElementById('status-pagamento').innerHTML =
-        '<span style="color:var(--success-color);font-weight:600;"><i class="bi bi-check-circle-fill"></i> Pagamento confirmado!</span>';
-    showToast('Pagamento confirmado com sucesso!', 'success');
-
-    const usuarioRaw = sessionStorage.getItem('usuario');
-    if (usuarioRaw) {
-        try {
-            const usuario = JSON.parse(usuarioRaw);
-            fetch('/api/orcamentos/salvar', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    usuario_id:      usuario.id,
-                    numero_pedido:   `NG${Date.now().toString().slice(-6)}`,
-                    tipo_veiculo:    orderData.veiculo,
-                    endereco_coleta: [orderData.coleta.endereco, orderData.coleta.numero].filter(Boolean).join(', '),
-                    endereco_entrega:[orderData.entrega.endereco, orderData.entrega.numero].filter(Boolean).join(', '),
-                    descricao:       orderData.categorias.join(', ') + (orderData.descricao ? ' — ' + orderData.descricao : ''),
-                    valor_total:     orderData.valor,
-                })
-            }).catch(() => {});
-        } catch (e) {}
-    }
-
+        '<span style="color:var(--success-color);font-weight:600;"><i class="bi bi-check-circle-fill"></i> Pagamento confirmado! 🎉</span>';
+    showToast('Pagamento confirmado!', 'success');
     setTimeout(() => {
-        alert('✅ Pagamento confirmado! Seu pedido foi registrado.');
+        alert('✅ Pagamento confirmado! Seu pedido foi registrado. Em breve nosso motoboy buscará a entrega.');
         window.location.href = 'index.html';
     }, 2000);
 }
 
 function copiarPix() {
-    const pixElement = document.getElementById('pix-codigo');
-    let codigo = pixElement.getAttribute('data-full-pix') || pixElement.textContent;
-    
-    if (!codigo || codigo === 'Clique para copiar o código PIX' || codigo.includes('disponível no QR Code')) {
-        codigo = 'comercial.ngexpress@gmail.com';
-    }
-    
+    const el     = document.getElementById('pix-codigo');
+    const codigo = el.getAttribute('data-full-pix') || el.textContent;
+    if (!codigo || codigo === 'Clique para copiar o código PIX') return;
     navigator.clipboard.writeText(codigo).then(() => {
         showToast('Código PIX copiado!', 'success');
-    }).catch(() => {
-        showToast('Não foi possível copiar o código', 'error');
-    });
+        el.textContent = '✅ Copiado!';
+        setTimeout(() => {
+            const full = el.getAttribute('data-full-pix') || '';
+            el.textContent = full.length > 100 ? full.substring(0, 100) + '...' : full;
+        }, 2500);
+    }).catch(() => showToast('Não foi possível copiar', 'error'));
 }
 
 function fecharModalPagamento() {
@@ -979,15 +933,15 @@ function fecharModalPagamento() {
 }
 
 function enviarComprovante() {
-    const msg = `*NOVO PEDIDO N&G EXPRESS*%0A%0A` +
-        `Cliente: ${orderData.cliente.nome}%0A` +
-        `WhatsApp: ${orderData.cliente.telefone}%0A` +
-        `Veículo: ${orderData.veiculo === 'moto' ? 'Moto' : 'Carro'}%0A` +
-        `Coleta: ${orderData.coleta.endereco}, ${orderData.coleta.numero}%0A` +
-        `Entrega: ${orderData.entrega.endereco}, ${orderData.entrega.numero}%0A` +
-        `Produto: ${orderData.categorias.join(', ')}%0A` +
-        `Valor: R$ ${orderData.valor.toFixed(2).replace('.', ',')}%0A%0A` +
-        `Pagamento via PIX — Aguardando confirmação.`;
+    const msg = `*NOVO PEDIDO N&G EXPRESS* 🚚%0A%0A` +
+        `👤 *Cliente:* ${orderData.cliente.nome}%0A` +
+        `📱 *WhatsApp:* ${orderData.cliente.telefone}%0A` +
+        `🚗 *Veículo:* ${orderData.veiculo === 'moto' ? 'Moto 🏍️' : 'Carro 🚗'}%0A` +
+        `📍 *Coleta:* ${orderData.coleta.endereco}, ${orderData.coleta.numero}%0A` +
+        `📍 *Entrega:* ${orderData.entrega.endereco}, ${orderData.entrega.numero}%0A` +
+        `📦 *Produto:* ${orderData.categorias.join(', ') || 'Não especificado'}%0A` +
+        `💰 *Valor:* R$ ${orderData.valor.toFixed(2).replace('.', ',')}%0A%0A` +
+        `✅ Pagamento via PIX realizado — aguardando confirmação.`;
     window.open(`https://wa.me/5547999123260?text=${msg}`, '_blank');
     setTimeout(() => fecharModalPagamento(), 1500);
 }
@@ -995,16 +949,16 @@ function enviarComprovante() {
 // =============================================================
 // MODAIS
 // =============================================================
-window.abrirModalLogin   = () => { document.getElementById('login-modal').style.display = 'flex'; };
+window.abrirModalLogin    = () => { document.getElementById('login-modal').style.display    = 'flex'; };
 window.abrirModalCadastro = () => { fecharModal('login-modal'); document.getElementById('cadastro-modal').style.display = 'flex'; };
-window.fecharModal = (id) => { document.getElementById(id).style.display = 'none'; };
+window.fecharModal        = (id) => { document.getElementById(id).style.display = 'none'; };
 
 window.fazerLogin = async (e) => {
     e.preventDefault();
     const email = document.getElementById('login-email').value;
     const senha = document.getElementById('login-senha').value;
     try {
-        const res  = await fetch('/api/usuarios/login', {
+        const res  = await fetch(`${API_BASE_URL}/api/usuarios/login`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, senha })
         });
@@ -1017,9 +971,7 @@ window.fazerLogin = async (e) => {
         } else {
             showToast(data.message || 'E-mail ou senha inválidos', 'error');
         }
-    } catch (err) {
-        showToast('Não foi possível conectar ao servidor', 'error');
-    }
+    } catch { showToast('Não foi possível conectar ao servidor', 'error'); }
 };
 
 window.fazerCadastro = async (e) => {
@@ -1031,7 +983,7 @@ window.fazerCadastro = async (e) => {
     const conf     = document.getElementById('cadastro-confirmar-senha').value;
     if (senha !== conf) { showToast('As senhas não conferem', 'error'); return; }
     try {
-        const res  = await fetch('/api/usuarios/cadastrar', {
+        const res  = await fetch(`${API_BASE_URL}/api/usuarios/cadastrar`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nome, email, telefone, senha })
         });
@@ -1044,9 +996,12 @@ window.fazerCadastro = async (e) => {
         } else {
             showToast(data.message || 'Erro ao cadastrar', 'error');
         }
-    } catch (err) {
-        showToast('Não foi possível conectar ao servidor', 'error');
-    }
+    } catch { showToast('Não foi possível conectar ao servidor', 'error'); }
+};
+
+window.fazerLogout = () => {
+    sessionStorage.removeItem('usuario');
+    window.location.href = 'index.html';
 };
 
 // =============================================================
@@ -1057,13 +1012,12 @@ function inicializarAutocomplete() {
     let debounceT = null;
 
     $('.autocomplete-endereco').autocomplete({
-        minLength: 3,
-        delay: 0,
+        minLength: 3, delay: 0,
         source(req, resp) {
             clearTimeout(debounceT);
             debounceT = setTimeout(async () => {
                 try {
-                    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(req.term)}&format=json&addressdetails=1&countrycodes=br&limit=6&accept-language=pt-BR`;
+                    const url  = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(req.term)}&format=json&addressdetails=1&countrycodes=br&limit=6&accept-language=pt-BR`;
                     const res  = await fetch(url, { headers: { 'User-Agent': 'NGExpress/1.0' } });
                     const data = await res.json();
                     resp(data.map(item => {
@@ -1074,17 +1028,13 @@ function inicializarAutocomplete() {
                         const label  = [rua, bairro, cidade].filter(Boolean).join(', ');
                         return { label, value: label, lat: parseFloat(item.lat), lng: parseFloat(item.lon) };
                     }));
-                } catch (err) { resp([]); }
+                } catch { resp([]); }
             }, 350);
         },
         select(event, ui) {
             event.preventDefault();
             this.value = ui.item.label;
-            if (this.id === 'endereco-coleta') {
-                _geocodeCache[`gc_${ui.item.label}, Brasil`] = { lat: ui.item.lat, lng: ui.item.lng };
-            } else if (this.id === 'endereco-entrega') {
-                _geocodeCache[`gc_${ui.item.label}, Brasil`] = { lat: ui.item.lat, lng: ui.item.lng };
-            }
+            _geocodeCache[`gc_${ui.item.label}, Brasil`] = { lat: ui.item.lat, lng: ui.item.lng };
             return false;
         }
     });
@@ -1098,10 +1048,17 @@ function carregarDadosUsuario() {
     if (!raw) return;
     try {
         const u = JSON.parse(raw);
-        if (u.nome  && !document.getElementById('cliente-nome').value)     document.getElementById('cliente-nome').value     = u.nome;
-        if (u.email && !document.getElementById('cliente-email').value)    document.getElementById('cliente-email').value    = u.email;
-        if (u.telefone && !document.getElementById('cliente-telefone').value) document.getElementById('cliente-telefone').value = u.telefone;
-    } catch (e) {}
+        const el = (id) => document.getElementById(id);
+        if (u.nome      && !el('cliente-nome').value)      el('cliente-nome').value      = u.nome;
+        if (u.email     && !el('cliente-email').value)     el('cliente-email').value     = u.email;
+        if (u.telefone  && !el('cliente-telefone').value)  el('cliente-telefone').value  = u.telefone;
+
+        // Atualiza nav
+        document.querySelectorAll('.login-item').forEach(e => e.style.display = 'none');
+        document.querySelectorAll('.perfil-item').forEach(e => e.style.display = 'block');
+        const pn = document.getElementById('menu-perfil-nome');
+        if (pn) pn.textContent = u.nome.split(' ')[0];
+    } catch {}
 }
 
 // =============================================================
@@ -1138,7 +1095,9 @@ window.addEventListener('click', e => {
 });
 window.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-        document.querySelectorAll('.modal').forEach(m => { if (m.style.display !== 'none') fecharModal(m.id); });
+        document.querySelectorAll('.modal').forEach(m => {
+            if (m.style.display !== 'none') fecharModal(m.id);
+        });
     }
 });
 
@@ -1152,5 +1111,8 @@ inicializarAutocomplete();
 carregarDadosUsuario();
 updateSteps();
 </script>
+
+<!-- config.js carrega depois (sobrescreve API_BASE_URL se existir) -->
+<script src="js/config.js" onerror="console.warn('config.js não encontrado, usando URL padrão')"></script>
 </body>
 </html>
