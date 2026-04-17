@@ -1,19 +1,17 @@
-FROM php:8.2-cli
+FROM node:20-alpine
 
-RUN docker-php-ext-install pdo pdo_mysql
+# Diretório de trabalho
+WORKDIR /app
 
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# Copia package.json e instala dependências primeiro (cache do Docker)
+COPY package*.json ./
+RUN npm install --production
 
-WORKDIR /var/www/html
+# Copia o restante do projeto
+COPY . .
 
-COPY . /var/www/html/
+# Expõe a porta (Railway injeta $PORT automaticamente)
+EXPOSE 3000
 
-RUN chown -R www-data:www-data /var/www/html && \
-    chmod -R 755 /var/www/html
-
-RUN printf '#!/bin/bash\necho "Iniciando servidor PHP N&G Express..."\necho "Porta: ${PORT:-8080}"\nphp -S 0.0.0.0:${PORT:-8080} -t /var/www/html /var/www/html/router.php\n' > /start.sh && \
-    chmod +x /start.sh
-
-EXPOSE 8080
-
-CMD ["/start.sh"]
+# Comando de inicialização
+CMD ["node", "server.js"]
