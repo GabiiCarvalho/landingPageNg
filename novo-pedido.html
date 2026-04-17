@@ -336,8 +336,8 @@
                         <span><i class="bi bi-clock"></i> Tempo estimado</span>
                         <span id="tempo-final">—</span>
                     </div>
-                    <div class="resumo-total" id="valor-final">R$ 0,00</div>
-                    <div style="font-size:0.75rem;color:var(--text-tertiary);margin-top:8px;" id="valor-info">Calculando rota...</div>
+                    <div class="resumo-total" id="valor-final">Calculando...</div>
+                    <div style="font-size:0.75rem;color:var(--text-tertiary);margin-top:8px;" id="valor-info">Calculando distância e valor...</div>
                 </div>
                 <div class="navigation-buttons" style="margin-top:0;">
                     <button class="btn btn-danger" id="btn-cancelar"><i class="bi bi-x-circle"></i> Cancelar</button>
@@ -567,7 +567,7 @@ function finalizarPedido() {
     const endColeta = [orderData.coleta.endereco, orderData.coleta.numero].filter(Boolean).join(', ');
     const endEntrega = [orderData.entrega.endereco, orderData.entrega.numero].filter(Boolean).join(', ');
 
-    orderData.valor = calcularPreco(5.0, orderData.veiculo);
+    orderData.valor = 0;
 
     document.getElementById('wizard-container').style.display = 'none';
     document.getElementById('checkout-screen').style.display = 'block';
@@ -578,7 +578,9 @@ function finalizarPedido() {
     document.getElementById('resumo-entrega').textContent = endEntrega;
     document.getElementById('resumo-receptor').textContent = orderData.receptor.nome;
     document.getElementById('resumo-categorias').textContent = orderData.categorias.length ? orderData.categorias.join(', ') : 'Não especificado';
-    document.getElementById('valor-final').textContent = `R$ ${orderData.valor.toFixed(2).replace('.', ',')}`;
+    
+    document.getElementById('valor-final').textContent = 'Calculando...';
+    document.getElementById('valor-info').textContent = 'Calculando distância e valor...';
 
     calcularRotaBackground(endColeta + ', Brasil', endEntrega + ', Brasil');
 }
@@ -604,6 +606,17 @@ async function calcularRotaBackground(endColeta, endEntrega) {
 
         let distKm, duracaoMin, rotaOk = false;
         const hereKey = (typeof window.HERE_API_CONFIG !== 'undefined') ? window.HERE_API_CONFIG.apiKey : 'O8E5nipilq9UhVMoh75UR3RxE0J3zvC1DCXR-DZVL6I';
+        
+        const elDist = document.getElementById('distancia-final');
+        const elTempo = document.getElementById('tempo-final');
+        const elValor = document.getElementById('valor-final');
+        const elInfo = document.getElementById('valor-info');
+        
+        if (elDist) elDist.innerHTML = '<i class="bi bi-hourglass-split"></i> calculando...';
+        if (elTempo) elTempo.textContent = 'calculando...';
+        if (elValor) elValor.textContent = 'Calculando...';
+        if (elInfo) elInfo.textContent = 'Aguarde, calculando distância...';
+
         try {
             const url = `https://router.hereapi.com/v8/routes?transportMode=car&origin=${coordColeta.lat},${coordColeta.lng}&destination=${coordEntrega.lat},${coordEntrega.lng}&return=summary&apikey=${hereKey}`;
             const res = await fetch(url);
@@ -631,22 +644,24 @@ async function calcularRotaBackground(endColeta, endEntrega) {
         orderData.duracaoMin = duracaoMin;
         orderData.valor = calcularPreco(distKm, orderData.veiculo);
 
-        const elDist = document.getElementById('distancia-final');
-        const elTempo = document.getElementById('tempo-final');
-        const elValor = document.getElementById('valor-final');
-        const elInfo = document.getElementById('valor-info');
-
         if (elDist) elDist.textContent = `${distKm.toFixed(1)} km`;
         if (elTempo) elTempo.textContent = duracaoMin < 60 ? `${duracaoMin} min` : `${Math.floor(duracaoMin/60)}h ${duracaoMin%60}min`;
         if (elValor) elValor.textContent = `R$ ${orderData.valor.toFixed(2).replace('.', ',')}`;
-        if (elInfo) elInfo.textContent = rotaOk ? 'Valor calculado com base na rota real' : 'Valor estimado (linha reta × 1.35)';
+        if (elInfo) elInfo.textContent = rotaOk ? '✅ Valor calculado com base na rota real' : '⚠️ Valor estimado (rota não disponível)';
 
     } catch (err) {
         console.warn('Cálculo de rota falhou:', err.message);
         const elDist = document.getElementById('distancia-final');
+        const elTempo = document.getElementById('tempo-final');
+        const elValor = document.getElementById('valor-final');
         const elInfo = document.getElementById('valor-info');
+        
         if (elDist) elDist.innerHTML = '<i class="bi bi-question-circle"></i> Não disponível';
-        if (elInfo) elInfo.textContent = 'Valor mínimo aplicado';
+        if (elTempo) elTempo.textContent = 'Não disponível';
+        if (elValor) elValor.textContent = 'R$ 15,00';
+        if (elInfo) elInfo.textContent = '⚠️ Valor mínimo aplicado (rota não disponível)';
+        
+        orderData.valor = 15.00;
     }
 }
 
@@ -856,7 +871,6 @@ function fecharModalPagamento() {
     if (paymentData.intervalId) clearInterval(paymentData.intervalId);
 }
 
-// MENSAGEM COMPLETA DO WHATSAPP COM TODOS OS DADOS SOLICITADOS
 function enviarComprovante() {
     const quemRecebeTexto = orderData.receptor.isOutro 
         ? `👤 *Receptor:* ${orderData.receptor.nome}%0A📱 *Telefone do receptor:* ${orderData.receptor.telefone}%0A`
