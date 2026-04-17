@@ -448,6 +448,7 @@ let orderData = {
     duracaoMin:  null
 };
 let paymentData = { paymentId: null, intervalId: null };
+let pagamentoJaConfirmado = false;
 let _geocodeCache = {};
 
 function showToast(msg, tipo = 'success') {
@@ -827,7 +828,7 @@ function iniciarVerificacaoPagamento(paymentId, convId) {
             const res = await fetch(`${API_BASE_URL}/api/pix/status/${convId}`);
             if (res.ok) {
                 const data = await res.json();
-                if (data.status === 'approved') {
+                if (data.status === 'approved' && !pagamentoJaConfirmado) {
                     clearInterval(paymentData.intervalId);
                     pagamentoConfirmado();
                 }
@@ -843,13 +844,26 @@ function iniciarVerificacaoPagamento(paymentId, convId) {
 }
 
 function pagamentoConfirmado() {
+    if (pagamentoJaConfirmado) return;
+    pagamentoJaConfirmado = true;
+    
     document.getElementById('status-pagamento').innerHTML =
-        '<span style="color:var(--success-color);font-weight:600;"><i class="bi bi-check-circle-fill"></i> Pagamento confirmado! 🎉</span>';
-    showToast('Pagamento confirmado!', 'success');
-    setTimeout(() => {
-        alert('✅ Pagamento confirmado! Seu pedido foi registrado. Em breve nosso motoboy buscará a entrega.');
-        window.location.href = 'index.html';
-    }, 2000);
+        '<span style="color:var(--success-color);font-weight:600;"><i class="bi bi-check-circle-fill"></i> ✅ Pagamento confirmado! Clique em "Confirmar Pedido" abaixo para enviar para a empresa.</span>';
+    showToast('Pagamento confirmado! Agora confirme o pedido.', 'success');
+    
+    const btnEnviar = document.getElementById('btn-enviar-comprovante');
+    if (btnEnviar) {
+        btnEnviar.innerHTML = '<i class="bi bi-check-lg"></i> Confirmar Pedido para Empresa';
+        btnEnviar.style.background = '#075e54';
+        btnEnviar.style.fontWeight = 'bold';
+    }
+    
+    const btnPagar = document.getElementById('btn-pagar');
+    if (btnPagar) {
+        btnPagar.disabled = true;
+        btnPagar.style.opacity = '0.5';
+        btnPagar.style.cursor = 'not-allowed';
+    }
 }
 
 function copiarPix() {
@@ -910,7 +924,13 @@ function enviarComprovante() {
         `_Aguardando confirmação da empresa para iniciar a entrega._`;
 
     window.open(`https://wa.me/5547999123260?text=${msg}`, '_blank');
-    setTimeout(() => fecharModalPagamento(), 1500);
+    
+    showToast('Pedido enviado para a empresa! Em breve você receberá atualizações.', 'success');
+    
+    setTimeout(() => {
+        fecharModalPagamento();
+        showToast('Pedido registrado com sucesso! Obrigado pela preferência.', 'success');
+    }, 2000);
 }
 
 window.abrirModalLogin = () => { document.getElementById('login-modal').style.display = 'flex'; };
