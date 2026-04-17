@@ -885,51 +885,60 @@ function fecharModalPagamento() {
     if (paymentData.intervalId) clearInterval(paymentData.intervalId);
 }
 
+// MENSAGEM NO FORMATO EXATO SOLICITADO
 function enviarComprovante() {
+    const veiculoIcone = orderData.veiculo === 'moto' ? '🏍️' : '🚗';
+    const veiculoTexto = orderData.veiculo === 'moto' ? 'Moto' : 'Carro';
+    
     const quemRecebeTexto = orderData.receptor.isOutro 
-        ? `👤 *Receptor:* ${orderData.receptor.nome}%0A📱 *Telefone do receptor:* ${orderData.receptor.telefone}%0A`
-        : `👤 *Receptor:* O próprio solicitante%0A`;
+        ? `━━━━━━━━━━━━━━━━━━━━━\n👤 *RECEPTOR*\n━━━━━━━━━━━━━━━━━━━━━\n📛 *Nome:* ${orderData.receptor.nome.toUpperCase()}\n📱 *Telefone:* ${orderData.receptor.telefone.replace(/\D/g, '')}\n`
+        : `━━━━━━━━━━━━━━━━━━━━━\n👤 *RECEPTOR*\n━━━━━━━━━━━━━━━━━━━━━\n📛 *Nome:* ${orderData.cliente.nome.toUpperCase()}\n📱 *Telefone:* ${orderData.cliente.telefone.replace(/\D/g, '')}\n`;
+    
+    const endColeta = `${orderData.coleta.endereco}, ${orderData.coleta.numero}${orderData.coleta.complemento ? ' - ' + orderData.coleta.complemento : ''}`;
+    const endEntrega = `${orderData.entrega.endereco}, ${orderData.entrega.numero}${orderData.entrega.complemento ? ' - ' + orderData.entrega.complemento : ''}`;
+    
+    const msg = `🆕 *NOVO PEDIDO - N&G EXPRESS* 🆕\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━━\n` +
+        `📋 *DADOS DO CLIENTE*\n` +
+        `━━━━━━━━━━━━━━━━━━━━━\n` +
+        `👤 *Nome:* ${orderData.cliente.nome}\n` +
+        `📱 *Telefone:* ${orderData.cliente.telefone.replace(/\D/g, '')}\n` +
+        `📧 *E-mail:* ${orderData.cliente.email}\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━━\n` +
+        `🚚 *DADOS DA ENTREGA*\n` +
+        `━━━━━━━━━━━━━━━━━━━━━\n` +
+        `${veiculoIcone} *Veículo:* ${veiculoTexto}\n` +
+        `📏 *Distância:* ${orderData.distanciaKm ? orderData.distanciaKm.toFixed(1) : '0'} km\n` +
+        `⏱️ *Tempo estimado:* ${orderData.duracaoMin ? (orderData.duracaoMin < 60 ? orderData.duracaoMin + ' min' : Math.floor(orderData.duracaoMin/60) + 'h ' + (orderData.duracaoMin%60) + 'min') : '0 min'}\n` +
+        `💰 *Valor:* R$ ${orderData.valor.toFixed(2).replace('.', ',')}\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━━\n` +
+        `📍 *COLETA*\n` +
+        `━━━━━━━━━━━━━━━━━━━━━\n` +
+        `${endColeta}\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━━\n` +
+        `🎯 *ENTREGA*\n` +
+        `━━━━━━━━━━━━━━━━━━━━━\n` +
+        `${endEntrega}\n` +
+        `${quemRecebeTexto}\n` +
+        `━━━━━━━━━━━━━━━━━━━━━\n` +
+        `📦 *ENCOMENDA*\n` +
+        `━━━━━━━━━━━━━━━━━━━━━\n` +
+        `🏷️ *Tipo:* ${orderData.categorias.length ? orderData.categorias.join(', ') : 'Não especificado'}\n` +
+        `📝 *Descrição:* ${orderData.descricao || 'Não informada'}\n\n` +
+        `🔖 *Pedido:* #NG${Date.now().toString().slice(-6)}\n` +
+        `📅 *Data:* ${new Date().toLocaleString('pt-BR')}\n\n` +
+        `✅ *Por favor, confirme este pedido.*`;
 
-    const msg = `*🆕 NOVO PEDIDO - N&G EXPRESS* 🚚%0A%0A` +
-        `━━━━━━━━━━━━━━━━━━━━━%0A` +
-        `📋 *DADOS DO CLIENTE*%0A` +
-        `━━━━━━━━━━━━━━━━━━━━━%0A` +
-        `👤 *Nome:* ${orderData.cliente.nome}%0A` +
-        `📱 *WhatsApp:* ${orderData.cliente.telefone}%0A` +
-        `📧 *E-mail:* ${orderData.cliente.email}%0A%0A` +
-        `━━━━━━━━━━━━━━━━━━━━━%0A` +
-        `🚚 *DADOS DA ENTREGA*%0A` +
-        `━━━━━━━━━━━━━━━━━━━━━%0A` +
-        `🚗 *Veículo:* ${orderData.veiculo === 'moto' ? 'Moto 🏍️' : 'Carro 🚗'}%0A` +
-        `📍 *Coleta:* ${orderData.coleta.endereco}, ${orderData.coleta.numero}${orderData.coleta.complemento ? ' - ' + orderData.coleta.complemento : ''}%0A` +
-        `📍 *Entrega:* ${orderData.entrega.endereco}, ${orderData.entrega.numero}${orderData.entrega.complemento ? ' - ' + orderData.entrega.complemento : ''}%0A` +
-        `📏 *Distância:* ${orderData.distanciaKm ? orderData.distanciaKm.toFixed(1) + ' km' : 'Não calculada'}%0A` +
-        `⏱️ *Tempo estimado:* ${orderData.duracaoMin ? (orderData.duracaoMin < 60 ? orderData.duracaoMin + ' min' : Math.floor(orderData.duracaoMin/60) + 'h ' + (orderData.duracaoMin%60) + 'min') : 'Não calculado'}%0A%0A` +
-        `━━━━━━━━━━━━━━━━━━━━━%0A` +
-        `👤 *RECEPTOR*%0A` +
-        `━━━━━━━━━━━━━━━━━━━━━%0A` +
-        `${quemRecebeTexto}%0A` +
-        `━━━━━━━━━━━━━━━━━━━━━%0A` +
-        `📦 *ENCOMENDA*%0A` +
-        `━━━━━━━━━━━━━━━━━━━━━%0A` +
-        `🏷️ *Tipo de produto:* ${orderData.categorias.length ? orderData.categorias.join(', ') : 'Não especificado'}%0A` +
-        `📝 *Descrição:* ${orderData.descricao || 'Não informada'}%0A%0A` +
-        `━━━━━━━━━━━━━━━━━━━━━%0A` +
-        `💰 *VALOR TOTAL*%0A` +
-        `━━━━━━━━━━━━━━━━━━━━━%0A` +
-        `💵 *Valor pago:* R$ ${orderData.valor.toFixed(2).replace('.', ',')}%0A%0A` +
-        `✅ *Pagamento via PIX confirmado!*%0A` +
-        `🕐 *Data do pedido:* ${new Date().toLocaleString('pt-BR')}%0A%0A` +
-        `🔖 *Protocolo:* NG${Date.now().toString().slice(-8)}%0A%0A` +
-        `_Aguardando confirmação da empresa para iniciar a entrega._`;
-
-    window.open(`https://wa.me/5547999123260?text=${msg}`, '_blank');
+    window.open(`https://wa.me/5547999123260?text=${encodeURIComponent(msg)}`, '_blank');
     
     showToast('Pedido enviado para a empresa! Em breve você receberá atualizações.', 'success');
     
     setTimeout(() => {
         fecharModalPagamento();
         showToast('Pedido registrado com sucesso! Obrigado pela preferência.', 'success');
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 2000);
     }, 2000);
 }
 
