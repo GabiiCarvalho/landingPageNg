@@ -749,7 +749,7 @@ function gerarPayloadPIX(valor, descricao) {
 // Renderiza QR Code igual ao chatbot
 // =============================================================
 function renderizarQRCode(container, texto) {
-    container.innerHTML = '';   // limpa spinner ou conteúdo anterior
+    container.innerHTML = '';   
     if (typeof QRCode === 'undefined') {
         container.innerHTML = '<p style="color:red;font-size:0.8rem;">QRCode.js não carregou. Copie o código abaixo.</p>';
         return;
@@ -765,7 +765,7 @@ function renderizarQRCode(container, texto) {
 }
 
 // =============================================================
-// GERAR PAGAMENTO PIX — fluxo idêntico ao chatbot
+// GERAR PAGAMENTO PIX — fluxo 
 // =============================================================
 async function gerarPagamento() {
     if (!orderData.valor || orderData.valor <= 0) {
@@ -789,7 +789,7 @@ async function gerarPagamento() {
     const convId = `pedido_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
     try {
-        // 1) Tenta API do Railway (server.js completo do chatbot)
+        
         const response = await fetch(`${API_BASE_URL}/api/pix/criar`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
