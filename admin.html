@@ -447,8 +447,8 @@
     // CONFIGURAÇÕES
     // =============================================
     const API = (typeof window.API_BASE_URL !== 'undefined') 
-        ? window.API_BASE_URL 
-        : 'https://landingpageng-production.up.railway.app/api';
+    ? window.API_BASE_URL 
+    : 'https://landingpageng-production.up.railway.app/api';
     
     let adminData = null;
     let dadosCache = null;
@@ -503,44 +503,62 @@
     // LOGIN ADMIN (CORRIGIDO COM .php)
     // =============================================
     async function fazerLoginAdmin(event) {
-        event.preventDefault();
-        const email = document.getElementById('admin-email').value.trim();
-        const senha = document.getElementById('admin-senha').value;
-        const btn   = document.getElementById('btn-admin-login');
-        const erro  = document.getElementById('admin-login-erro');
+    event.preventDefault();
+    const email = document.getElementById('admin-email').value.trim();
+    const senha = document.getElementById('admin-senha').value;
+    const btn = document.getElementById('btn-admin-login');
+    const erro = document.getElementById('admin-login-erro');
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> Entrando...';
+    erro.style.display = 'none';
+    
+    try {
+        // Construir URL corretamente
+        const baseUrl = API.endsWith('/api') ? API : API + '/api';
+        const url = `${baseUrl}/admin/login.php`;
         
-        btn.disabled = true;
-        btn.innerHTML = '<span class="loading-spinner"></span> Entrando...';
-        erro.style.display = 'none';
+        console.log('Tentando login em:', url);
         
+        const r = await fetch(url, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ email, senha })
+        });
+        
+        // Verificar se a resposta é JSON válido
+        const text = await r.text();
+        console.log('Resposta bruta:', text);
+        
+        let d;
         try {
-            // URL CORRIGIDA - adicionado .php
-            const r = await fetch(`${API}/admin/login.php`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, senha })
-            });
-            
-            const d = await r.json();
-            
-            if (d.success && d.admin) {
-                adminData = d.admin;
-                sessionStorage.setItem('admin', JSON.stringify(adminData));
-                iniciarPainel();
-                mostrarToast(`Bem-vindo, ${adminData.nome}!`, 'success');
-            } else {
-                erro.textContent = d.message || 'E-mail ou senha inválidos';
-                erro.style.display = 'block';
-            }
+            d = JSON.parse(text);
         } catch (e) {
-            console.error('Erro no login admin:', e);
-            erro.textContent = 'Erro ao conectar com o servidor';
-            erro.style.display = 'block';
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Entrar';
+            console.error('Resposta não é JSON:', text);
+            throw new Error('Resposta inválida do servidor');
         }
+        
+        if (d.success && d.admin) {
+            adminData = d.admin;
+            sessionStorage.setItem('admin', JSON.stringify(adminData));
+            iniciarPainel();
+            mostrarToast(`Bem-vindo, ${adminData.nome}!`, 'success');
+        } else {
+            erro.textContent = d.message || 'E-mail ou senha inválidos';
+            erro.style.display = 'block';
+        }
+    } catch (e) {
+        console.error('Erro no login admin:', e);
+        erro.textContent = 'Erro ao conectar com o servidor: ' + e.message;
+        erro.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Entrar';
     }
+}
 
     async function fazerLogoutAdmin() {
         try { 
