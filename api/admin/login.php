@@ -2,10 +2,15 @@
 require_once __DIR__ . '/../../cors.php';
 header('Content-Type: application/json');
 require_once __DIR__ . '/../../config/database.php';
+
 session_start();
 
 $data = json_decode(file_get_contents('php://input'), true);
-if (!$data) { echo json_encode(['success' => false, 'message' => 'Dados inválidos']); exit; }
+
+if (!$data) {
+    echo json_encode(['success' => false, 'message' => 'Dados inválidos']);
+    exit;
+}
 
 $email = $data['email'] ?? '';
 $senha = $data['senha'] ?? '';

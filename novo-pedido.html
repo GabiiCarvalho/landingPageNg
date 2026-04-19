@@ -57,7 +57,7 @@
         .logo-text-main { font-size:1.4rem; font-weight:bolder; color:var(--text-primary); line-height:1.2; }
         .logo-text-main span { color:var(--primary-color); }
         .logo-text-sub { font-size:0.7rem; font-weight:400; color:var(--text-tertiary); letter-spacing:1px; }
-        .nav-links { display:flex; gap:2rem; align-items:center; flex-wrap:wrap; }
+        .nav-links { display:flex; gap:2rem; align-items:center; flex-wrap:wrap; list-style:none; }
         .nav-links a { color:#fff; text-decoration:none; transition:color 0.3s; font-size:0.95rem; font-weight:500; }
         .nav-links a:hover { color:var(--primary-color); }
 
@@ -100,7 +100,7 @@
         .radio-group label { display:flex; align-items:center; gap:10px; cursor:pointer; padding:12px 20px; background:var(--bg-tertiary); border-radius:var(--radius-full); border:1px solid var(--border-medium); }
 
         .navigation-buttons { display:flex; justify-content:space-between; padding:20px 30px; background:var(--bg-tertiary); border-top:1px solid var(--border-medium); }
-        .btn { display:inline-flex; align-items:center; justify-content:center; gap:12px; padding:12px 28px; background:var(--gradient-primary); color:white; border:none; border-radius:var(--radius-full); cursor:pointer; font-weight:600; font-size:0.95rem; transition:var(--transition-base); }
+        .btn { display:inline-flex; align-items:center; justify-content:center; gap:12px; padding:12px 28px; background:var(--gradient-primary); color:white; border:none; border-radius:var(--radius-full); cursor:pointer; font-weight:600; font-size:0.95rem; transition:var(--transition-base); text-decoration:none; }
         .btn-secondary { background:var(--bg-elevated); color:var(--text-primary); border:1px solid var(--border-medium); }
         .btn-danger { background:var(--danger-color); }
         .btn-success { background:var(--success-color); }
@@ -144,9 +144,14 @@
         .ui-menu-item { padding:0!important; border-bottom:1px solid var(--border-light); cursor:pointer; color:var(--text-primary); }
         .ui-menu-item:hover, .ui-state-focus { background:var(--gradient-glow)!important; }
 
+        .banner-usuario { background:linear-gradient(135deg, rgba(0,196,140,0.1), rgba(0,51,102,0.1)); border:1px solid var(--success-color); border-radius:var(--radius-md); padding:12px 16px; margin-bottom:20px; display:flex; align-items:center; gap:12px; }
+        .banner-usuario i { color:var(--success-color); font-size:1.2rem; }
+        .banner-usuario span { color:var(--text-secondary); font-size:0.9rem; }
+
         @media (max-width:768px) {
             .container { padding:0 16px; }
             .navbar { flex-direction:column; gap:15px; }
+            .nav-links { justify-content:center; }
             .step-label { display:none; }
             .step-content { padding:20px; }
             .endereco-row { grid-template-columns:1fr; gap:10px; }
@@ -422,6 +427,9 @@
 <div id="toast-container"></div>
 
 <script>
+// =============================================
+// CONFIGURAÇÕES E VARIÁVEIS GLOBAIS
+// =============================================
 const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined')
     ? window.API_BASE_URL.replace('/api', '')
     : 'https://landingpageng-production.up.railway.app';
@@ -451,6 +459,9 @@ let paymentData = { paymentId: null, intervalId: null };
 let pagamentoJaConfirmado = false;
 let _geocodeCache = {};
 
+// =============================================
+// FUNÇÕES UTILITÁRIAS
+// =============================================
 function showToast(msg, tipo = 'success') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
@@ -465,6 +476,186 @@ function showToast(msg, tipo = 'success') {
 }
 window.mostrarToast = showToast;
 
+function fecharModal(id) {
+    document.getElementById(id).style.display = 'none';
+}
+
+function abrirModalLogin() {
+    document.getElementById('login-modal').style.display = 'flex';
+}
+
+function abrirModalCadastro() {
+    fecharModal('login-modal');
+    document.getElementById('cadastro-modal').style.display = 'flex';
+}
+
+// =============================================
+// FUNÇÃO PARA PREENCHER DADOS DO SOLICITANTE
+// =============================================
+function preencherDadosSolicitante(usuario) {
+    if (!usuario) return;
+    
+    const campoNome = document.getElementById('cliente-nome');
+    const campoEmail = document.getElementById('cliente-email');
+    const campoTelefone = document.getElementById('cliente-telefone');
+    
+    if (campoNome && usuario.nome) campoNome.value = usuario.nome;
+    if (campoEmail && usuario.email) campoEmail.value = usuario.email;
+    if (campoTelefone && usuario.telefone) campoTelefone.value = usuario.telefone;
+    
+    // Atualizar também o orderData
+    if (typeof orderData !== 'undefined') {
+        orderData.cliente.nome = usuario.nome || '';
+        orderData.cliente.email = usuario.email || '';
+        orderData.cliente.telefone = usuario.telefone || '';
+    }
+    
+    // Mostrar banner de usuário logado
+    const bannerContainer = document.getElementById('banner-usuario-container');
+    if (bannerContainer) {
+        bannerContainer.innerHTML = `
+            <div class="banner-usuario">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>✅ Dados preenchidos automaticamente - Bem-vindo(a), ${usuario.nome.split(' ')[0]}!</span>
+            </div>
+        `;
+    }
+}
+
+// =============================================
+// FUNÇÕES DE LOGIN E CADASTRO (CORRIGIDAS)
+// =============================================
+window.fazerLogin = async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value;
+    const senha = document.getElementById('login-senha').value;
+    
+    try {
+        // URL CORRIGIDA - adicionado .php
+        const res = await fetch(`${API_BASE_URL}/api/usuarios/login.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, senha })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+            sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
+            carregarDadosUsuario();
+            fecharModal('login-modal');
+            showToast(`Bem-vindo, ${data.usuario.nome.split(' ')[0]}!`, 'success');
+            
+            // Preencher automaticamente os dados do solicitante
+            preencherDadosSolicitante(data.usuario);
+        } else {
+            showToast(data.message || 'E-mail ou senha inválidos', 'error');
+        }
+    } catch (error) {
+        console.error('Erro no login:', error);
+        showToast('Não foi possível conectar ao servidor', 'error');
+    }
+};
+
+window.fazerCadastro = async (e) => {
+    e.preventDefault();
+    const nome = document.getElementById('cadastro-nome').value;
+    const email = document.getElementById('cadastro-email').value;
+    const telefone = document.getElementById('cadastro-telefone').value;
+    const senha = document.getElementById('cadastro-senha').value;
+    const conf = document.getElementById('cadastro-confirmar-senha').value;
+    
+    if (senha !== conf) {
+        showToast('As senhas não conferem', 'error');
+        return;
+    }
+    
+    try {
+        // URL CORRIGIDA - adicionado .php
+        const res = await fetch(`${API_BASE_URL}/api/usuarios/cadastrar.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, email, telefone, senha })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+            sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
+            carregarDadosUsuario();
+            fecharModal('cadastro-modal');
+            showToast('Cadastro realizado!', 'success');
+            
+            // Preencher automaticamente os dados do solicitante
+            preencherDadosSolicitante(data.usuario);
+        } else {
+            showToast(data.message || 'Erro ao cadastrar', 'error');
+        }
+    } catch (error) {
+        console.error('Erro no cadastro:', error);
+        showToast('Não foi possível conectar ao servidor', 'error');
+    }
+};
+
+window.fazerLogout = () => {
+    sessionStorage.removeItem('usuario');
+    window.location.href = 'index.html';
+};
+
+// =============================================
+// FUNÇÃO CARREGAR DADOS DO USUÁRIO
+// =============================================
+function carregarDadosUsuario() {
+    const raw = sessionStorage.getItem('usuario');
+    if (!raw) return;
+    
+    try {
+        const u = JSON.parse(raw);
+        const el = (id) => document.getElementById(id);
+        
+        // Só preenche se o campo estiver vazio
+        if (u.nome && el('cliente-nome') && !el('cliente-nome').value) {
+            el('cliente-nome').value = u.nome;
+        }
+        if (u.email && el('cliente-email') && !el('cliente-email').value) {
+            el('cliente-email').value = u.email;
+        }
+        if (u.telefone && el('cliente-telefone') && !el('cliente-telefone').value) {
+            el('cliente-telefone').value = u.telefone;
+        }
+
+        // Atualizar menu
+        document.querySelectorAll('.login-item').forEach(e => e.style.display = 'none');
+        document.querySelectorAll('.perfil-item').forEach(e => e.style.display = 'block');
+        
+        const pn = document.getElementById('menu-perfil-nome');
+        if (pn) pn.textContent = u.nome.split(' ')[0];
+        
+        // Também atualiza o orderData
+        if (typeof orderData !== 'undefined') {
+            if (u.nome) orderData.cliente.nome = u.nome;
+            if (u.email) orderData.cliente.email = u.email;
+            if (u.telefone) orderData.cliente.telefone = u.telefone;
+        }
+        
+        // Mostrar banner de usuário logado
+        const bannerContainer = document.getElementById('banner-usuario-container');
+        if (bannerContainer) {
+            bannerContainer.innerHTML = `
+                <div class="banner-usuario">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>✅ Você está logado como ${u.nome.split(' ')[0]}. Seus dados serão preenchidos automaticamente.</span>
+                </div>
+            `;
+        }
+    } catch (e) {
+        console.error('Erro ao carregar dados do usuário:', e);
+    }
+}
+
+// =============================================
+// WIZARD E FORMULÁRIO
+// =============================================
 function updateSteps() {
     document.querySelectorAll('.step').forEach((step, idx) => {
         step.classList.toggle('completed', idx < currentStep);
@@ -885,7 +1076,6 @@ function fecharModalPagamento() {
     if (paymentData.intervalId) clearInterval(paymentData.intervalId);
 }
 
-// MENSAGEM NO FORMATO EXATO SOLICITADO
 function enviarComprovante() {
     const veiculoIcone = orderData.veiculo === 'moto' ? '🏍️' : '🚗';
     const veiculoTexto = orderData.veiculo === 'moto' ? 'Moto' : 'Carro';
@@ -942,61 +1132,6 @@ function enviarComprovante() {
     }, 2000);
 }
 
-window.abrirModalLogin = () => { document.getElementById('login-modal').style.display = 'flex'; };
-window.abrirModalCadastro = () => { fecharModal('login-modal'); document.getElementById('cadastro-modal').style.display = 'flex'; };
-window.fecharModal = (id) => { document.getElementById(id).style.display = 'none'; };
-
-window.fazerLogin = async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('login-email').value;
-    const senha = document.getElementById('login-senha').value;
-    try {
-        const res = await fetch(`${API_BASE_URL}/api/usuarios/login`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, senha })
-        });
-        const data = await res.json();
-        if (data.success) {
-            sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
-            carregarDadosUsuario();
-            fecharModal('login-modal');
-            showToast(`Bem-vindo, ${data.usuario.nome.split(' ')[0]}!`, 'success');
-        } else {
-            showToast(data.message || 'E-mail ou senha inválidos', 'error');
-        }
-    } catch { showToast('Não foi possível conectar ao servidor', 'error'); }
-};
-
-window.fazerCadastro = async (e) => {
-    e.preventDefault();
-    const nome = document.getElementById('cadastro-nome').value;
-    const email = document.getElementById('cadastro-email').value;
-    const telefone = document.getElementById('cadastro-telefone').value;
-    const senha = document.getElementById('cadastro-senha').value;
-    const conf = document.getElementById('cadastro-confirmar-senha').value;
-    if (senha !== conf) { showToast('As senhas não conferem', 'error'); return; }
-    try {
-        const res = await fetch(`${API_BASE_URL}/api/usuarios/cadastrar`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nome, email, telefone, senha })
-        });
-        const data = await res.json();
-        if (data.success) {
-            sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
-            carregarDadosUsuario();
-            fecharModal('cadastro-modal');
-            showToast('Cadastro realizado!', 'success');
-        } else {
-            showToast(data.message || 'Erro ao cadastrar', 'error');
-        }
-    } catch { showToast('Não foi possível conectar ao servidor', 'error'); }
-};
-
-window.fazerLogout = () => {
-    sessionStorage.removeItem('usuario');
-    window.location.href = 'index.html';
-};
-
 function inicializarAutocomplete() {
     if (typeof jQuery === 'undefined' || !jQuery.fn.autocomplete) return;
     let debounceT = null;
@@ -1030,23 +1165,6 @@ function inicializarAutocomplete() {
     });
 }
 
-function carregarDadosUsuario() {
-    const raw = sessionStorage.getItem('usuario');
-    if (!raw) return;
-    try {
-        const u = JSON.parse(raw);
-        const el = (id) => document.getElementById(id);
-        if (u.nome && !el('cliente-nome').value) el('cliente-nome').value = u.nome;
-        if (u.email && !el('cliente-email').value) el('cliente-email').value = u.email;
-        if (u.telefone && !el('cliente-telefone').value) el('cliente-telefone').value = u.telefone;
-
-        document.querySelectorAll('.login-item').forEach(e => e.style.display = 'none');
-        document.querySelectorAll('.perfil-item').forEach(e => e.style.display = 'block');
-        const pn = document.getElementById('menu-perfil-nome');
-        if (pn) pn.textContent = u.nome.split(' ')[0];
-    } catch {}
-}
-
 function mascaraTelefone(input) {
     if (!input) return;
     input.addEventListener('input', function () {
@@ -1058,6 +1176,9 @@ function mascaraTelefone(input) {
     });
 }
 
+// =============================================
+// INICIALIZAÇÃO
+// =============================================
 document.getElementById('btn-avancar').addEventListener('click', avancar);
 document.getElementById('btn-voltar').addEventListener('click', voltar);
 document.getElementById('btn-cancelar').addEventListener('click', cancelarPedido);
@@ -1087,6 +1208,11 @@ mascaraTelefone(document.getElementById('cadastro-telefone'));
 inicializarAutocomplete();
 carregarDadosUsuario();
 updateSteps();
+
+// Expor funções globalmente
+window.abrirModalLogin = abrirModalLogin;
+window.abrirModalCadastro = abrirModalCadastro;
+window.fecharModal = fecharModal;
 </script>
 
 <script src="js/config.js" onerror="console.warn('config.js não encontrado, usando URL padrão')"></script>
