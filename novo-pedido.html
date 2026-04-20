@@ -1100,7 +1100,7 @@ function enviarComprovante() {
         `${veiculoIcone} *Veículo:* ${veiculoTexto}\n` +
         `📏 *Distância:* ${orderData.distanciaKm ? orderData.distanciaKm.toFixed(1) : '0'} km\n` +
         `⏱️ *Tempo estimado:* ${orderData.duracaoMin ? (orderData.duracaoMin < 60 ? orderData.duracaoMin + ' min' : Math.floor(orderData.duracaoMin/60) + 'h ' + (orderData.duracaoMin%60) + 'min') : '0 min'}\n` +
-        `💰 *Valor:* R$ ${orderData.valor.toFixed(2).replace('.', ',')}\n\n` +
+        `💰 *Valor Pago:* R$ ${orderData.valor.toFixed(2).replace('.', ',')}\n\n` +
         `━━━━━━━━━━━━━━━━━━━━━\n` +
         `📍 *COLETA*\n` +
         `━━━━━━━━━━━━━━━━━━━━━\n` +

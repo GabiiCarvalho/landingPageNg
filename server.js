@@ -1,4 +1,3 @@
-// server.js — N&G Express (unificado: chatbot + site)
 require('dotenv').config();
 
 const express  = require('express');
@@ -8,7 +7,7 @@ const fs       = require('fs');
 const https    = require('https');
 const { v4: uuid } = require('uuid');
 const initSql  = require('sql.js');
-const bcrypt   = require('bcryptjs'); // npm i bcryptjs
+const bcrypt   = require('bcryptjs');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -22,7 +21,6 @@ console.log('🔑 MP_ACCESS_TOKEN:',    MP_ACCESS_TOKEN   ? '✅ OK' : '❌ NÃO
 console.log('🔐 MP_WEBHOOK_SECRET:',  MP_WEBHOOK_SECRET ? '✅ OK' : '❌ NÃO CONFIGURADO');
 console.log('🌐 BASE_URL:', BASE_URL);
 
-// Valida URL de webhook (Mercado Pago exige HTTPS em produção)
 function isValidWebhookUrl(url) {
     if (!url) return false;
     try {
@@ -39,12 +37,11 @@ console.log('🔗 Webhook URL:', WEBHOOK_URL || '❌ NÃO CONFIGURADO (fallback 
 app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '25mb' }));
 
-// ── Arquivos estáticos ──────────────────────────────────────
-// Serve tanto /public (chatbot) quanto raiz (site)
+// Serve arquivos estáticos
 const publicDir = path.join(__dirname, 'public');
 const rootDir   = __dirname;
 if (fs.existsSync(publicDir)) app.use(express.static(publicDir));
-app.use(express.static(rootDir, { index: false })); // evita conflito com /
+app.use(express.static(rootDir, { index: false }));
 
 const PRICING_CONFIG = {
     valorMinimoAte7km: { moto: 15.00, carro: 50.00 },
@@ -53,8 +50,19 @@ const PRICING_CONFIG = {
     valorMaximo:       500.00
 };
 
+// ============================================================
+// MIDDLEWARE: Remove .php das URLs
+// /api/usuarios/login.php → /api/usuarios/login
+// ============================================================
+app.use((req, res, next) => {
+    if (req.path.endsWith('.php')) {
+        req.url = req.url.replace(/\.php(\?|$)/, (_, q) => q || '');
+    }
+    next();
+});
+
 // =============================================================
-// BANCO DE DADOS (sql.js — SQLite em memória + arquivo)
+// BANCO DE DADOS
 // =============================================================
 let DB;
 
@@ -93,7 +101,7 @@ async function abrirBanco() {
         atualizada INTEGER
     )`);
 
-    // Tabela usuários (site)
+    // Tabela usuários — campo senha_hash (compatível com bcrypt)
     DB.run(`CREATE TABLE IF NOT EXISTS usuarios (
         id TEXT PRIMARY KEY,
         nome TEXT NOT NULL,
@@ -103,7 +111,16 @@ async function abrirBanco() {
         criado INTEGER
     )`);
 
-    // Tabela histórico de orçamentos (site)
+    // Tabela admins — NOVA, necessária para o painel admin
+    DB.run(`CREATE TABLE IF NOT EXISTS admins (
+        id TEXT PRIMARY KEY,
+        nome TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        senha_hash TEXT NOT NULL,
+        criado INTEGER
+    )`);
+
+    // Tabela histórico de orçamentos
     DB.run(`CREATE TABLE IF NOT EXISTS historico_orcamentos (
         id TEXT PRIMARY KEY,
         usuario_id TEXT,
@@ -116,6 +133,7 @@ async function abrirBanco() {
         payment_id TEXT DEFAULT '',
         status_pagamento TEXT DEFAULT 'pendente',
         data_pagamento INTEGER,
+        data_orcamento INTEGER,
         criado INTEGER
     )`);
 
@@ -131,6 +149,7 @@ async function abrirBanco() {
         `ALTER TABLE conversas ADD COLUMN atendente TEXT DEFAULT ''`,
         `ALTER TABLE conversas ADD COLUMN pix TEXT DEFAULT ''`,
         `ALTER TABLE conversas ADD COLUMN ultima TEXT DEFAULT ''`,
+        `ALTER TABLE historico_orcamentos ADD COLUMN data_orcamento INTEGER`,
     ];
     for (const sql of migracoes) {
         try { DB.run(sql); } catch (_) {}
@@ -153,6 +172,16 @@ async function abrirBanco() {
         dados TEXT DEFAULT '',
         ts INTEGER
     )`);
+
+    // Cria admin padrão se não existir
+    const adminExiste = um('SELECT id FROM admins WHERE email=?', ['admin@ngexpress.com.br']);
+    if (!adminExiste) {
+        const hash = await bcrypt.hash('admin123', 10);
+        rodar('INSERT INTO admins (id,nome,email,senha_hash,criado) VALUES (?,?,?,?,?)',
+            [uuid(), 'Administrador', 'admin@ngexpress.com.br', hash, agora()]);
+        console.log('✅ Admin padrão criado: admin@ngexpress.com.br / admin123');
+        console.log('⚠️  IMPORTANTE: Troque a senha do admin após o primeiro acesso!');
+    }
 
     salvar();
     console.log('✅ Banco pronto:', DB_FILE);
@@ -215,7 +244,7 @@ function montarConversa(c) {
 }
 
 // =============================================================
-// MERCADO PAGO — requisições HTTPS nativas (sem SDK)
+// MERCADO PAGO
 // =============================================================
 function mpRequest(method, endpoint, body) {
     return new Promise((resolve, reject) => {
@@ -246,7 +275,7 @@ function mpRequest(method, endpoint, body) {
 }
 
 // =============================================================
-// ROTAS — PÁGINAS
+// ROTAS — PÁGINAS HTML
 // =============================================================
 app.get('/', (req, res) => {
     const f = fs.existsSync(path.join(publicDir, 'chatbot-cliente.html'))
@@ -259,79 +288,179 @@ app.get('/painel', (req, res) => {
     const f = fs.existsSync(path.join(publicDir, 'painel-atendentes.html'))
         ? path.join(publicDir, 'painel-atendentes.html')
         : path.join(rootDir, 'painel-atendentes.html');
-    res.sendFile(f);
+    if (fs.existsSync(f)) res.sendFile(f);
+    else res.status(404).send('Painel não encontrado');
 });
 
 // =============================================================
-// ROTAS — USUÁRIOS (site)
+// ROTAS — USUÁRIOS
+// (aceita /api/usuarios/login E /api/usuarios/login.php)
 // =============================================================
 
 /** POST /api/usuarios/cadastrar */
 app.post('/api/usuarios/cadastrar', async (req, res) => {
-    const { nome, email, telefone, senha } = req.body;
-    if (!nome || !email || !senha) {
-        return res.status(400).json({ success: false, message: 'Nome, e-mail e senha são obrigatórios' });
-    }
-    if (senha.length < 6) {
-        return res.status(400).json({ success: false, message: 'Senha deve ter no mínimo 6 caracteres' });
-    }
-    const existe = um('SELECT id FROM usuarios WHERE email=?', [email.toLowerCase()]);
-    if (existe) {
-        return res.status(409).json({ success: false, message: 'E-mail já cadastrado' });
-    }
+    const { nome, email, telefone, senha } = req.body || {};
+    if (!nome || !email || !senha)
+        return res.status(400).json({ success: false, message: 'Todos os campos são obrigatórios' });
+    if (senha.length < 6)
+        return res.status(400).json({ success: false, message: 'A senha deve ter no mínimo 6 caracteres' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+        return res.status(400).json({ success: false, message: 'E-mail inválido' });
+    if (!telefone || !String(telefone).trim())
+        return res.status(400).json({ success: false, message: 'Todos os campos são obrigatórios' });
+
+    const existe = um('SELECT id FROM usuarios WHERE email=?', [email.toLowerCase().trim()]);
+    if (existe) return res.status(409).json({ success: false, message: 'E-mail já cadastrado' });
+
     try {
         const hash = await bcrypt.hash(senha, 10);
         const id   = uuid();
         rodar('INSERT INTO usuarios (id,nome,email,telefone,senha_hash,criado) VALUES (?,?,?,?,?,?)',
-            [id, nome.trim(), email.toLowerCase().trim(), (telefone || '').trim(), hash, agora()]);
-        const usuario = { id, nome: nome.trim(), email: email.toLowerCase().trim(), telefone: (telefone || '').trim() };
-        res.json({ success: true, usuario });
+            [id, nome.trim(), email.toLowerCase().trim(), String(telefone).trim(), hash, agora()]);
+        res.json({ success: true, message: 'Cadastro realizado com sucesso!',
+            usuario: { id, nome: nome.trim(), email: email.toLowerCase().trim(), telefone: String(telefone).trim() } });
     } catch (err) {
         console.error('Erro cadastro:', err.message);
-        res.status(500).json({ success: false, message: 'Erro interno ao cadastrar' });
+        res.status(500).json({ success: false, message: 'Erro no servidor: ' + err.message });
     }
 });
 
 /** POST /api/usuarios/login */
 app.post('/api/usuarios/login', async (req, res) => {
-    const { email, senha } = req.body;
-    if (!email || !senha) {
-        return res.status(400).json({ success: false, message: 'E-mail e senha obrigatórios' });
-    }
+    const { email, senha } = req.body || {};
+    if (!email || !senha)
+        return res.status(400).json({ success: false, message: 'E-mail e senha são obrigatórios' });
+
     const u = um('SELECT * FROM usuarios WHERE email=?', [email.toLowerCase().trim()]);
-    if (!u) {
-        return res.status(401).json({ success: false, message: 'E-mail ou senha incorretos' });
-    }
+    if (!u) return res.status(401).json({ success: false, message: 'E-mail ou senha inválidos' });
+
     try {
         const ok = await bcrypt.compare(senha, u.senha_hash);
-        if (!ok) return res.status(401).json({ success: false, message: 'E-mail ou senha incorretos' });
-        const usuario = { id: u.id, nome: u.nome, email: u.email, telefone: u.telefone };
-        res.json({ success: true, usuario });
+        if (!ok) return res.status(401).json({ success: false, message: 'E-mail ou senha inválidos' });
+        res.json({ success: true,
+            usuario: { id: u.id, nome: u.nome, email: u.email, telefone: u.telefone } });
     } catch (err) {
-        res.status(500).json({ success: false, message: 'Erro interno no login' });
+        res.status(500).json({ success: false, message: 'Erro no banco de dados' });
     }
 });
+
+/** POST /api/usuarios/logout */
+app.post('/api/usuarios/logout', (req, res) => res.json({ success: true }));
+
+/** GET /api/usuarios/verificar */
+app.get('/api/usuarios/verificar', (req, res) => res.json({ logado: false }));
+
+/** POST /api/usuarios/atualizar */
+app.post('/api/usuarios/atualizar', async (req, res) => {
+    const { id, nome, telefone, senha } = req.body || {};
+    if (!id) return res.status(400).json({ success: false, message: 'id obrigatório' });
+    const campos = [], vals = [];
+    if (nome)     { campos.push('nome=?');     vals.push(nome.trim()); }
+    if (telefone) { campos.push('telefone=?'); vals.push(String(telefone).trim()); }
+    if (senha && senha.length >= 6) {
+        const hash = await bcrypt.hash(senha, 10);
+        campos.push('senha_hash=?'); vals.push(hash);
+    }
+    if (campos.length) { vals.push(id); rodar(`UPDATE usuarios SET ${campos.join(',')} WHERE id=?`, vals); }
+    res.json({ success: true });
+});
+
+// =============================================================
+// ROTAS — ADMIN
+// (aceita /api/admin/login E /api/admin/login.php)
+// =============================================================
+
+/** POST /api/admin/login */
+app.post('/api/admin/login', async (req, res) => {
+    const { email, senha } = req.body || {};
+    if (!email || !senha)
+        return res.status(400).json({ success: false, message: 'E-mail e senha são obrigatórios' });
+
+    const a = um('SELECT * FROM admins WHERE email=?', [email.toLowerCase().trim()]);
+    if (!a) return res.status(401).json({ success: false, message: 'E-mail ou senha inválidos' });
+
+    try {
+        const ok = await bcrypt.compare(senha, a.senha_hash);
+        if (!ok) return res.status(401).json({ success: false, message: 'E-mail ou senha inválidos' });
+        res.json({ success: true, admin: { id: a.id, nome: a.nome, email: a.email } });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Erro: ' + err.message });
+    }
+});
+
+/** POST /api/admin/logout */
+app.post('/api/admin/logout', (req, res) => res.json({ success: true }));
+
+/** GET /api/admin/dados */
+app.get('/api/admin/dados', (req, res) => {
+    const aid = req.query.aid;
+    if (!aid) return res.status(401).json({ success: false, message: 'Acesso negado' });
+    const a = um('SELECT id FROM admins WHERE id=?', [aid]);
+    if (!a) return res.status(401).json({ success: false, message: 'Acesso negado' });
+
+    const totalCorridasRow = um('SELECT COUNT(*) AS c FROM historico_orcamentos');
+    const totalFaturadoRow = um('SELECT COALESCE(SUM(valor_total),0) AS s FROM historico_orcamentos');
+    const totalUsuariosRow = um('SELECT COUNT(*) AS c FROM usuarios');
+    const porVeiculo       = todos('SELECT tipo_veiculo, COUNT(*) AS total FROM historico_orcamentos GROUP BY tipo_veiculo');
+    const corridas         = todos(`
+        SELECT h.id, h.numero_pedido, h.tipo_veiculo,
+               h.endereco_coleta, h.endereco_entrega,
+               h.valor_total, h.status_pagamento AS status, h.data_orcamento,
+               u.nome AS usuario_nome, u.email AS usuario_email, u.telefone AS usuario_telefone
+        FROM historico_orcamentos h
+        LEFT JOIN usuarios u ON u.id = h.usuario_id
+        ORDER BY COALESCE(h.data_orcamento, h.criado) DESC LIMIT 50
+    `);
+    const topUsuarios = todos(`
+        SELECT u.nome, u.email, u.telefone,
+               COUNT(h.id) AS total_pedidos,
+               COALESCE(SUM(h.valor_total), 0) AS total_gasto
+        FROM usuarios u
+        LEFT JOIN historico_orcamentos h ON h.usuario_id = u.id
+        GROUP BY u.id ORDER BY total_pedidos DESC LIMIT 10
+    `);
+
+    res.json({
+        success:       true,
+        totalCorridas: parseInt(totalCorridasRow?.c || 0),
+        totalFaturado: parseFloat(totalFaturadoRow?.s || 0),
+        totalUsuarios: parseInt(totalUsuariosRow?.c || 0),
+        porVeiculo,
+        corridas: corridas.map(c => ({
+            ...c,
+            data_orcamento: c.data_orcamento ? new Date(c.data_orcamento).toISOString() : null
+        })),
+        topUsuarios,
+    });
+});
+
+// =============================================================
+// ROTAS — ORÇAMENTOS
+// =============================================================
 
 /** POST /api/orcamentos/salvar */
 app.post('/api/orcamentos/salvar', (req, res) => {
-    const {
-        usuario_id, numero_pedido, tipo_veiculo,
-        endereco_coleta, endereco_entrega, descricao, valor_total
-    } = req.body;
+    const { usuario_id, numero_pedido, tipo_veiculo, endereco_coleta, endereco_entrega, descricao, valor_total } = req.body || {};
     if (!usuario_id) return res.status(400).json({ success: false, message: 'usuario_id obrigatório' });
-    const id = uuid();
-    rodar(
-        `INSERT INTO historico_orcamentos
-         (id,usuario_id,numero_pedido,tipo_veiculo,endereco_coleta,endereco_entrega,descricao,valor_total,criado)
-         VALUES (?,?,?,?,?,?,?,?,?)`,
+    const id = uuid(), now = agora();
+    rodar(`INSERT INTO historico_orcamentos
+        (id,usuario_id,numero_pedido,tipo_veiculo,endereco_coleta,endereco_entrega,descricao,valor_total,data_orcamento,criado)
+        VALUES (?,?,?,?,?,?,?,?,?,?)`,
         [id, usuario_id, numero_pedido || `NG${Date.now().toString().slice(-6)}`,
          tipo_veiculo || 'moto', endereco_coleta || '', endereco_entrega || '',
-         descricao || '', parseFloat(valor_total) || 0, agora()]
-    );
+         descricao || '', parseFloat(valor_total) || 0, now, now]);
     res.json({ success: true, id });
 });
 
-/** GET /api/orcamentos/:usuarioId */
+/** GET /api/orcamentos/historico?uid=XXX */
+app.get('/api/orcamentos/historico', (req, res) => {
+    const uid = req.query.uid;
+    if (!uid) return res.status(400).json({ success: false, message: 'uid obrigatório' });
+    const orcamentos = todos('SELECT * FROM historico_orcamentos WHERE usuario_id=? ORDER BY criado DESC', [uid]);
+    res.json({ success: true, orcamentos });
+});
+
+/** GET /api/orcamentos/:usuarioId (rota legada) */
 app.get('/api/orcamentos/:usuarioId', (req, res) => {
     const orcamentos = todos(
         'SELECT * FROM historico_orcamentos WHERE usuario_id=? ORDER BY criado DESC',
@@ -341,18 +470,16 @@ app.get('/api/orcamentos/:usuarioId', (req, res) => {
 });
 
 // =============================================================
-// ROTAS — PIX  (idêntico ao chatbot que funciona)
+// ROTAS — PIX
 // =============================================================
 
 /** POST /api/pix/criar */
 app.post('/api/pix/criar', async (req, res) => {
-    const { convId, valor, nomeCliente, descricao } = req.body;
-    if (!valor || parseFloat(valor) <= 0) {
+    const { convId, valor, nomeCliente, descricao } = req.body || {};
+    if (!valor || parseFloat(valor) <= 0)
         return res.status(400).json({ success: false, erro: 'Valor inválido' });
-    }
-    if (!MP_ACCESS_TOKEN) {
+    if (!MP_ACCESS_TOKEN)
         return res.status(503).json({ success: false, erro: 'MP_ACCESS_TOKEN não configurado' });
-    }
 
     const convIdFinal = convId || `pedido_${Date.now()}`;
 
@@ -375,7 +502,6 @@ app.post('/api/pix/criar', async (req, res) => {
         let resp = await mpRequest('POST', '/v1/payments', mpBody);
         console.log('📥 Resposta MP:', resp.status);
 
-        // Retry sem webhook se der erro 4020
         if (resp.status !== 201 && resp.body?.cause?.[0]?.code === 4020 && mpBody.notification_url) {
             console.log('⚠️ Erro webhook 4020, tentando sem notification_url...');
             delete mpBody.notification_url;
@@ -388,16 +514,12 @@ app.post('/api/pix/criar', async (req, res) => {
         }
 
         const pix = resp.body.point_of_interaction?.transaction_data;
-        if (!pix?.qr_code) {
+        if (!pix?.qr_code)
             return res.status(502).json({ success: false, erro: 'MP não retornou QR Code PIX' });
-        }
 
-        // Salva na tabela de conversas (compatível com chatbot)
         const convExiste = um('SELECT id FROM conversas WHERE id=?', [convIdFinal]);
-        if (!convExiste) {
-            rodar('INSERT INTO conversas (id,criada,atualizada) VALUES (?,?,?)',
-                [convIdFinal, agora(), agora()]);
-        }
+        if (!convExiste)
+            rodar('INSERT INTO conversas (id,criada,atualizada) VALUES (?,?,?)', [convIdFinal, agora(), agora()]);
         rodar('UPDATE conversas SET mp_payment_id=?,pix=?,aguard_pag=1,valor=?,atualizada=? WHERE id=?',
             [String(resp.body.id), pix.qr_code, parseFloat(valor), agora(), convIdFinal]);
 
@@ -409,7 +531,6 @@ app.post('/api/pix/criar', async (req, res) => {
             qrCodeBase64: pix.qr_code_base64 || null,
             valor:        resp.body.transaction_amount,
         });
-
     } catch (err) {
         console.error('❌ Erro criar PIX:', err.message);
         res.status(500).json({ success: false, erro: err.message });
@@ -424,23 +545,19 @@ app.get('/api/pix/status/:convId', async (req, res) => {
     try {
         const resp = await mpRequest('GET', `/v1/payments/${c.mp_payment_id}`, null);
         if (resp.status !== 200) return res.status(502).json({ erro: 'Erro ao consultar MP' });
-        // Se aprovado, marca no banco automaticamente
-        if (resp.body.status === 'approved' && !c.pag_conf) {
-            rodar('UPDATE conversas SET pag_conf=1,aguard_pag=0,atualizada=? WHERE id=?',
-                [agora(), req.params.convId]);
-        }
+        if (resp.body.status === 'approved' && !c.pag_conf)
+            rodar('UPDATE conversas SET pag_conf=1,aguard_pag=0,atualizada=? WHERE id=?', [agora(), req.params.convId]);
         res.json({ status: resp.body.status, valor: resp.body.transaction_amount });
     } catch (err) {
         res.status(500).json({ erro: err.message });
     }
 });
 
-/** POST /api/pix/webhook — Mercado Pago notifica aqui */
+/** POST /api/pix/webhook */
 app.post('/api/pix/webhook', async (req, res) => {
-    res.sendStatus(200); // responde imediatamente ao MP
-
+    res.sendStatus(200);
     try {
-        const { type, data } = req.body;
+        const { type, data } = req.body || {};
         console.log('📨 Webhook recebido:', type, data?.id);
         if (type !== 'payment' || !data?.id) return;
 
@@ -453,21 +570,17 @@ app.post('/api/pix/webhook', async (req, res) => {
         const c = um('SELECT * FROM conversas WHERE id=?', [convId]);
         if (!c || c.pag_conf) return;
 
-        rodar('UPDATE conversas SET pag_conf=1,aguard_pag=0,lida=0,atualizada=? WHERE id=?',
-            [agora(), convId]);
+        rodar('UPDATE conversas SET pag_conf=1,aguard_pag=0,lida=0,atualizada=? WHERE id=?', [agora(), convId]);
 
         const msgId = uuid(), ts = agora();
         rodar('INSERT INTO msgs (id,conv_id,tipo,texto,atendente,ts) VALUES (?,?,?,?,?,?)',
             [msgId, convId, 'atendente',
              '✅ Pagamento confirmado! Sua entrega foi registrada. Em breve nosso motoboy irá buscar seu pedido. 🚚',
              'Sistema', ts]);
-        rodar('UPDATE conversas SET ultima=?,atualizada=? WHERE id=?',
-            ['✅ Pagamento confirmado!', ts, convId]);
+        rodar('UPDATE conversas SET ultima=?,atualizada=? WHERE id=?', ['✅ Pagamento confirmado!', ts, convId]);
 
-        // Atualiza histórico de orçamentos se existir
         rodar(`UPDATE historico_orcamentos SET status_pagamento='aprovado', data_pagamento=?, payment_id=?
-               WHERE numero_pedido=? OR usuario_id IN (SELECT id FROM usuarios WHERE email='cliente@ngexpress.com.br')`,
-            [agora(), String(data.id), convId]);
+               WHERE numero_pedido=?`, [agora(), String(data.id), convId]);
 
         console.log(`✅ PIX aprovado via webhook — conversa ${convId}`);
     } catch (err) {
@@ -480,7 +593,7 @@ app.post('/api/pix/webhook', async (req, res) => {
 // =============================================================
 
 app.post('/api/conv', (req, res) => {
-    const { id } = req.body;
+    const { id } = req.body || {};
     if (!id) return res.status(400).json({ erro: 'id obrigatório' });
     let c = um('SELECT * FROM conversas WHERE id=?', [id]);
     if (!c) {
@@ -503,7 +616,7 @@ app.get('/api/conv/:id', (req, res) => {
 
 app.patch('/api/conv/:id', (req, res) => {
     const { id } = req.params;
-    const b = req.body;
+    const b = req.body || {};
     const c = um('SELECT * FROM conversas WHERE id=?', [id]);
     if (!c) return res.status(404).json({ erro: 'não encontrada' });
 
@@ -561,32 +674,27 @@ app.get('/api/historico', (req, res) => {
     res.json(match ? montarConversa(match) : null);
 });
 
-// ── Mensagens ───────────────────────────────────────────────
 app.post('/api/conv/:id/msgs', (req, res) => {
-    const { tipo, texto, atendente } = req.body;
+    const { tipo, texto, atendente } = req.body || {};
     const conv_id = req.params.id;
     const id = uuid(), ts = agora();
     rodar('INSERT INTO msgs (id,conv_id,tipo,texto,atendente,ts) VALUES (?,?,?,?,?,?)',
         [id, conv_id, tipo, texto || '', atendente || '', ts]);
     if (tipo === 'user') {
-        rodar('UPDATE conversas SET ultima=?,atualizada=?,lida=0 WHERE id=?',
-            [(texto || '').substring(0, 80), ts, conv_id]);
+        rodar('UPDATE conversas SET ultima=?,atualizada=?,lida=0 WHERE id=?', [(texto || '').substring(0, 80), ts, conv_id]);
     } else {
-        rodar('UPDATE conversas SET ultima=?,atualizada=? WHERE id=?',
-            [(texto || '').substring(0, 80), ts, conv_id]);
+        rodar('UPDATE conversas SET ultima=?,atualizada=? WHERE id=?', [(texto || '').substring(0, 80), ts, conv_id]);
     }
     res.json({ id, ts, ok: true });
 });
 
-// ── Arquivos ────────────────────────────────────────────────
 app.post('/api/conv/:id/arq', (req, res) => {
-    const { nome, mime, dados } = req.body;
+    const { nome, mime, dados } = req.body || {};
     if (!dados) return res.status(400).json({ erro: 'dados obrigatório' });
     const id = uuid(), ts = agora();
     rodar('INSERT INTO arquivos (id,conv_id,nome,mime,dados,ts) VALUES (?,?,?,?,?,?)',
         [id, req.params.id, nome || 'arquivo', mime || 'image/jpeg', dados, ts]);
-    rodar('UPDATE conversas SET ultima=?,atualizada=?,lida=0 WHERE id=?',
-        ['📎 Comprovante enviado', ts, req.params.id]);
+    rodar('UPDATE conversas SET ultima=?,atualizada=?,lida=0 WHERE id=?', ['📎 Comprovante enviado', ts, req.params.id]);
     res.json({ id, ts, ok: true });
 });
 
@@ -594,23 +702,24 @@ app.get('/api/conv/:id/arq', (req, res) => {
     res.json(todos('SELECT * FROM arquivos WHERE conv_id=? ORDER BY ts ASC', [req.params.id]));
 });
 
-// ── Calcular preço ──────────────────────────────────────────
 app.post('/api/calcular', (req, res) => {
-    const { distancia, veiculo } = req.body;
+    const { distancia, veiculo } = req.body || {};
     const preco = calcularPreco(parseFloat(distancia) || 0, veiculo || 'moto');
     res.json({ distancia: parseFloat(distancia) || 0, valor: preco, veiculo: veiculo || 'moto' });
 });
 
-// ── Health Check ────────────────────────────────────────────
+// ── Health Check ─────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
     const nc = um('SELECT COUNT(*) as c FROM conversas');
     const nm = um('SELECT COUNT(*) as c FROM msgs');
     const nu = um('SELECT COUNT(*) as c FROM usuarios');
+    const na = um('SELECT COUNT(*) as c FROM admins');
     res.json({
         ok:         true,
         conversas:  nc?.c || 0,
         mensagens:  nm?.c || 0,
         usuarios:   nu?.c || 0,
+        admins:     na?.c || 0,
         mp:         MP_ACCESS_TOKEN ? 'configurado' : 'ausente',
         webhook:    WEBHOOK_URL || 'não configurado',
         banco:      fs.existsSync(DB_FILE) ? `${(fs.statSync(DB_FILE).size / 1024).toFixed(1)} KB` : 'novo'
@@ -625,13 +734,17 @@ abrirBanco().then(() => {
         console.log('');
         console.log('🚚 N&G Express — servidor unificado');
         console.log(`📡 http://localhost:${PORT}`);
-        console.log(`👤 Chatbot:    http://localhost:${PORT}/`);
-        console.log(`👩‍💼 Painel:     http://localhost:${PORT}/painel`);
-        console.log(`🌐 Site:       http://localhost:${PORT}/index.html`);
-        console.log(`💳 PIX criar:  POST http://localhost:${PORT}/api/pix/criar`);
-        console.log(`🔍 PIX status: GET  http://localhost:${PORT}/api/pix/status/:convId`);
-        console.log(`🔗 Webhook:    ${WEBHOOK_URL || '❌ não configurado'}`);
-        console.log(`🏥 Health:     http://localhost:${PORT}/api/health`);
+        console.log(`👤 Chatbot:      http://localhost:${PORT}/`);
+        console.log(`👩‍💼 Painel:       http://localhost:${PORT}/painel`);
+        console.log(`🌐 Site:         http://localhost:${PORT}/index.html`);
+        console.log(`💳 PIX criar:    POST /api/pix/criar`);
+        console.log(`🔍 PIX status:   GET  /api/pix/status/:convId`);
+        console.log(`👑 Admin login:  POST /api/admin/login`);
+        console.log(`📋 Admin dados:  GET  /api/admin/dados?aid=ID`);
+        console.log(`🔗 Webhook:      ${WEBHOOK_URL || '❌ não configurado'}`);
+        console.log(`🏥 Health:       http://localhost:${PORT}/api/health`);
+        console.log('');
+        console.log('💡 Admin padrão: admin@ngexpress.com.br / admin123');
         console.log('');
     });
 }).catch(err => {
