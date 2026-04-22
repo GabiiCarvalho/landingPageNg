@@ -500,7 +500,7 @@
     }
 
     // =============================================
-    // LOGIN ADMIN (CORRIGIDO COM .php)
+    // LOGIN ADMIN 
     // =============================================
     async function fazerLoginAdmin(event) {
     event.preventDefault();
@@ -508,31 +508,29 @@
     const senha = document.getElementById('admin-senha').value;
     const btn = document.getElementById('btn-admin-login');
     const erro = document.getElementById('admin-login-erro');
-    
+
     btn.disabled = true;
     btn.innerHTML = '<span class="loading-spinner"></span> Entrando...';
     erro.style.display = 'none';
-    
+
     try {
-        // Construir URL corretamente
         const baseUrl = API.endsWith('/api') ? API : API + '/api';
         const url = `${baseUrl}/admin/login.php`;
-        
+
         console.log('Tentando login em:', url);
-        
+
         const r = await fetch(url, {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
             body: JSON.stringify({ email, senha })
         });
-        
-        // Verificar se a resposta é JSON válido
+
         const text = await r.text();
-        console.log('Resposta bruta:', text);
-        
+        console.log('Resposta bruta do login:', text);
+
         let d;
         try {
             d = JSON.parse(text);
@@ -540,7 +538,7 @@
             console.error('Resposta não é JSON:', text);
             throw new Error('Resposta inválida do servidor');
         }
-        
+
         if (d.success && d.admin) {
             adminData = d.admin;
             sessionStorage.setItem('admin', JSON.stringify(adminData));
@@ -580,24 +578,35 @@
     }
 
     // =============================================
-    // CARREGAR DADOS (CORRIGIDO COM .php)
+    // CARREGAR DADOS 
     // =============================================
     async function carregarDados() {
+    try {
+        const url = `${API}/admin/dados.php?aid=${adminData.id}`;
+        console.log('Carregando dados de:', url);
+
+        const r = await fetch(url);
+        const text = await r.text();
+        console.log('Resposta bruta de dados:', text);
+
+        let d;
         try {
-            // URL CORRIGIDA - adicionado .php
-            const r = await fetch(`${API}/admin/dados.php?aid=${adminData.id}`);
-            const d = await r.json();
-            
-            if (!d.success) throw new Error(d.message || 'Erro ao carregar dados');
-            dadosCache = d;
-            renderizarResumo(d);
-            renderizarCorridas(d.corridas);
-            renderizarUsuarios(d.topUsuarios);
+            d = JSON.parse(text);
         } catch (e) {
-            console.error('Erro ao carregar dados:', e);
-            mostrarToast('Erro ao carregar dados: ' + e.message, 'error');
+            console.error('Resposta não é JSON:', text);
+            throw new Error('Resposta inválida do servidor (não é JSON)');
         }
+
+        if (!d.success) throw new Error(d.message || 'Erro ao carregar dados');
+        dadosCache = d;
+        renderizarResumo(d);
+        renderizarCorridas(d.corridas);
+        renderizarUsuarios(d.topUsuarios);
+    } catch (e) {
+        console.error('Erro ao carregar dados:', e);
+        mostrarToast('Erro ao carregar dados: ' + e.message, 'error');
     }
+}
 
     function renderizarResumo(d) {
         document.getElementById('admin-stat-corridas').textContent = d.totalCorridas || 0;

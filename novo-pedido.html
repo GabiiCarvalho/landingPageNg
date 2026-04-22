@@ -531,7 +531,6 @@ window.fazerLogin = async (e) => {
     const senha = document.getElementById('login-senha').value;
     
     try {
-        // URL CORRIGIDA - adicionado .php
         const res = await fetch(`${API_BASE_URL}/api/usuarios/login.php`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -611,18 +610,14 @@ function carregarDadosUsuario() {
     
     try {
         const u = JSON.parse(raw);
-        const el = (id) => document.getElementById(id);
+        const elNome = document.getElementById('cliente-nome');
+        const elEmail = document.getElementById('cliente-email');
+        const elTelefone = document.getElementById('cliente-telefone');
         
-        // Só preenche se o campo estiver vazio
-        if (u.nome && el('cliente-nome') && !el('cliente-nome').value) {
-            el('cliente-nome').value = u.nome;
-        }
-        if (u.email && el('cliente-email') && !el('cliente-email').value) {
-            el('cliente-email').value = u.email;
-        }
-        if (u.telefone && el('cliente-telefone') && !el('cliente-telefone').value) {
-            el('cliente-telefone').value = u.telefone;
-        }
+        // Sempre preenche com os dados do usuário logado (sobrescreve se necessário)
+        if (u.nome && elNome) elNome.value = u.nome;
+        if (u.email && elEmail) elEmail.value = u.email;
+        if (u.telefone && elTelefone) elTelefone.value = u.telefone;
 
         // Atualizar menu
         document.querySelectorAll('.login-item').forEach(e => e.style.display = 'none');
@@ -631,7 +626,7 @@ function carregarDadosUsuario() {
         const pn = document.getElementById('menu-perfil-nome');
         if (pn) pn.textContent = u.nome.split(' ')[0];
         
-        // Também atualiza o orderData
+        // Atualizar orderData
         if (typeof orderData !== 'undefined') {
             if (u.nome) orderData.cliente.nome = u.nome;
             if (u.email) orderData.cliente.email = u.email;
@@ -644,7 +639,7 @@ function carregarDadosUsuario() {
             bannerContainer.innerHTML = `
                 <div class="banner-usuario">
                     <i class="bi bi-check-circle-fill"></i>
-                    <span>✅ Você está logado como ${u.nome.split(' ')[0]}. Seus dados serão preenchidos automaticamente.</span>
+                    <span>✅ Você está logado como ${u.nome.split(' ')[0]}. Seus dados foram preenchidos automaticamente.</span>
                 </div>
             `;
         }
