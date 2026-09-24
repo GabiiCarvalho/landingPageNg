@@ -3,3 +3,7 @@
 node_modules/
 vendor/
 *.server.js
+
+# Banco de dados local
+#.db
+banco.db

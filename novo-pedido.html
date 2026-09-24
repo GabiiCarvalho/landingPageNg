@@ -6,10 +6,11 @@
     <title>N&G EXPRESS - Solicitar Entrega</title>
     <link rel="icon" href="img/logoAba.png" type="image/x-icon">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
+    <!-- ✅ config.js PRIMEIRO -->
+    <script src="js/config.js"></script>
+
     <style>
         :root {
             --primary-color: #FF6B00;
@@ -114,6 +115,73 @@
         .resumo-item span:last-child { font-weight:500; text-align:right; }
         .resumo-total { font-size:1.8rem; font-weight:800; color:var(--primary-color); margin-top:16px; text-align:center; }
 
+        /* 🗺️ MAPA dentro do resumo */
+        #mapa-wrapper {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-light);
+        }
+        #mapa-wrapper .map-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        #mapa-wrapper .map-header i {
+            color: var(--primary-color);
+            font-size: 1rem;
+        }
+        #mapa-container {
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border-medium);
+            background: var(--bg-elevated);
+        }
+        #map {
+            width: 100%;
+            height: 320px;
+        }
+        @media (max-width: 768px) {
+            #map { height: 240px; }
+        }
+
+        /* Google Places Autocomplete */
+        .pac-container {
+            background: var(--bg-elevated) !important;
+            border: 1px solid var(--border-medium) !important;
+            border-radius: var(--radius-md) !important;
+            box-shadow: var(--shadow-lg) !important;
+            z-index: 9999 !important;
+            font-family: 'Inter', sans-serif !important;
+            margin-top: 4px !important;
+            padding: 4px 0 !important;
+        }
+        .pac-item {
+            padding: 10px 16px !important;
+            border-top: 1px solid var(--border-light) !important;
+            color: var(--text-primary) !important;
+            cursor: pointer !important;
+            font-size: 0.9rem !important;
+            line-height: 1.4 !important;
+        }
+        .pac-item:first-child { border-top: none !important; }
+        .pac-item:hover, .pac-item-selected {
+            background: rgba(255,107,0,0.12) !important;
+        }
+        .pac-item-query {
+            color: var(--primary-color) !important;
+            font-weight: 600 !important;
+        }
+        .pac-matched { color: var(--primary-light) !important; }
+        .pac-icon { display: none !important; }
+        .pac-item-query .pac-matched { color: var(--primary-light) !important; }
+        .pac-logo::after { display: none !important; }
+
         .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:var(--blur-md); z-index:2000; justify-content:center; align-items:center; }
         .modal-content { background:var(--bg-secondary); border-radius:var(--radius-xl); max-width:460px; width:90%; padding:30px; border:1px solid var(--border-heavy); animation:modalFadeIn 0.4s ease; max-height:90vh; overflow-y:auto; }
         @keyframes modalFadeIn { from{opacity:0;transform:translateY(-30px) scale(0.95)} to{opacity:1;transform:translateY(0) scale(1)} }
@@ -139,10 +207,6 @@
         .toast-success { border-color:var(--success-color); color:var(--success-color); }
         .toast-error { border-color:var(--danger-color); color:var(--danger-color); }
         .toast-warning { border-color:var(--warning-color); color:var(--warning-color); }
-
-        .ui-autocomplete { background:var(--bg-elevated)!important; border:1px solid var(--border-medium)!important; border-radius:var(--radius-md)!important; max-height:280px; overflow-y:auto; z-index:2000!important; box-shadow:var(--shadow-lg)!important; }
-        .ui-menu-item { padding:0!important; border-bottom:1px solid var(--border-light); cursor:pointer; color:var(--text-primary); }
-        .ui-menu-item:hover, .ui-state-focus { background:var(--gradient-glow)!important; }
 
         .banner-usuario { background:linear-gradient(135deg, rgba(0,196,140,0.1), rgba(0,51,102,0.1)); border:1px solid var(--success-color); border-radius:var(--radius-md); padding:12px 16px; margin-bottom:20px; display:flex; align-items:center; gap:12px; }
         .banner-usuario i { color:var(--success-color); font-size:1.2rem; }
@@ -245,7 +309,7 @@
                 <div class="form-group">
                     <label>Endereço *</label>
                     <div class="endereco-row">
-                        <input type="text" id="endereco-coleta" class="autocomplete-endereco" placeholder="Rua, Bairro, Cidade">
+                        <input type="text" id="endereco-coleta" class="autocomplete-endereco" placeholder="Digite o endereço...">
                         <input type="text" id="numero-coleta" placeholder="Nº">
                     </div>
                 </div>
@@ -262,7 +326,7 @@
                 <div class="form-group">
                     <label>Endereço *</label>
                     <div class="endereco-row">
-                        <input type="text" id="endereco-entrega" class="autocomplete-endereco" placeholder="Rua, Bairro, Cidade">
+                        <input type="text" id="endereco-entrega" class="autocomplete-endereco" placeholder="Digite o endereço...">
                         <input type="text" id="numero-entrega" placeholder="Nº">
                     </div>
                 </div>
@@ -323,6 +387,7 @@
                 <h3 style="margin-bottom:20px;display:flex;align-items:center;gap:12px;font-size:1.3rem;">
                     <i class="bi bi-calculator" style="color:var(--primary-color);"></i> Resumo da Entrega
                 </h3>
+
                 <div class="resumo-card">
                     <div class="resumo-item"><span><i class="bi bi-person"></i> Cliente</span><span id="resumo-nome">-</span></div>
                     <div class="resumo-item"><span><i class="bi bi-telephone"></i> Telefone</span><span id="resumo-telefone">-</span></div>
@@ -332,6 +397,7 @@
                     <div class="resumo-item"><span><i class="bi bi-person-check"></i> Receptor</span><span id="resumo-receptor">-</span></div>
                     <div class="resumo-item"><span><i class="bi bi-box"></i> Categoria</span><span id="resumo-categorias">-</span></div>
                 </div>
+
                 <div class="resumo-card" style="text-align:center;">
                     <div class="resumo-item">
                         <span><i class="bi bi-map"></i> Distância estimada</span>
@@ -341,9 +407,25 @@
                         <span><i class="bi bi-clock"></i> Tempo estimado</span>
                         <span id="tempo-final">—</span>
                     </div>
+                    <div class="resumo-item">
+                        <span><i class="bi bi-building"></i> Cidade destino</span>
+                        <span id="cidade-destino">—</span>
+                    </div>
                     <div class="resumo-total" id="valor-final">Calculando...</div>
                     <div style="font-size:0.75rem;color:var(--text-tertiary);margin-top:8px;" id="valor-info">Calculando distância e valor...</div>
+
+                    <!-- 🗺️ MAPA AQUI — dentro do card de resumo -->
+                    <div id="mapa-wrapper" style="display:none;">
+                        <div class="map-header">
+                            <i class="bi bi-map-fill"></i>
+                            <span>Rota da entrega</span>
+                        </div>
+                        <div id="mapa-container">
+                            <div id="map"></div>
+                        </div>
+                    </div>
                 </div>
+
                 <div class="navigation-buttons" style="margin-top:0;">
                     <button class="btn btn-danger" id="btn-cancelar"><i class="bi bi-x-circle"></i> Cancelar</button>
                     <button class="btn btn-success" id="btn-pagar"><i class="bi bi-qr-code"></i> Pagar via PIX</button>
@@ -426,41 +508,86 @@
 </div>
 <div id="toast-container"></div>
 
+<!-- =============================================
+     GOOGLE MAPS LOADER
+     ============================================= -->
+<script>
+(function loadGoogleMaps() {
+    const cfg = window.GOOGLE_MAPS_CONFIG;
+    if (!cfg?.apiKey || cfg.apiKey === 'COLE_SUA_CHAVE_AQUI') {
+        console.warn('⚠️ Configure GOOGLE_MAPS_CONFIG.apiKey em js/config.js');
+        return;
+    }
+    const s = document.createElement('script');
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${cfg.apiKey}`
+          + `&libraries=${cfg.libraries || 'places'}`
+          + `&language=${cfg.language || 'pt-BR'}`
+          + `&region=${cfg.region || 'BR'}`
+          + `&callback=__googleMapsReady`;
+    s.async = true;
+    s.defer = true;
+    document.head.appendChild(s);
+})();
+
+window.__googleMapsReady = function () {
+    window.__googleMapsLoaded = true;
+    window.dispatchEvent(new Event('google-maps-ready'));
+    console.log('✅ Google Maps SDK carregado');
+};
+</script>
+
 <script>
 // =============================================
-// CONFIGURAÇÕES E VARIÁVEIS GLOBAIS
+// CONFIGURAÇÕES
 // =============================================
 const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined')
-    ? window.API_BASE_URL.replace('/api', '')
-    : 'https://landingpageng-production.up.railway.app';
+    ? window.API_BASE_URL
+    : 'https://landingpageng-production.up.railway.app/api';
 
-const PRICING_CONFIG = {
-    valorMinimoAte7km: { moto: 15.00, carro: 50.00 },
-    valorPorKm:        { moto: 1.80,  carro: 3.50  },
-    limiteKmMinimo: 7,
-    valorMaximo:   500.00
+// Regras de preço (espelham o config.js como fallback)
+const PRICING = window.OPERATION_CONFIG || {
+    cidadePrincipal: 'Balneário Camboriú',
+    dentroCidadePrincipal: { valorBase: 15.00, limiteKmBase: 7, valorPorKmExcedente: 2.30 },
+    foraCidadePrincipal:   { valorPorKm: 2.30, valorMinimo: 15.00 }
 };
 
+const WHATSAPP_NUMERO = (window.WHATSAPP_CONFIG?.numero) || '5547999123260';
+
+// =============================================
+// ESTADO GLOBAL
+// =============================================
 let currentStep = 0;
 const totalSteps = 6;
+
 let orderData = {
     cliente:    { nome:'', telefone:'', email:'' },
     veiculo:    'moto',
-    coleta:     { endereco:'', numero:'', complemento:'' },
-    entrega:    { endereco:'', numero:'', complemento:'' },
+    coleta:     { endereco:'', numero:'', complemento:'', coords: null, enderecoCompleto: '' },
+    entrega:    { endereco:'', numero:'', complemento:'', coords: null, enderecoCompleto: '' },
     receptor:   { nome:'', telefone:'', isOutro:false },
     categorias: [],
     descricao:  '',
     valor:      0,
     distanciaKm: null,
-    duracaoMin:  null
+    duracaoMin:  null,
+    cidadeDestino: null,
+    mapsLink:   null
 };
+
 let paymentData = { paymentId: null, intervalId: null };
 let pagamentoJaConfirmado = false;
-let _geocodeCache = {};
+
+// Google Maps
+let gMap = null;
+let gDirections = null;
+let gRenderer = null;
+let gGeocoder = null;
+let gMarkers = { coleta: null, entrega: null };
+let gMapsPronto = false;
+const _cidadeCache = {};
 
 // =============================================
-// FUNÇÕES UTILITÁRIAS
+// UTILITÁRIOS
 // =============================================
 function showToast(msg, tipo = 'success') {
     const container = document.getElementById('toast-container');
@@ -489,63 +616,56 @@ function abrirModalCadastro() {
     document.getElementById('cadastro-modal').style.display = 'flex';
 }
 
+function normalizarTexto(txt) {
+    return (txt || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
 // =============================================
-// FUNÇÃO PARA PREENCHER DADOS DO SOLICITANTE
+// DADOS DO USUÁRIO
 // =============================================
 function preencherDadosSolicitante(usuario) {
     if (!usuario) return;
-    
-    const campoNome = document.getElementById('cliente-nome');
-    const campoEmail = document.getElementById('cliente-email');
-    const campoTelefone = document.getElementById('cliente-telefone');
-    
-    if (campoNome && usuario.nome) campoNome.value = usuario.nome;
-    if (campoEmail && usuario.email) campoEmail.value = usuario.email;
-    if (campoTelefone && usuario.telefone) campoTelefone.value = usuario.telefone;
-    
-    // Atualizar também o orderData
-    if (typeof orderData !== 'undefined') {
-        orderData.cliente.nome = usuario.nome || '';
-        orderData.cliente.email = usuario.email || '';
-        orderData.cliente.telefone = usuario.telefone || '';
-    }
-    
-    // Mostrar banner de usuário logado
+    const cn = document.getElementById('cliente-nome');
+    const ce = document.getElementById('cliente-email');
+    const ct = document.getElementById('cliente-telefone');
+
+    if (cn && usuario.nome)     cn.value = usuario.nome;
+    if (ce && usuario.email)    ce.value = usuario.email;
+    if (ct && usuario.telefone) ct.value = usuario.telefone;
+
+    orderData.cliente.nome = usuario.nome || '';
+    orderData.cliente.email = usuario.email || '';
+    orderData.cliente.telefone = usuario.telefone || '';
+
     const bannerContainer = document.getElementById('banner-usuario-container');
     if (bannerContainer) {
         bannerContainer.innerHTML = `
             <div class="banner-usuario">
                 <i class="bi bi-check-circle-fill"></i>
-                <span>✅ Dados preenchidos automaticamente - Bem-vindo(a), ${usuario.nome.split(' ')[0]}!</span>
+                <span>✅ Dados preenchidos automaticamente - Bem-vindo(a), ${(usuario.nome || '').split(' ')[0]}!</span>
             </div>
         `;
     }
 }
 
 // =============================================
-// FUNÇÕES DE LOGIN E CADASTRO (CORRIGIDAS)
+// LOGIN / CADASTRO / LOGOUT
 // =============================================
 window.fazerLogin = async (e) => {
     e.preventDefault();
     const email = document.getElementById('login-email').value;
     const senha = document.getElementById('login-senha').value;
-    
     try {
-        const res = await fetch(`${API_BASE_URL}/api/usuarios/login.php`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        const res = await fetch(`${API_BASE_URL}/usuarios/login.php`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, senha })
         });
-        
         const data = await res.json();
-        
         if (data.success) {
             sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
             carregarDadosUsuario();
             fecharModal('login-modal');
             showToast(`Bem-vindo, ${data.usuario.nome.split(' ')[0]}!`, 'success');
-            
-            // Preencher automaticamente os dados do solicitante
             preencherDadosSolicitante(data.usuario);
         } else {
             showToast(data.message || 'E-mail ou senha inválidos', 'error');
@@ -563,29 +683,18 @@ window.fazerCadastro = async (e) => {
     const telefone = document.getElementById('cadastro-telefone').value;
     const senha = document.getElementById('cadastro-senha').value;
     const conf = document.getElementById('cadastro-confirmar-senha').value;
-    
-    if (senha !== conf) {
-        showToast('As senhas não conferem', 'error');
-        return;
-    }
-    
+    if (senha !== conf) { showToast('As senhas não conferem', 'error'); return; }
     try {
-        // URL CORRIGIDA - adicionado .php
-        const res = await fetch(`${API_BASE_URL}/api/usuarios/cadastrar.php`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        const res = await fetch(`${API_BASE_URL}/usuarios/cadastrar.php`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nome, email, telefone, senha })
         });
-        
         const data = await res.json();
-        
         if (data.success) {
             sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
             carregarDadosUsuario();
             fecharModal('cadastro-modal');
             showToast('Cadastro realizado!', 'success');
-            
-            // Preencher automaticamente os dados do solicitante
             preencherDadosSolicitante(data.usuario);
         } else {
             showToast(data.message || 'Erro ao cadastrar', 'error');
@@ -601,55 +710,23 @@ window.fazerLogout = () => {
     window.location.href = 'index.html';
 };
 
-// =============================================
-// FUNÇÃO CARREGAR DADOS DO USUÁRIO
-// =============================================
 function carregarDadosUsuario() {
     const raw = sessionStorage.getItem('usuario');
     if (!raw) return;
-    
     try {
         const u = JSON.parse(raw);
-        const elNome = document.getElementById('cliente-nome');
-        const elEmail = document.getElementById('cliente-email');
-        const elTelefone = document.getElementById('cliente-telefone');
-        
-        // Sempre preenche com os dados do usuário logado (sobrescreve se necessário)
-        if (u.nome && elNome) elNome.value = u.nome;
-        if (u.email && elEmail) elEmail.value = u.email;
-        if (u.telefone && elTelefone) elTelefone.value = u.telefone;
-
-        // Atualizar menu
+        preencherDadosSolicitante(u);
         document.querySelectorAll('.login-item').forEach(e => e.style.display = 'none');
         document.querySelectorAll('.perfil-item').forEach(e => e.style.display = 'block');
-        
         const pn = document.getElementById('menu-perfil-nome');
         if (pn) pn.textContent = u.nome.split(' ')[0];
-        
-        // Atualizar orderData
-        if (typeof orderData !== 'undefined') {
-            if (u.nome) orderData.cliente.nome = u.nome;
-            if (u.email) orderData.cliente.email = u.email;
-            if (u.telefone) orderData.cliente.telefone = u.telefone;
-        }
-        
-        // Mostrar banner de usuário logado
-        const bannerContainer = document.getElementById('banner-usuario-container');
-        if (bannerContainer) {
-            bannerContainer.innerHTML = `
-                <div class="banner-usuario">
-                    <i class="bi bi-check-circle-fill"></i>
-                    <span>✅ Você está logado como ${u.nome.split(' ')[0]}. Seus dados foram preenchidos automaticamente.</span>
-                </div>
-            `;
-        }
     } catch (e) {
         console.error('Erro ao carregar dados do usuário:', e);
     }
 }
 
 // =============================================
-// WIZARD E FORMULÁRIO
+// WIZARD
 // =============================================
 function updateSteps() {
     document.querySelectorAll('.step').forEach((step, idx) => {
@@ -657,7 +734,7 @@ function updateSteps() {
         step.classList.toggle('active', idx === currentStep);
     });
     document.querySelectorAll('.step-content').forEach((c, i) => {
-        c.classList.toggle('active', i === currentStep);
+        if (i < totalSteps) c.classList.toggle('active', i === currentStep);
     });
     document.getElementById('btn-voltar').disabled = currentStep === 0;
     const btnAv = document.getElementById('btn-avancar');
@@ -734,28 +811,228 @@ function voltar() {
     if (currentStep > 0) { currentStep--; updateSteps(); }
 }
 
-function calcularPreco(distanciaKm, veiculo) {
-    const c = PRICING_CONFIG;
-    let preco = distanciaKm <= c.limiteKmMinimo
-        ? c.valorMinimoAte7km[veiculo]
-        : distanciaKm * c.valorPorKm[veiculo];
-    return Math.min(Math.round(preco * 100) / 100, c.valorMaximo);
+// =============================================
+// GOOGLE MAPS — INICIALIZAÇÃO
+// =============================================
+function quandoGoogleMapsCarregar(cb) {
+    if (window.__googleMapsLoaded) { cb(); return; }
+    window.addEventListener('google-maps-ready', cb, { once: true });
+    let t = 0;
+    const check = setInterval(() => {
+        t++;
+        if (window.__googleMapsLoaded) { clearInterval(check); cb(); }
+        else if (t > 33) { clearInterval(check); console.warn('⚠️ Google Maps não carregou após 10s'); }
+    }, 300);
 }
 
-function haversineKm(lat1, lon1, lat2, lon2) {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+function inicializarServicosMaps() {
+    if (typeof google === 'undefined' || !google.maps) return false;
+    if (!gDirections) gDirections = new google.maps.DirectionsService();
+    if (!gGeocoder)   gGeocoder   = new google.maps.Geocoder();
+    gMapsPronto = true;
+    console.log('✅ Serviços Google Maps prontos');
+    return true;
 }
 
-function finalizarPedido() {
-    const endColeta = [orderData.coleta.endereco, orderData.coleta.numero].filter(Boolean).join(', ');
-    const endEntrega = [orderData.entrega.endereco, orderData.entrega.numero].filter(Boolean).join(', ');
+function criarMapaSeNecessario() {
+    if (gMap) return true;
+    const mapEl = document.getElementById('map');
+    if (!mapEl) { console.warn('⚠️ #map não encontrado'); return false; }
+    if (typeof google === 'undefined' || !google.maps) { console.warn('⚠️ SDK não disponível'); return false; }
 
-    orderData.valor = 0;
+    const cfg = window.GOOGLE_MAPS_CONFIG || {};
+    gMap = new google.maps.Map(mapEl, {
+        center: cfg.center || { lat: -26.9906, lng: -48.6347 },
+        zoom: cfg.defaultZoom || 13,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: true,
+        styles: cfg.styles || []
+    });
 
+    gRenderer = new google.maps.DirectionsRenderer({
+        map: gMap,
+        suppressMarkers: true,
+        polylineOptions: { strokeColor: '#FF6B00', strokeWeight: 5, strokeOpacity: 0.85 }
+    });
+
+    console.log('✅ Mapa criado');
+    return true;
+}
+
+function adicionarMarcador(tipo, position) {
+    if (!gMap) return;
+    if (gMarkers[tipo]) gMarkers[tipo].setMap(null);
+    gMarkers[tipo] = new google.maps.Marker({
+        position, map: gMap,
+        title: tipo === 'coleta' ? 'Coleta' : 'Entrega',
+        icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 12,
+            fillColor: tipo === 'coleta' ? '#FF6B00' : '#00C48C',
+            fillOpacity: 1,
+            strokeColor: '#fff',
+            strokeWeight: 3
+        },
+        label: { text: tipo === 'coleta' ? 'C' : 'E', color: '#fff', fontSize: '11px', fontWeight: 'bold' }
+    });
+}
+
+// =============================================
+// AUTOCOMPLETE GOOGLE PLACES
+// =============================================
+function inicializarAutocomplete() {
+    if (typeof google === 'undefined' || !google.maps?.places) return;
+
+    const opts = {
+        componentRestrictions: { country: 'br' },
+        fields: ['address_components', 'geometry', 'formatted_address', 'name'],
+        types: ['address']
+    };
+
+    const acColeta  = new google.maps.places.Autocomplete(document.getElementById('endereco-coleta'),  opts);
+    const acEntrega = new google.maps.places.Autocomplete(document.getElementById('endereco-entrega'), opts);
+
+    acColeta.addListener('place_changed', () => {
+        const place = acColeta.getPlace();
+        if (!place.geometry) return;
+        orderData.coleta.coords = { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() };
+        orderData.coleta.enderecoCompleto = place.formatted_address;
+        preencherNumeroAutomatico('numero-coleta', place);
+        adicionarMarcador('coleta', place.geometry.location);
+    });
+
+    acEntrega.addListener('place_changed', () => {
+        const place = acEntrega.getPlace();
+        if (!place.geometry) return;
+        orderData.entrega.coords = { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() };
+        orderData.entrega.enderecoCompleto = place.formatted_address;
+        preencherNumeroAutomatico('numero-entrega', place);
+        adicionarMarcador('entrega', place.geometry.location);
+    });
+
+    console.log('✅ Autocomplete configurado');
+}
+
+function preencherNumeroAutomatico(numeroId, place) {
+    const numEl = document.getElementById(numeroId);
+    if (!numEl || numEl.value) return;
+    const num = place.address_components?.find(c => c.types.includes('street_number'))?.short_name;
+    if (num) numEl.value = num;
+}
+
+// =============================================
+// GEOCÓDIGO
+// =============================================
+function geocodificarEndereco(endereco) {
+    return new Promise((resolve, reject) => {
+        if (!gGeocoder) { reject(new Error('Geocoder não inicializado')); return; }
+        gGeocoder.geocode(
+            { address: endereco, region: 'BR', componentRestrictions: { country: 'BR' } },
+            (results, status) => {
+                if (status === 'OK' && results[0]) {
+                    const loc = results[0].geometry.location;
+                    resolve({ lat: loc.lat(), lng: loc.lng(), endereco: results[0].formatted_address });
+                } else {
+                    reject(new Error(`Endereço não encontrado: ${endereco}`));
+                }
+            }
+        );
+    });
+}
+
+function obterCidadeDoPonto(lat, lng) {
+    const chave = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+    if (_cidadeCache[chave]) return Promise.resolve(_cidadeCache[chave]);
+    return new Promise((resolve) => {
+        if (!gGeocoder) { resolve(null); return; }
+        gGeocoder.geocode({ location: { lat, lng }, language: 'pt-BR', region: 'BR' }, (results, status) => {
+            if (status !== 'OK' || !results[0]) { resolve(null); return; }
+            for (const r of results) {
+                const m = r.address_components?.find(c => c.types.includes('administrative_area_level_2'));
+                if (m) { _cidadeCache[chave] = m.long_name; resolve(m.long_name); return; }
+            }
+            resolve(null);
+        });
+    });
+}
+
+// =============================================
+// CÁLCULO DE DISTÂNCIA
+// =============================================
+async function calcularDistancia() {
+    let c = orderData.coleta.coords;
+    let e = orderData.entrega.coords;
+
+    const endC = montarEnderecoCompleto('coleta');
+    const endE = montarEnderecoCompleto('entrega');
+
+    if (!c && endC) c = await geocodificarEndereco(endC);
+    if (!e && endE) e = await geocodificarEndereco(endE);
+    if (!c || !e) throw new Error('Endereços inválidos');
+
+    orderData.coleta.coords = c;
+    orderData.entrega.coords = e;
+
+    return new Promise((resolve, reject) => {
+        gDirections.route({
+            origin: { lat: c.lat, lng: c.lng },
+            destination: { lat: e.lat, lng: e.lng },
+            travelMode: google.maps.TravelMode.DRIVING
+        }, (result, status) => {
+            if (status !== 'OK' || !result.routes[0]?.legs[0]) {
+                reject(new Error('Não foi possível calcular a rota: ' + status));
+                return;
+            }
+            const leg = result.routes[0].legs[0];
+            const distanciaKm = leg.distance.value / 1000;
+            const minutos = Math.round(leg.duration.value / 60);
+            if (gRenderer) gRenderer.setDirections(result);
+            resolve({
+                distanciaKm,
+                distanciaTexto: `${distanciaKm.toFixed(1)} km`,
+                duracaoTexto: minutos < 60 ? `${minutos} min` : `${Math.floor(minutos/60)}h ${minutos%60}min`,
+                duracaoMin: minutos
+            });
+        });
+    });
+}
+
+function montarEnderecoCompleto(tipo) {
+    const d = orderData[tipo];
+    const base = d.enderecoCompleto || d.endereco;
+    return [base, d.numero].filter(Boolean).join(', ');
+}
+
+// =============================================
+// CÁLCULO DE PREÇO POR MUNICÍPIO
+// =============================================
+function calcularPreco(distanciaKm, cidadeDestino) {
+    distanciaKm = Math.round(distanciaKm * 10) / 10;
+
+    const cidadePrincipal = normalizarTexto(PRICING.cidadePrincipal);
+    const cidadeDest = normalizarTexto(cidadeDestino);
+    const ehPrincipal = cidadeDest === cidadePrincipal;
+
+    if (ehPrincipal) {
+        const r = PRICING.dentroCidadePrincipal;
+        if (distanciaKm <= r.limiteKmBase) return r.valorBase;
+        const excedente = distanciaKm - r.limiteKmBase;
+        return Math.min(Math.round((r.valorBase + excedente * r.valorPorKmExcedente) * 100) / 100, 500);
+    } else {
+        const r = PRICING.foraCidadePrincipal;
+        return Math.min(Math.round(Math.max(r.valorMinimo, distanciaKm * r.valorPorKm) * 100) / 100, 500);
+    }
+}
+
+// =============================================
+// FINALIZAR PEDIDO — Mostra checkout + mapa
+// =============================================
+async function finalizarPedido() {
+    const endColeta = montarEnderecoCompleto('coleta');
+    const endEntrega = montarEnderecoCompleto('entrega');
+
+    // Preenche resumo
     document.getElementById('wizard-container').style.display = 'none';
     document.getElementById('checkout-screen').style.display = 'block';
     document.getElementById('resumo-nome').textContent = orderData.cliente.nome;
@@ -765,90 +1042,104 @@ function finalizarPedido() {
     document.getElementById('resumo-entrega').textContent = endEntrega;
     document.getElementById('resumo-receptor').textContent = orderData.receptor.nome;
     document.getElementById('resumo-categorias').textContent = orderData.categorias.length ? orderData.categorias.join(', ') : 'Não especificado';
-    
-    document.getElementById('valor-final').textContent = 'Calculando...';
-    document.getElementById('valor-info').textContent = 'Calculando distância e valor...';
 
-    calcularRotaBackground(endColeta + ', Brasil', endEntrega + ', Brasil');
-}
+    const elDist = document.getElementById('distancia-final');
+    const elTempo = document.getElementById('tempo-final');
+    const elValor = document.getElementById('valor-final');
+    const elInfo = document.getElementById('valor-info');
+    const elCidade = document.getElementById('cidade-destino');
 
-async function geocodificar(endereco) {
-    const key = 'gc_' + endereco;
-    if (_geocodeCache[key]) return _geocodeCache[key];
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(endereco)}&format=json&countrycodes=br&limit=1`;
-    const res = await fetch(url, { headers: { 'User-Agent': 'NGExpress/1.0' } });
-    if (!res.ok) throw new Error('Geocodificação falhou');
-    const data = await res.json();
-    if (!data.length) throw new Error('Endereço não encontrado');
-    const r = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-    _geocodeCache[key] = r;
-    return r;
-}
+    elDist.innerHTML = '<i class="bi bi-hourglass-split"></i> calculando...';
+    elTempo.textContent = '—';
+    elValor.textContent = 'Calculando...';
+    elInfo.textContent = 'Calculando distância e valor...';
+    elCidade.textContent = '—';
 
-async function calcularRotaBackground(endColeta, endEntrega) {
+    // Aguarda Google Maps estar pronto
+    await new Promise(resolve => quandoGoogleMapsCarregar(resolve));
+    if (!gMapsPronto) inicializarServicosMaps();
+
     try {
-        const [coordColeta, coordEntrega] = await Promise.all([
-            geocodificar(endColeta), geocodificar(endEntrega)
-        ]);
+        // 1) Calcula rota
+        const rota = await calcularDistancia();
+        orderData.distanciaKm = rota.distanciaKm;
+        orderData.duracaoMin = rota.duracaoMin;
 
-        let distKm, duracaoMin, rotaOk = false;
-        const hereKey = (typeof window.HERE_API_CONFIG !== 'undefined') ? window.HERE_API_CONFIG.apiKey : 'O8E5nipilq9UhVMoh75UR3RxE0J3zvC1DCXR-DZVL6I';
-        
-        const elDist = document.getElementById('distancia-final');
-        const elTempo = document.getElementById('tempo-final');
-        const elValor = document.getElementById('valor-final');
-        const elInfo = document.getElementById('valor-info');
-        
-        if (elDist) elDist.innerHTML = '<i class="bi bi-hourglass-split"></i> calculando...';
-        if (elTempo) elTempo.textContent = 'calculando...';
-        if (elValor) elValor.textContent = 'Calculando...';
-        if (elInfo) elInfo.textContent = 'Aguarde, calculando distância...';
+        // 2) Descobre cidade destino
+        const e = orderData.entrega.coords;
+        let cidadeDestino = null;
+        if (e) cidadeDestino = await obterCidadeDoPonto(e.lat, e.lng);
+        orderData.cidadeDestino = cidadeDestino;
 
-        try {
-            const url = `https://router.hereapi.com/v8/routes?transportMode=car&origin=${coordColeta.lat},${coordColeta.lng}&destination=${coordEntrega.lat},${coordEntrega.lng}&return=summary&apikey=${hereKey}`;
-            const res = await fetch(url);
-            if (res.ok) {
-                const data = await res.json();
-                const section = data.routes?.[0]?.sections?.[0];
-                if (section) {
-                    distKm = section.summary.length / 1000;
-                    duracaoMin = Math.round(section.summary.duration / 60);
-                    rotaOk = true;
-                }
-            }
-        } catch (e) {
-            console.warn('HERE Maps falhou, usando haversine:', e.message);
+        // 3) Calcula preço
+        const valor = calcularPreco(rota.distanciaKm, cidadeDestino);
+        orderData.valor = valor;
+
+        // 4) Atualiza UI
+        elDist.textContent = rota.distanciaTexto;
+        elTempo.textContent = rota.duracaoTexto;
+        elValor.textContent = `R$ ${valor.toFixed(2).replace('.', ',')}`;
+        elCidade.textContent = cidadeDestino || 'Não identificada';
+
+        const ehPrincipal = normalizarTexto(cidadeDestino) === normalizarTexto(PRICING.cidadePrincipal);
+        if (ehPrincipal) {
+            const r = PRICING.dentroCidadePrincipal;
+            const excedente = Math.max(0, rota.distanciaKm - r.limiteKmBase);
+            elInfo.textContent = excedente > 0
+                ? `Base R$${r.valorBase.toFixed(2)} + ${excedente.toFixed(1)}km × R$${r.valorPorKmExcedente.toFixed(2)}`
+                : `✅ Rota dentro de ${cidadeDestino} (≤ ${r.limiteKmBase}km)`;
+        } else {
+            elInfo.textContent = `Fora de ${PRICING.cidadePrincipal}: ${rota.distanciaKm.toFixed(1)}km × R$${PRICING.foraCidadePrincipal.valorPorKm.toFixed(2)}`;
         }
 
-        if (!rotaOk) {
-            distKm = haversineKm(coordColeta.lat, coordColeta.lng, coordEntrega.lat, coordEntrega.lng) * 1.35;
-            duracaoMin = Math.round(distKm / 30 * 60);
+        // 5) 🗺️ Mostra o mapa dentro do resumo
+        document.getElementById('mapa-wrapper').style.display = 'block';
+        if (criarMapaSeNecessario()) {
+            setTimeout(() => {
+                google.maps.event.trigger(gMap, 'resize');
+                const c = orderData.coleta.coords;
+                if (c) adicionarMarcador('coleta',  { lat: c.lat, lng: c.lng });
+                if (e) adicionarMarcador('entrega', { lat: e.lat, lng: e.lng });
+                // Recalcula a rota pro renderer ajustar após resize
+                gDirections.route({
+                    origin: { lat: c.lat, lng: c.lng },
+                    destination: { lat: e.lat, lng: e.lng },
+                    travelMode: google.maps.TravelMode.DRIVING
+                }, (result, status) => {
+                    if (status === 'OK') {
+                        gRenderer.setDirections(result);
+                        const bounds = new google.maps.LatLngBounds();
+                        result.routes[0].legs[0].steps.forEach(s => {
+                            bounds.extend(s.start_location);
+                            bounds.extend(s.end_location);
+                        });
+                        gMap.fitBounds(bounds);
+                    }
+                });
+            }, 150);
         }
 
-        distKm = Math.round(distKm * 10) / 10;
-        duracaoMin = Math.round(duracaoMin);
-        orderData.distanciaKm = distKm;
-        orderData.duracaoMin = duracaoMin;
-        orderData.valor = calcularPreco(distKm, orderData.veiculo);
+        // 6) Gera link do Maps para o motoboy
+        const c = orderData.coleta.coords;
+        if (c && e) {
+            orderData.mapsLink = `https://www.google.com/maps/dir/?api=1`
+                + `&origin=${c.lat},${c.lng}`
+                + `&destination=${e.lat},${e.lng}`
+                + `&travelmode=driving`;
+            console.log('🗺️ Link Maps:', orderData.mapsLink);
+        }
 
-        if (elDist) elDist.textContent = `${distKm.toFixed(1)} km`;
-        if (elTempo) elTempo.textContent = duracaoMin < 60 ? `${duracaoMin} min` : `${Math.floor(duracaoMin/60)}h ${duracaoMin%60}min`;
-        if (elValor) elValor.textContent = `R$ ${orderData.valor.toFixed(2).replace('.', ',')}`;
-        if (elInfo) elInfo.textContent = rotaOk ? '✅ Valor calculado com base na rota real' : '⚠️ Valor estimado (rota não disponível)';
+        // 7) Limpa valor inicial do PIX (força regerar no botão)
+        orderData.valor = valor;
 
     } catch (err) {
-        console.warn('Cálculo de rota falhou:', err.message);
-        const elDist = document.getElementById('distancia-final');
-        const elTempo = document.getElementById('tempo-final');
-        const elValor = document.getElementById('valor-final');
-        const elInfo = document.getElementById('valor-info');
-        
-        if (elDist) elDist.innerHTML = '<i class="bi bi-question-circle"></i> Não disponível';
-        if (elTempo) elTempo.textContent = 'Não disponível';
-        if (elValor) elValor.textContent = 'R$ 15,00';
-        if (elInfo) elInfo.textContent = '⚠️ Valor mínimo aplicado (rota não disponível)';
-        
+        console.error('Erro no cálculo:', err);
+        elDist.innerHTML = '<i class="bi bi-question-circle"></i> Não disponível';
+        elTempo.textContent = 'Não disponível';
+        elValor.textContent = 'R$ 15,00';
+        elInfo.textContent = '⚠️ Valor mínimo aplicado (rota não disponível)';
         orderData.valor = 15.00;
+        showToast('Não foi possível calcular a rota automaticamente', 'warning');
     }
 }
 
@@ -859,37 +1150,37 @@ function cancelarPedido() {
     updateSteps();
 }
 
+// =============================================
+// PAGAMENTO PIX
+// =============================================
 function gerarPayloadPIX(valor, descricao) {
     const chavePix = 'comercial.ngexpress@gmail.com';
     const nomeRecebedor = 'N&G Express';
     const cidade = 'SAO PAULO';
     const valorFmt = valor.toFixed(2);
-    const valorLen = String(valorFmt.length).padStart(2, '0');
+    const desc = (descricao || '')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9 ]/g, '').slice(0, 25);
 
     const payload = '000201' +
-        '26' +
-        '0014br.gov.bcb.pix' +
+        '26' + '0014br.gov.bcb.pix' +
         '01' + String(chavePix.length).padStart(2, '0') + chavePix +
-        '52040000' +
-        '5303986' +
-        '54' + valorLen + valorFmt +
+        '52040000' + '5303986' +
+        '54' + String(valorFmt.length).padStart(2, '0') + valorFmt +
         '5802BR' +
         '59' + String(nomeRecebedor.length).padStart(2, '0') + nomeRecebedor +
         '60' + String(cidade.length).padStart(2, '0') + cidade +
-        '6205' + String(descricao.length).padStart(2, '0') + descricao +
+        '6205' + String(desc.length).padStart(2, '0') + desc +
         '6304';
 
     function crc16(str) {
         let crc = 0xFFFF;
         for (let i = 0; i < str.length; i++) {
             crc ^= str.charCodeAt(i) << 8;
-            for (let j = 0; j < 8; j++) {
-                crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
-            }
+            for (let j = 0; j < 8; j++) crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
         }
         return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
     }
-
     return payload + crc16(payload);
 }
 
@@ -900,21 +1191,16 @@ function renderizarQRCode(container, texto) {
         return;
     }
     new QRCode(container, {
-        text: texto,
-        width: 200,
-        height: 200,
-        colorDark: '#1b5e20',
-        colorLight: '#ffffff',
+        text: texto, width: 200, height: 200,
+        colorDark: '#1b5e20', colorLight: '#ffffff',
         correctLevel: QRCode.CorrectLevel.M
     });
 }
 
 async function gerarPagamento() {
     if (!orderData.valor || orderData.valor <= 0) {
-        showToast('Valor do pedido não calculado', 'error');
-        return;
+        showToast('Valor do pedido não calculado', 'error'); return;
     }
-
     document.getElementById('modal-pagamento').style.display = 'flex';
     document.getElementById('modal-valor').textContent = `R$ ${orderData.valor.toFixed(2).replace('.', ',')}`;
     document.getElementById('status-pagamento').textContent = '';
@@ -922,32 +1208,23 @@ async function gerarPagamento() {
     document.getElementById('modal-badge').textContent = '✅ Processado pelo Mercado Pago';
 
     const qrContainer = document.getElementById('qr-container');
-    qrContainer.innerHTML = `
-        <div id="qr-loading" style="text-align:center;">
-            <div class="spinner"></div>
-            <span style="font-size:0.85rem;">Gerando QR Code...</span>
-        </div>`;
+    qrContainer.innerHTML = `<div style="text-align:center;"><div class="spinner" style="margin:0 auto 12px;"></div><span style="font-size:0.85rem;">Gerando QR Code...</span></div>`;
 
     const convId = `pedido_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/pix/criar`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        const response = await fetch(`${API_BASE_URL}/pix/criar`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                convId: convId,
-                valor: orderData.valor,
+                convId, valor: orderData.valor,
                 nomeCliente: orderData.cliente.nome,
                 descricao: `Entrega N&G Express - ${orderData.coleta.endereco} → ${orderData.entrega.endereco}`
             })
         });
-
         if (response.ok) {
             const dados = await response.json();
-
             if (dados.success !== false && (dados.qrCode || dados.qrCodeBase64)) {
                 paymentData.paymentId = dados.paymentId;
-
                 if (dados.qrCodeBase64) {
                     qrContainer.innerHTML = '';
                     const img = document.createElement('img');
@@ -957,11 +1234,9 @@ async function gerarPagamento() {
                 } else {
                     renderizarQRCode(qrContainer, dados.qrCode);
                 }
-
                 const pixEl = document.getElementById('pix-codigo');
                 pixEl.textContent = dados.qrCode;
                 pixEl.setAttribute('data-full-pix', dados.qrCode);
-
                 document.getElementById('status-pagamento').innerHTML =
                     '<span style="color:var(--success-color)">✅ Escaneie o QR Code no app do seu banco</span>';
                 showToast('QR Code gerado!', 'success');
@@ -969,12 +1244,10 @@ async function gerarPagamento() {
                 return;
             }
         }
-
-        console.warn('API Railway falhou ou não retornou QR Code. Usando fallback local.');
+        console.warn('API falhou. Usando fallback local.');
         usarFallbackPIX(convId);
-
     } catch (err) {
-        console.error('Erro ao contatar API PIX:', err.message);
+        console.error('Erro PIX:', err.message);
         usarFallbackPIX(convId);
     }
 }
@@ -982,22 +1255,17 @@ async function gerarPagamento() {
 function usarFallbackPIX(convId) {
     const descricao = `NG${(convId || Date.now().toString()).slice(-6).toUpperCase()}`;
     const payload = gerarPayloadPIX(orderData.valor, descricao);
-
     const qrContainer = document.getElementById('qr-container');
     renderizarQRCode(qrContainer, payload);
-
     document.getElementById('chave-manual-container').style.display = 'block';
     document.getElementById('chave-manual').textContent = 'comercial.ngexpress@gmail.com';
-
     const pixEl = document.getElementById('pix-codigo');
     pixEl.textContent = payload.length > 100 ? payload.substring(0, 100) + '...' : payload;
     pixEl.setAttribute('data-full-pix', payload);
-
     document.getElementById('modal-badge').textContent = '⚠️ Pagamento manual — confirme pelo comprovante';
     document.getElementById('modal-instrucao').textContent = 'Escaneie o QR Code ou use a chave PIX abaixo';
     document.getElementById('status-pagamento').innerHTML =
         '<span style="color:var(--warning-color)">⚠️ Após pagar, clique em "Enviei o PIX" para confirmar</span>';
-
     paymentData.paymentId = 'manual_' + Date.now();
     showToast('QR Code gerado! Use a chave PIX para pagar.', 'warning');
 }
@@ -1007,11 +1275,10 @@ function iniciarVerificacaoPagamento(paymentId, convId) {
     let tentativas = 0;
     const maxTent = 60;
     if (paymentData.intervalId) clearInterval(paymentData.intervalId);
-
     paymentData.intervalId = setInterval(async () => {
         tentativas++;
         try {
-            const res = await fetch(`${API_BASE_URL}/api/pix/status/${convId}`);
+            const res = await fetch(`${API_BASE_URL}/pix/status/${convId}`);
             if (res.ok) {
                 const data = await res.json();
                 if (data.status === 'approved' && !pagamentoJaConfirmado) {
@@ -1019,8 +1286,7 @@ function iniciarVerificacaoPagamento(paymentId, convId) {
                     pagamentoConfirmado();
                 }
             }
-        } catch (e) { console.warn('Polling status:', e.message); }
-
+        } catch (e) { console.warn('Polling:', e.message); }
         if (tentativas >= maxTent) {
             clearInterval(paymentData.intervalId);
             document.getElementById('status-pagamento').innerHTML =
@@ -1032,18 +1298,15 @@ function iniciarVerificacaoPagamento(paymentId, convId) {
 function pagamentoConfirmado() {
     if (pagamentoJaConfirmado) return;
     pagamentoJaConfirmado = true;
-    
     document.getElementById('status-pagamento').innerHTML =
         '<span style="color:var(--success-color);font-weight:600;"><i class="bi bi-check-circle-fill"></i> ✅ Pagamento confirmado! Clique em "Confirmar Pedido" abaixo para enviar para a empresa.</span>';
     showToast('Pagamento confirmado! Agora confirme o pedido.', 'success');
-    
     const btnEnviar = document.getElementById('btn-enviar-comprovante');
     if (btnEnviar) {
         btnEnviar.innerHTML = '<i class="bi bi-check-lg"></i> Confirmar Pedido para Empresa';
         btnEnviar.style.background = '#075e54';
         btnEnviar.style.fontWeight = 'bold';
     }
-    
     const btnPagar = document.getElementById('btn-pagar');
     if (btnPagar) {
         btnPagar.disabled = true;
@@ -1071,108 +1334,109 @@ function fecharModalPagamento() {
     if (paymentData.intervalId) clearInterval(paymentData.intervalId);
 }
 
-function enviarComprovante() {
+// =============================================
+// ENVIAR PEDIDO VIA WHATSAPP (com link do Maps)
+// =============================================
+async function enviarComprovante() {
     const veiculoIcone = orderData.veiculo === 'moto' ? '🏍️' : '🚗';
     const veiculoTexto = orderData.veiculo === 'moto' ? 'Moto' : 'Carro';
-    
-    const quemRecebeTexto = orderData.receptor.isOutro 
+    const quemRecebeTexto = orderData.receptor.isOutro
         ? `━━━━━━━━━━━━━━━━━━━━━\n👤 *RECEPTOR*\n━━━━━━━━━━━━━━━━━━━━━\n📛 *Nome:* ${orderData.receptor.nome.toUpperCase()}\n📱 *Telefone:* ${orderData.receptor.telefone.replace(/\D/g, '')}\n`
         : `━━━━━━━━━━━━━━━━━━━━━\n👤 *RECEPTOR*\n━━━━━━━━━━━━━━━━━━━━━\n📛 *Nome:* ${orderData.cliente.nome.toUpperCase()}\n📱 *Telefone:* ${orderData.cliente.telefone.replace(/\D/g, '')}\n`;
-    
-    const endColeta = `${orderData.coleta.endereco}, ${orderData.coleta.numero}${orderData.coleta.complemento ? ' - ' + orderData.coleta.complemento : ''}`;
-    const endEntrega = `${orderData.entrega.endereco}, ${orderData.entrega.numero}${orderData.entrega.complemento ? ' - ' + orderData.entrega.complemento : ''}`;
-    
+
+    const endColeta = montarEnderecoCompleto('coleta');
+    const endEntrega = montarEnderecoCompleto('entrega');
+    const numPedido = 'NG' + Date.now().toString().slice(-6);
+
+    // 🗺️ Bloco do link Maps para o motoboy
+    const blocoMaps = orderData.mapsLink ? `
+
+━━━━━━━━━━━━━━━━━━━━━
+🗺️ *ROTA PARA O MOTOBOY*
+━━━━━━━━━━━━━━━━━━━━━
+👉 *Toque no link abaixo para abrir no Google Maps:*
+${orderData.mapsLink}
+
+_Toque e abrirá direto no app de navegação_` : '';
+
     const msg = `🆕 *NOVO PEDIDO - N&G EXPRESS* 🆕\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━━\n` +
-        `📋 *DADOS DO CLIENTE*\n` +
-        `━━━━━━━━━━━━━━━━━━━━━\n` +
+        `━━━━━━━━━━━━━━━━━━━━━\n📋 *DADOS DO CLIENTE*\n━━━━━━━━━━━━━━━━━━━━━\n` +
         `👤 *Nome:* ${orderData.cliente.nome}\n` +
         `📱 *Telefone:* ${orderData.cliente.telefone.replace(/\D/g, '')}\n` +
         `📧 *E-mail:* ${orderData.cliente.email}\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━━\n` +
-        `🚚 *DADOS DA ENTREGA*\n` +
-        `━━━━━━━━━━━━━━━━━━━━━\n` +
+        `━━━━━━━━━━━━━━━━━━━━━\n🚚 *DADOS DA ENTREGA*\n━━━━━━━━━━━━━━━━━━━━━\n` +
         `${veiculoIcone} *Veículo:* ${veiculoTexto}\n` +
+        `🏙️ *Cidade destino:* ${orderData.cidadeDestino || '—'}\n` +
         `📏 *Distância:* ${orderData.distanciaKm ? orderData.distanciaKm.toFixed(1) : '0'} km\n` +
-        `⏱️ *Tempo estimado:* ${orderData.duracaoMin ? (orderData.duracaoMin < 60 ? orderData.duracaoMin + ' min' : Math.floor(orderData.duracaoMin/60) + 'h ' + (orderData.duracaoMin%60) + 'min') : '0 min'}\n` +
+        `⏱️ *Tempo estimado:* ${orderData.duracaoMin ? (orderData.duracaoMin < 60 ? orderData.duracaoMin + ' min' : Math.floor(orderData.duracaoMin/60) + 'h ' + (orderData.duracaoMin%60) + 'min') : '—'}\n` +
         `💰 *Valor Pago:* R$ ${orderData.valor.toFixed(2).replace('.', ',')}\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━━\n` +
-        `📍 *COLETA*\n` +
-        `━━━━━━━━━━━━━━━━━━━━━\n` +
-        `${endColeta}\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━━\n` +
-        `🎯 *ENTREGA*\n` +
-        `━━━━━━━━━━━━━━━━━━━━━\n` +
-        `${endEntrega}\n` +
-        `${quemRecebeTexto}\n` +
-        `━━━━━━━━━━━━━━━━━━━━━\n` +
-        `📦 *ENCOMENDA*\n` +
-        `━━━━━━━━━━━━━━━━━━━━━\n` +
+        `━━━━━━━━━━━━━━━━━━━━━\n📍 *COLETA*\n━━━━━━━━━━━━━━━━━━━━━\n${endColeta}\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━━\n🎯 *ENTREGA*\n━━━━━━━━━━━━━━━━━━━━━\n${endEntrega}\n` +
+        `${quemRecebeTexto}${blocoMaps}\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━━\n📦 *ENCOMENDA*\n━━━━━━━━━━━━━━━━━━━━━\n` +
         `🏷️ *Tipo:* ${orderData.categorias.length ? orderData.categorias.join(', ') : 'Não especificado'}\n` +
         `📝 *Descrição:* ${orderData.descricao || 'Não informada'}\n\n` +
-        `🔖 *Pedido:* #NG${Date.now().toString().slice(-6)}\n` +
+        `🔖 *Pedido:* #${numPedido}\n` +
         `📅 *Data:* ${new Date().toLocaleString('pt-BR')}\n\n` +
         `✅ *Por favor, confirme este pedido.*`;
 
-    window.open(`https://wa.me/5547999123260?text=${encodeURIComponent(msg)}`, '_blank');
-    
-    showToast('Pedido enviado para a empresa! Em breve você receberá atualizações.', 'success');
-    
+    window.open(`https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msg)}`, '_blank');
+
+    // Salva no backend se estiver logado
+    const raw = sessionStorage.getItem('usuario');
+    if (raw) {
+        try {
+            const usuario = JSON.parse(raw);
+            const payload = {
+                usuario_id: usuario.id,
+                numero_pedido: numPedido,
+                tipo_veiculo: orderData.veiculo,
+                endereco_coleta: endColeta,
+                endereco_entrega: endEntrega,
+                cidade_destino: orderData.cidadeDestino || '',
+                descricao: orderData.descricao || '',
+                valor_total: orderData.valor,
+                distancia_km: orderData.distanciaKm || 0,
+                coords_coleta: orderData.coleta.coords
+                    ? `${orderData.coleta.coords.lat},${orderData.coleta.coords.lng}` : '',
+                coords_entrega: orderData.entrega.coords
+                    ? `${orderData.entrega.coords.lat},${orderData.entrega.coords.lng}` : '',
+                maps_link: orderData.mapsLink || ''
+            };
+            fetch(`${API_BASE_URL}/orcamentos/salvar.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).catch(e => console.warn('Salvar pedido:', e.message));
+        } catch (e) {
+            console.warn('Session parse:', e.message);
+        }
+    }
+
+    showToast('Pedido enviado para a empresa!', 'success');
     setTimeout(() => {
         fecharModalPagamento();
-        showToast('Pedido registrado com sucesso! Obrigado pela preferência.', 'success');
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 2000);
+        showToast('Pedido registrado com sucesso! Obrigado!', 'success');
+        setTimeout(() => { window.location.href = 'index.html'; }, 2000);
     }, 2000);
 }
 
-function inicializarAutocomplete() {
-    if (typeof jQuery === 'undefined' || !jQuery.fn.autocomplete) return;
-    let debounceT = null;
-
-    $('.autocomplete-endereco').autocomplete({
-        minLength: 3, delay: 0,
-        source(req, resp) {
-            clearTimeout(debounceT);
-            debounceT = setTimeout(async () => {
-                try {
-                    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(req.term)}&format=json&addressdetails=1&countrycodes=br&limit=6&accept-language=pt-BR`;
-                    const res = await fetch(url, { headers: { 'User-Agent': 'NGExpress/1.0' } });
-                    const data = await res.json();
-                    resp(data.map(item => {
-                        const a = item.address || {};
-                        const rua = a.road || a.pedestrian || a.footway || '';
-                        const bairro = a.suburb || a.neighbourhood || '';
-                        const cidade = a.city || a.town || a.village || '';
-                        const label = [rua, bairro, cidade].filter(Boolean).join(', ');
-                        return { label, value: label, lat: parseFloat(item.lat), lng: parseFloat(item.lon) };
-                    }));
-                } catch { resp([]); }
-            }, 350);
-        },
-        select(event, ui) {
-            event.preventDefault();
-            this.value = ui.item.label;
-            _geocodeCache[`gc_${ui.item.label}, Brasil`] = { lat: ui.item.lat, lng: ui.item.lng };
-            return false;
-        }
-    });
-}
-
+// =============================================
+// MÁSCARA TELEFONE
+// =============================================
 function mascaraTelefone(input) {
     if (!input) return;
     input.addEventListener('input', function () {
         let v = this.value.replace(/\D/g, '').slice(0, 11);
-        if (v.length > 6) v = `(${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7)}`;
-        else if (v.length > 2) v = `(${v.slice(0, 2)}) ${v.slice(2)}`;
+        if (v.length > 6) v = `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
+        else if (v.length > 2) v = `(${v.slice(0,2)}) ${v.slice(2)}`;
         else if (v.length > 0) v = `(${v}`;
         this.value = v;
     });
 }
 
 // =============================================
-// INICIALIZAÇÃO
+// INIT
 // =============================================
 document.getElementById('btn-avancar').addEventListener('click', avancar);
 document.getElementById('btn-voltar').addEventListener('click', voltar);
@@ -1192,24 +1456,26 @@ window.addEventListener('click', e => {
 window.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
         document.querySelectorAll('.modal').forEach(m => {
-            if (m.style.display !== 'none') fecharModal(m.id);
+            if (m.style.display !== 'none' && m.style.display !== '') fecharModal(m.id);
         });
     }
+});
+
+// Aguarda Google Maps carregar e inicializa
+quandoGoogleMapsCarregar(() => {
+    inicializarServicosMaps();
+    inicializarAutocomplete();
 });
 
 mascaraTelefone(document.getElementById('cliente-telefone'));
 mascaraTelefone(document.getElementById('receptor-telefone'));
 mascaraTelefone(document.getElementById('cadastro-telefone'));
-inicializarAutocomplete();
 carregarDadosUsuario();
 updateSteps();
 
-// Expor funções globalmente
 window.abrirModalLogin = abrirModalLogin;
 window.abrirModalCadastro = abrirModalCadastro;
 window.fecharModal = fecharModal;
 </script>
-
-<script src="js/config.js" onerror="console.warn('config.js não encontrado, usando URL padrão')"></script>
 </body>
 </html>
