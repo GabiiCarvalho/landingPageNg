@@ -1,1244 +1,1279 @@
-require("dotenv").config();
+document.addEventListener("DOMContentLoaded", function () {
+  console.log("🚀 N&G EXPRESS iniciado");
 
-const express = require("express");
-const path = require("path");
-const fs = require("fs");
-const https = require("https");
-const crypto = require("crypto");
-const { v4: uuid } = require("uuid");
-const bcrypt = require("bcryptjs");
-const session = require("express-session");
-const { um, todos, rodar, query, initDb } = require("./config/db");
+  const API_BASE_URL = (
+    window.API_BASE_URL || "http://localhost:3000/api"
+  ).replace(/\/$/, "");
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-const IS_PROD = process.env.NODE_ENV === "production";
+  let googleMap = null;
+  let routePolyline = null;
+  let markers = { coleta: null, entrega: null };
+  window.orcamentoAtual = null;
+  window.coordenadasCache = { coleta: null, entrega: null };
 
-const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
-const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
-const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || "";
-const SESSION_SECRET =
-  process.env.SESSION_SECRET || "ng-express-super-secret-key-2026";
-const TOKEN_SECRET = process.env.TOKEN_SECRET || SESSION_SECRET;
-
-console.log("🔑 MP_ACCESS_TOKEN:", MP_ACCESS_TOKEN ? "✅ OK" : "❌ FALTANDO");
-console.log("🌐 BASE_URL:", BASE_URL);
-console.log(
-  "🗺️ GOOGLE_MAPS_API_KEY:",
-  GOOGLE_MAPS_API_KEY ? "✅ OK" : "❌ FALTANDO",
-);
-
-// =============================================================
-// PRICING
-// =============================================================
-const PRICING = {
-  cidadePrincipal: "Balneário Camboriú",
-  dentroCidadePrincipal: {
-    valorBase: 15.0,
-    limiteKmBase: 7,
-    valorPorKmExcedente: 2.3,
-  },
-  foraCidadePrincipal: { valorPorKm: 2.3, valorMinimo: 15.0 },
-  valorMaximo: 500.0,
-};
-
-function normalizarTexto(txt) {
-  return (txt || "")
-    .toString()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
-}
-
-function calcularPreco(distanciaKm, cidadeDestino) {
-  distanciaKm = Math.round(distanciaKm * 10) / 10;
-  const ehPrincipal =
-    normalizarTexto(cidadeDestino) === normalizarTexto(PRICING.cidadePrincipal);
-
-  let valor = 0;
-  if (ehPrincipal) {
-    const r = PRICING.dentroCidadePrincipal;
-    valor =
-      distanciaKm <= r.limiteKmBase
-        ? r.valorBase
-        : r.valorBase + (distanciaKm - r.limiteKmBase) * r.valorPorKmExcedente;
-  } else {
-    const r = PRICING.foraCidadePrincipal;
-    valor = Math.max(r.valorMinimo, distanciaKm * r.valorPorKm);
+  // =============================================
+  // UTILITÁRIOS E AUTENTICAÇÃO
+  // =============================================
+  function formatarMoeda(v) {
+    return `R$ ${Number(v || 0)
+      .toFixed(2)
+      .replace(".", ",")}`;
   }
-  return Math.min(Math.round(valor * 100) / 100, PRICING.valorMaximo);
-}
 
-// =============================================================
-// UTILITÁRIOS
-// =============================================================
-const agora = () => Date.now();
-const texto = (v, max = 300) =>
-  String(v ?? "")
-    .trim()
-    .slice(0, max);
+  function getAuthHeaders(extra = {}) {
+    const token =
+      localStorage.getItem("ng_token") || sessionStorage.getItem("ng_token");
+    const headers = { "Content-Type": "application/json", ...extra };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    return headers;
+  }
 
-function limitar(max, janelaMs) {
-  const mapa = new Map();
-  return (req, res, next) => {
-    const agoraMs = Date.now();
-    const lista = (mapa.get(req.ip) || []).filter(
-      (t) => agoraMs - t < janelaMs,
-    );
-    if (lista.length >= max)
-      return res.status(429).json({
-        success: false,
-        message: "Muitas tentativas. Aguarde alguns minutos e tente de novo.",
-      });
-    lista.push(agoraMs);
-    mapa.set(req.ip, lista);
-    next();
+  function mostrarToast(msg, tipo = "success") {
+    const container = document.getElementById("toast-container");
+    if (!container) return;
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${tipo}`;
+    const icone =
+      tipo === "success"
+        ? "check-circle"
+        : tipo === "warning"
+          ? "exclamation-triangle"
+          : "exclamation-circle";
+    toast.innerHTML = `<i class="bi bi-${icone}"></i> <span>${msg}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transition = "opacity 0.4s";
+      setTimeout(() => toast.remove(), 400);
+    }, 4000);
+  }
+  window.mostrarToast = mostrarToast;
+
+  const yearEl = document.getElementById("currentYear");
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+  const mobileBtn = document.querySelector(".mobile-menu-btn");
+  const navLinks = document.querySelector(".nav-links");
+  if (mobileBtn && navLinks) {
+    mobileBtn.addEventListener("click", () => {
+      navLinks.classList.toggle("active");
+    });
+  }
+
+  if (typeof Swiper !== "undefined" && document.querySelector(".hero-swiper")) {
+    new Swiper(".hero-swiper", {
+      loop: true,
+      autoplay: { delay: 5000, disableOnInteraction: false },
+      pagination: { el: ".swiper-pagination", clickable: true },
+    });
+  }
+
+  // =============================================
+  // MODAIS, LOGIN E CADASTRO
+  // =============================================
+  window.fecharModal = (id) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
   };
-}
 
-// =============================================================
-// TOKENS ASSINADOS
-// =============================================================
-function assinar(payload, ttlMs) {
-  const corpo = Buffer.from(
-    JSON.stringify({ ...payload, exp: Date.now() + ttlMs }),
-  ).toString("base64url");
-  const sig = crypto
-    .createHmac("sha256", TOKEN_SECRET)
-    .update(corpo)
-    .digest("base64url");
-  return `${corpo}.${sig}`;
-}
-
-function verificarToken(token) {
-  try {
-    const [corpo, sig] = String(token || "").split(".");
-    if (!corpo || !sig) return null;
-    const esperado = crypto
-      .createHmac("sha256", TOKEN_SECRET)
-      .update(corpo)
-      .digest("base64url");
-    const a = Buffer.from(sig);
-    const b = Buffer.from(esperado);
-    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
-    const p = JSON.parse(Buffer.from(corpo, "base64url").toString());
-    if (!p.exp || p.exp < Date.now()) return null;
-    return p;
-  } catch (_) {
-    return null;
-  }
-}
-
-function lerAuth(req) {
-  const h = req.headers.authorization || "";
-  if (h.startsWith("Bearer ")) {
-    const p = verificarToken(h.slice(7));
-    if (p && (p.t === "u" || p.t === "a")) return p;
-  }
-  if (req.session?.usuario) return { t: "u", id: req.session.usuario.id };
-  if (req.session?.admin) return { t: "a", id: req.session.admin.id };
-  return null;
-}
-
-function exigirUsuario(req, res, next) {
-  const a = lerAuth(req);
-  if (!a || a.t !== "u")
-    return res
-      .status(401)
-      .json({ success: false, message: "Faça login para continuar" });
-  req.uid = a.id;
-  next();
-}
-
-function exigirAdmin(req, res, next) {
-  const a = lerAuth(req);
-  if (!a || a.t !== "a")
-    return res.status(401).json({ success: false, message: "Acesso negado" });
-  req.aid = a.id;
-  next();
-}
-
-const usuarioPublico = (u) => ({
-  id: u.id,
-  nome: u.nome,
-  email: u.email,
-  telefone: u.telefone || "",
-});
-
-// =============================================================
-// CORS + SESSÃO
-// =============================================================
-const ORIGENS_OK = [
-  "https://ng-express.netlify.app",
-  "http://localhost:3000",
-  "http://localhost:5500",
-  "http://127.0.0.1:5500",
-  ...(process.env.EXTRA_ORIGINS || "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean),
-];
-
-app.set("trust proxy", 1);
-
-app.use((req, res, next) => {
-  const origem = req.headers.origin || "";
-  res.setHeader(
-    "Access-Control-Allow-Origin",
-    ORIGENS_OK.includes(origem) ? origem : ORIGENS_OK[0],
-  );
-  res.setHeader("Vary", "Origin");
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-  );
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  if (req.method === "OPTIONS") return res.sendStatus(204);
-  next();
-});
-
-app.use(express.json({ limit: "1mb" }));
-
-app.use(
-  session({
-    secret: SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: IS_PROD,
-      sameSite: IS_PROD ? "none" : "lax",
-      httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    },
-  }),
-);
-
-// =============================================================
-// ARQUIVOS ESTÁTICOS
-// =============================================================
-const publicDir = path.join(__dirname, "public");
-if (fs.existsSync(publicDir)) app.use(express.static(publicDir));
-["css", "js", "img"].forEach((pasta) => {
-  const p = path.join(__dirname, pasta);
-  if (fs.existsSync(p)) app.use(`/${pasta}`, express.static(p));
-});
-
-const paginas = ["index", "novo-pedido", "admin", "dashboard"];
-paginas.forEach((nome) =>
-  app.get(`/${nome}.html`, (req, res) =>
-    res.sendFile(path.join(__dirname, `${nome}.html`)),
-  ),
-);
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
-
-// =============================================================
-// 100% GOOGLE MAPS PLATFORM (PLACES API NEW v1 + ROUTES API v2)
-// =============================================================
-function googleRequest(options, bodyObj = null) {
-  return new Promise((resolve, reject) => {
-    if (!GOOGLE_MAPS_API_KEY) {
-      return reject(new Error("GOOGLE_MAPS_API_KEY não configurada no .env"));
+  window.abrirModalLogin = () => {
+    window.fecharModal("cadastro-modal");
+    const emailSalvo = localStorage.getItem("ng_lembrar_email");
+    const inputEmail = document.getElementById("login-email");
+    const chkLembrar = document.getElementById("lembrar-email");
+    if (emailSalvo && inputEmail) {
+      inputEmail.value = emailSalvo;
+      if (chkLembrar) chkLembrar.checked = true;
     }
-    const data = bodyObj ? JSON.stringify(bodyObj) : null;
-    const headers = {
-      Referer: BASE_URL || "http://localhost:3000",
-      ...(options.headers || {}),
-    };
-    if (data) {
-      headers["Content-Type"] = "application/json";
-      headers["Content-Length"] = Buffer.byteLength(data);
+    const modal = document.getElementById("login-modal");
+    if (modal) modal.style.display = "flex";
+  };
+
+  window.abrirModalCadastro = () => {
+    window.fecharModal("login-modal");
+    const modal = document.getElementById("cadastro-modal");
+    if (modal) modal.style.display = "flex";
+  };
+
+  window.fazerLogin = async function (event) {
+    event.preventDefault();
+    const email = document.getElementById("login-email")?.value.trim();
+    const senha = document.getElementById("login-senha")?.value;
+    const lembrar = document.getElementById("lembrar-email")?.checked;
+    const btn = event.target.querySelector('button[type="submit"]');
+    const txtOriginal = btn ? btn.innerHTML : "Entrar";
+
+    if (!email || !senha) {
+      return mostrarToast("Preencha e-mail e senha.", "error");
     }
-    const req = https.request({ ...options, headers }, (res) => {
-      let raw = "";
-      res.on("data", (c) => (raw += c));
-      res.on("end", () => {
-        try {
-          resolve({ status: res.statusCode, body: JSON.parse(raw || "{}") });
-        } catch (e) {
-          reject(
-            new Error("Resposta inválida do Google: " + raw.slice(0, 180)),
-          );
-        }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner spinner-sm"></span> Entrando...';
+    }
+
+    try {
+      const resp = await fetch(`${API_BASE_URL}/usuarios/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, senha }),
       });
-    });
-    req.on("error", reject);
-    req.setTimeout(15000, () =>
-      req.destroy(new Error("Google Maps: tempo esgotado")),
-    );
-    if (data) req.write(data);
-    req.end();
-  });
-}
+      const data = await resp.json();
 
-function extrairCidadePlaceNew(addressComponents) {
-  if (!Array.isArray(addressComponents)) return null;
-  const comp = addressComponents.find(
-    (c) =>
-      c.types?.includes("administrative_area_level_2") ||
-      c.types?.includes("locality") ||
-      c.types?.includes("sublocality_level_1"),
-  );
-  return comp?.longText || comp?.shortText || null;
-}
-
-function extrairNumeroPlaceNew(addressComponents) {
-  if (!Array.isArray(addressComponents)) return "";
-  const comp = addressComponents.find((c) =>
-    c.types?.includes("street_number"),
-  );
-  return comp?.shortText || comp?.longText || "";
-}
-
-// 1) Busca endereço por texto usando Google Places API (New) v1
-async function geocodificarEndereco(endereco) {
-  const resp = await googleRequest(
-    {
-      hostname: "places.googleapis.com",
-      path: "/v1/places:searchText",
-      method: "POST",
-      headers: {
-        "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
-        "X-Goog-FieldMask":
-          "places.location,places.formattedAddress,places.addressComponents,places.displayName",
-      },
-    },
-    {
-      textQuery: endereco,
-      languageCode: "pt-BR",
-      regionCode: "BR",
-      locationBias: {
-        circle: {
-          center: { latitude: -26.9906, longitude: -48.6347 },
-          radius: 50000.0,
-        },
-      },
-    },
-  );
-
-  const place = resp.body?.places?.[0];
-  if (resp.status === 200 && place?.location) {
-    return {
-      lat: place.location.latitude,
-      lng: place.location.longitude,
-      enderecoFormatado:
-        place.formattedAddress || place.displayName?.text || endereco,
-      cidade: extrairCidadePlaceNew(place.addressComponents),
-      numero: extrairNumeroPlaceNew(place.addressComponents),
-    };
-  }
-
-  const msgErro =
-    resp.body?.error?.message ||
-    `Endereço não encontrado no Google Maps: ${endereco}`;
-  throw new Error(msgErro);
-}
-
-// 2) Detalhes de um Place ID via Google Places API (New) v1
-async function detalhesPlaceId(placeId) {
-  const resp = await googleRequest({
-    hostname: "places.googleapis.com",
-    path: `/v1/places/${encodeURIComponent(placeId)}?languageCode=pt-BR&regionCode=BR`,
-    method: "GET",
-    headers: {
-      "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
-      "X-Goog-FieldMask":
-        "id,formattedAddress,location,addressComponents,displayName",
-    },
-  });
-
-  if (resp.status === 200 && resp.body?.location) {
-    return {
-      lat: resp.body.location.latitude,
-      lng: resp.body.location.longitude,
-      endereco: resp.body.formattedAddress || resp.body.displayName?.text || "",
-      cidade: extrairCidadePlaceNew(resp.body.addressComponents),
-      numero: extrairNumeroPlaceNew(resp.body.addressComponents),
-    };
-  }
-  throw new Error(
-    resp.body?.error?.message || "Não foi possível obter detalhes do local",
-  );
-}
-
-// 3) GPS Reverso 100% Google (Geocoding API ou Places API SearchNearby)
-async function geocodificarReversoGoogle(lat, lng) {
-  const latitude = Number(lat);
-  const longitude = Number(lng);
-
-  try {
-    const qs = new URLSearchParams({
-      latlng: `${latitude},${longitude}`,
-      language: "pt-BR",
-      region: "br",
-      key: GOOGLE_MAPS_API_KEY,
-    });
-    const geo = await googleRequest({
-      hostname: "maps.googleapis.com",
-      path: `/maps/api/geocode/json?${qs.toString()}`,
-      method: "GET",
-    });
-
-    if (
-      geo.status === 200 &&
-      geo.body.status === "OK" &&
-      geo.body.results?.[0]
-    ) {
-      const r = geo.body.results[0];
-      const num =
-        r.address_components?.find((c) => c.types.includes("street_number"))
-          ?.short_name || "";
-      const cid =
-        r.address_components?.find(
-          (c) =>
-            c.types.includes("administrative_area_level_2") ||
-            c.types.includes("locality"),
-        )?.long_name || "Balneário Camboriú";
-      return {
-        lat: latitude,
-        lng: longitude,
-        endereco: r.formatted_address,
-        numero: num,
-        cidade: cid,
-      };
-    }
-  } catch (_) {}
-
-  const nearby = await googleRequest(
-    {
-      hostname: "places.googleapis.com",
-      path: "/v1/places:searchNearby",
-      method: "POST",
-      headers: {
-        "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
-        "X-Goog-FieldMask":
-          "places.formattedAddress,places.location,places.addressComponents,places.displayName",
-      },
-    },
-    {
-      languageCode: "pt-BR",
-      regionCode: "BR",
-      maxResultCount: 1,
-      rankPreference: "DISTANCE",
-      locationRestriction: {
-        circle: {
-          center: { latitude, longitude },
-          radius: 150.0,
-        },
-      },
-    },
-  );
-
-  const place = nearby.body?.places?.[0];
-  if (nearby.status === 200 && place) {
-    return {
-      lat: latitude,
-      lng: longitude,
-      endereco:
-        place.formattedAddress ||
-        place.displayName?.text ||
-        `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
-      numero: extrairNumeroPlaceNew(place.addressComponents),
-      cidade:
-        extrairCidadePlaceNew(place.addressComponents) || "Balneário Camboriú",
-    };
-  }
-
-  throw new Error(
-    nearby.body?.error?.message ||
-      "Não foi possível localizar o endereço no Google Maps.",
-  );
-}
-
-// Rota: Autocomplete 100% Google Places API (New) v1
-app.get("/api/enderecos/sugerir", async (req, res) => {
-  try {
-    const q = String(req.query.q || "").trim();
-    if (q.length < 3) return res.json({ success: true, sugestoes: [] });
-
-    const autoResp = await googleRequest(
-      {
-        hostname: "places.googleapis.com",
-        path: "/v1/places:autocomplete",
-        method: "POST",
-        headers: {
-          "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
-        },
-      },
-      {
-        input: q,
-        languageCode: "pt-BR",
-        regionCode: "BR",
-        includedRegionCodes: ["br"],
-        locationBias: {
-          circle: {
-            center: { latitude: -26.9906, longitude: -48.6347 },
-            radius: 50000.0,
-          },
-        },
-      },
-    );
-
-    if (autoResp.status === 200 && Array.isArray(autoResp.body?.suggestions)) {
-      const sugestoes = autoResp.body.suggestions
-        .map((s) => s.placePrediction)
-        .filter(Boolean)
-        .slice(0, 5)
-        .map((p) => ({
-          placeId: p.placeId,
-          descricao:
-            p.text?.text ||
-            [
-              p.structuredFormat?.mainText?.text,
-              p.structuredFormat?.secondaryText?.text,
-            ]
-              .filter(Boolean)
-              .join(" - "),
-        }));
-
-      return res.json({ success: true, sugestoes });
-    }
-
-    if (autoResp.body?.error) {
-      console.error("Erro Google Places (New):", autoResp.body.error.message);
-    }
-    res.json({ success: true, sugestoes: [] });
-  } catch (e) {
-    console.error("Falha /api/enderecos/sugerir:", e.message);
-    res.json({ success: false, sugestoes: [], message: e.message });
-  }
-});
-
-// Rota: Detalhes de um Place ID
-app.get("/api/enderecos/detalhes", async (req, res) => {
-  try {
-    const placeId = String(req.query.placeId || "").trim();
-    if (!placeId)
-      return res
-        .status(400)
-        .json({ success: false, message: "placeId obrigatório" });
-    const dados = await detalhesPlaceId(placeId);
-    res.json({ success: true, ...dados });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
-});
-
-// Rota: GPS Reverso
-app.get("/api/enderecos/reverso", async (req, res) => {
-  try {
-    const { lat, lng } = req.query;
-    if (!lat || !lng)
-      return res
-        .status(400)
-        .json({ success: false, message: "Coordenadas ausentes" });
-    const dados = await geocodificarReversoGoogle(lat, lng);
-    res.json({ success: true, ...dados });
-  } catch (e) {
-    console.error("Erro GPS Google:", e.message);
-    res.status(500).json({ success: false, message: e.message });
-  }
-});
-
-// 4) Cálculo de Rota 100% Google Routes API v2
-function rotaPorModo(origem, destino, modo) {
-  return new Promise((resolve, reject) => {
-    const corpo = {
-      origin: {
-        location: { latLng: { latitude: origem.lat, longitude: origem.lng } },
-      },
-      destination: {
-        location: { latLng: { latitude: destino.lat, longitude: destino.lng } },
-      },
-      travelMode: modo,
-      computeAlternativeRoutes: false,
-      languageCode: "pt-BR",
-      units: "METRIC",
-    };
-    if (modo === "DRIVE") corpo.routingPreference = "TRAFFIC_AWARE";
-    const data = JSON.stringify(corpo);
-
-    const req = https.request(
-      {
-        hostname: "routes.googleapis.com",
-        path: "/directions/v2:computeRoutes",
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Content-Length": Buffer.byteLength(data),
-          "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
-          "X-Goog-FieldMask":
-            "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline",
-        },
-      },
-      (res) => {
-        let raw = "";
-        res.on("data", (c) => (raw += c));
-        res.on("end", () => {
-          try {
-            const body = JSON.parse(raw);
-            if (res.statusCode !== 200 || !body.routes?.[0])
-              throw new Error(body.error?.message || "Rota não encontrada");
-            const route = body.routes[0];
-            const distanciaKm = route.distanceMeters / 1000;
-            const duracaoMin = Math.max(
-              1,
-              Math.round(
-                parseInt(String(route.duration).replace("s", ""), 10) / 60,
-              ),
-            );
-            resolve({
-              distanciaKm,
-              distanciaTexto: `${distanciaKm.toFixed(1)} km`,
-              duracaoMin,
-              duracaoTexto:
-                duracaoMin < 60
-                  ? `${duracaoMin} min`
-                  : `${Math.floor(duracaoMin / 60)}h ${duracaoMin % 60}min`,
-              polyline: route.polyline?.encodedPolyline || "",
-              mapsLink: `https://www.google.com/maps/dir/?api=1&origin=${origem.lat},${origem.lng}&destination=${destino.lat},${destino.lng}&travelmode=driving`,
-            });
-          } catch (e) {
-            reject(e);
-          }
-        });
-      },
-    );
-    req.on("error", reject);
-    req.setTimeout(15000, () =>
-      req.destroy(new Error("Routes API: tempo esgotado")),
-    );
-    req.write(data);
-    req.end();
-  });
-}
-
-async function calcularRota(origem, destino, veiculo) {
-  const modos = veiculo === "moto" ? ["TWO_WHEELER", "DRIVE"] : ["DRIVE"];
-  let ultimoErro;
-  for (const modo of modos) {
-    try {
-      return await rotaPorModo(origem, destino, modo);
-    } catch (e) {
-      ultimoErro = e;
-      console.warn(`Rota (${modo}) falhou:`, e.message);
-    }
-  }
-  throw ultimoErro;
-}
-
-// =============================================================
-// USUÁRIOS
-// =============================================================
-app.post(
-  "/api/usuarios/cadastrar",
-  limitar(10, 10 * 60 * 1000),
-  async (req, res) => {
-    try {
-      const { nome, email, telefone, senha } = req.body || {};
-      if (!nome || !email || !telefone || !senha)
-        return res.status(400).json({
-          success: false,
-          message: "Todos os campos são obrigatórios",
-        });
-      if (String(senha).length < 6)
-        return res
-          .status(400)
-          .json({ success: false, message: "Senha mínimo 6 caracteres" });
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-        return res
-          .status(400)
-          .json({ success: false, message: "E-mail inválido" });
-
-      const emailNorm = String(email).toLowerCase().trim();
-      const existe = await um("SELECT id FROM usuarios WHERE email = $1", [
-        emailNorm,
-      ]);
-      if (existe)
-        return res
-          .status(409)
-          .json({ success: false, message: "E-mail já cadastrado" });
-
-      const id = uuid();
-      const hash = await bcrypt.hash(String(senha), 10);
-      await rodar(
-        "INSERT INTO usuarios (id,nome,email,telefone,senha_hash,criado) VALUES ($1,$2,$3,$4,$5,$6)",
-        [id, texto(nome, 120), emailNorm, texto(telefone, 30), hash, agora()],
-      );
-
-      const usuario = {
-        id,
-        nome: texto(nome, 120),
-        email: emailNorm,
-        telefone: texto(telefone, 30),
-      };
-      req.session.usuario = usuario;
-      const token = assinar({ t: "u", id }, 7 * 24 * 3600 * 1000);
-      req.session.save(() =>
-        res.json({
-          success: true,
-          message: "Cadastro realizado!",
-          usuario,
-          token,
-        }),
-      );
-    } catch (e) {
-      console.error("Erro cadastro:", e);
-      res.status(500).json({ success: false, message: "Erro interno" });
-    }
-  },
-);
-
-app.post(
-  "/api/usuarios/login",
-  limitar(15, 10 * 60 * 1000),
-  async (req, res) => {
-    try {
-      const { email, senha } = req.body || {};
-      if (!email || !senha)
-        return res
-          .status(400)
-          .json({ success: false, message: "E-mail e senha obrigatórios" });
-
-      const u = await um("SELECT * FROM usuarios WHERE email = $1", [
-        String(email).toLowerCase().trim(),
-      ]);
-      const ok = u && (await bcrypt.compare(String(senha), u.senha_hash));
-      if (!ok)
-        return res
-          .status(401)
-          .json({ success: false, message: "E-mail ou senha inválidos" });
-
-      const usuario = usuarioPublico(u);
-      req.session.usuario = usuario;
-      const token = assinar({ t: "u", id: u.id }, 7 * 24 * 3600 * 1000);
-      req.session.save(() => res.json({ success: true, usuario, token }));
-    } catch (e) {
-      console.error("Erro login:", e);
-      res.status(500).json({ success: false, message: "Erro interno" });
-    }
-  },
-);
-
-app.post("/api/usuarios/logout", (req, res) =>
-  req.session.destroy(() => res.json({ success: true })),
-);
-
-app.get("/api/usuarios/verificar", async (req, res) => {
-  try {
-    const a = lerAuth(req);
-    if (!a || a.t !== "u") return res.json({ logado: false, usuario: null });
-    const u = await um(
-      "SELECT id,nome,email,telefone FROM usuarios WHERE id = $1",
-      [a.id],
-    );
-    if (!u) return res.json({ logado: false, usuario: null });
-    res.json({ logado: true, usuario: usuarioPublico(u) });
-  } catch (e) {
-    res.status(500).json({ logado: false, usuario: null });
-  }
-});
-
-app.post("/api/usuarios/atualizar", exigirUsuario, async (req, res) => {
-  try {
-    const { nome, telefone, senha } = req.body || {};
-    if (!texto(nome))
-      return res
-        .status(400)
-        .json({ success: false, message: "Informe o nome" });
-    if (senha && String(senha).length < 6)
-      return res
-        .status(400)
-        .json({ success: false, message: "Senha mínimo 6 caracteres" });
-
-    if (senha) {
-      const hash = await bcrypt.hash(String(senha), 10);
-      await rodar(
-        "UPDATE usuarios SET nome=$1, telefone=$2, senha_hash=$3 WHERE id=$4",
-        [texto(nome, 120), texto(telefone, 30), hash, req.uid],
-      );
-    } else {
-      await rodar("UPDATE usuarios SET nome=$1, telefone=$2 WHERE id=$3", [
-        texto(nome, 120),
-        texto(telefone, 30),
-        req.uid,
-      ]);
-    }
-    const u = await um(
-      "SELECT id,nome,email,telefone FROM usuarios WHERE id = $1",
-      [req.uid],
-    );
-    if (req.session) req.session.usuario = usuarioPublico(u);
-    res.json({ success: true, usuario: usuarioPublico(u) });
-  } catch (e) {
-    console.error("Erro atualizar:", e);
-    res.status(500).json({ success: false, message: "Erro interno" });
-  }
-});
-
-// =============================================================
-// ADMIN
-// =============================================================
-app.post("/api/admin/login", limitar(10, 10 * 60 * 1000), async (req, res) => {
-  try {
-    const { email, senha } = req.body || {};
-    if (!email || !senha)
-      return res
-        .status(400)
-        .json({ success: false, message: "E-mail e senha obrigatórios" });
-    const a = await um("SELECT * FROM admins WHERE email = $1", [
-      String(email).toLowerCase().trim(),
-    ]);
-    const ok = a && (await bcrypt.compare(String(senha), a.senha_hash));
-    if (!ok)
-      return res
-        .status(401)
-        .json({ success: false, message: "E-mail ou senha inválidos" });
-
-    const adminObj = { id: a.id, nome: a.nome, email: a.email };
-    req.session.admin = adminObj;
-    const token = assinar({ t: "a", id: a.id }, 12 * 3600 * 1000);
-    req.session.save(() =>
-      res.json({
-        success: true,
-        admin: adminObj,
-        token,
-      }),
-    );
-  } catch (e) {
-    console.error("Erro login admin:", e);
-    res.status(500).json({ success: false, message: "Erro interno" });
-  }
-});
-
-app.post("/api/admin/logout", (req, res) =>
-  req.session.destroy(() => res.json({ success: true })),
-);
-
-app.get("/api/admin/dados", exigirAdmin, async (req, res) => {
-  try {
-    const PAGO = "status_pagamento = 'aprovado'";
-    const nCorridas = await um(
-      `SELECT COUNT(*)::int AS c FROM historico_orcamentos WHERE ${PAGO}`,
-    );
-    const nFaturado = await um(
-      `SELECT COALESCE(SUM(valor_total), 0) AS s FROM historico_orcamentos WHERE ${PAGO}`,
-    );
-    const nUsuarios = await um("SELECT COUNT(*)::int AS c FROM usuarios");
-    const porVeiculo = await todos(
-      `SELECT tipo_veiculo, COUNT(*)::int AS total FROM historico_orcamentos WHERE ${PAGO} GROUP BY tipo_veiculo`,
-    );
-    const corridas = await todos(
-      `SELECT h.*, u.nome AS usuario_nome, u.telefone AS usuario_telefone, u.email AS usuario_email
-       FROM historico_orcamentos h LEFT JOIN usuarios u ON u.id = h.usuario_id
-       ORDER BY COALESCE(h.data_orcamento, h.criado) DESC LIMIT 100`,
-    );
-    const topUsuarios = await todos(
-      `SELECT u.nome, u.email, u.telefone, COUNT(h.id)::int AS total_pedidos,
-              COALESCE(SUM(h.valor_total), 0) AS total_gasto
-       FROM usuarios u
-       LEFT JOIN historico_orcamentos h ON h.usuario_id = u.id AND h.status_pagamento = 'aprovado'
-       GROUP BY u.id, u.nome, u.email, u.telefone
-       ORDER BY total_pedidos DESC, u.nome LIMIT 50`,
-    );
-
-    res.json({
-      success: true,
-      totalCorridas: nCorridas?.c || 0,
-      totalFaturado: parseFloat(nFaturado?.s || 0),
-      totalUsuarios: nUsuarios?.c || 0,
-      porVeiculo,
-      corridas,
-      topUsuarios,
-    });
-  } catch (e) {
-    console.error("Erro admin dados:", e);
-    res.status(500).json({ success: false, message: "Erro interno" });
-  }
-});
-
-app.post("/api/admin/confirmar-pagamento", exigirAdmin, async (req, res) => {
-  try {
-    const { id } = req.body || {};
-    if (!id)
-      return res.status(400).json({ success: false, message: "ID ausente" });
-    await rodar(
-      `UPDATE historico_orcamentos SET status_pagamento = 'aprovado', data_pagamento = $1 WHERE id = $2`,
-      [agora(), String(id)],
-    );
-    res.json({ success: true });
-  } catch (e) {
-    console.error("Erro confirmar pagamento admin:", e);
-    res.status(500).json({ success: false, message: "Erro interno" });
-  }
-});
-
-// =============================================================
-// ROTA E PREÇO (100% GOOGLE MAPS)
-// =============================================================
-app.post(
-  "/api/rotas/calcular",
-  limitar(40, 10 * 60 * 1000),
-  async (req, res) => {
-    try {
-      const { coleta, entrega } = req.body || {};
-      const veiculo = req.body?.veiculo === "carro" ? "carro" : "moto";
-      if (!coleta || !entrega)
-        return res
-          .status(400)
-          .json({ success: false, message: "Informe coleta e entrega" });
-
-      const resolver = async (p) => {
-        if (p.lat && p.lng) {
-          return {
-            lat: Number(p.lat),
-            lng: Number(p.lng),
-            endereco: p.endereco || `${p.lat}, ${p.lng}`,
-            cidade: p.cidade || null,
-          };
-        }
-        if (p.placeId) {
-          const det = await detalhesPlaceId(p.placeId);
-          return {
-            lat: det.lat,
-            lng: det.lng,
-            endereco: p.endereco || det.endereco,
-            cidade: det.cidade || null,
-          };
-        }
-        if (p.endereco) {
-          const g = await geocodificarEndereco(p.endereco);
-          return {
-            lat: g.lat,
-            lng: g.lng,
-            endereco: g.enderecoFormatado || p.endereco,
-            cidade: g.cidade || null,
-          };
-        }
-        return null;
-      };
-
-      const origem = await resolver(coleta);
-      const destino = await resolver(entrega);
-      if (!origem || !destino)
-        return res
-          .status(400)
-          .json({ success: false, message: "Endereços inválidos" });
-
-      const rota = await calcularRota(origem, destino, veiculo);
-
-      let cidadeDestino = destino.cidade;
-      if (!cidadeDestino) {
-        try {
-          const rev = await geocodificarReversoGoogle(destino.lat, destino.lng);
-          cidadeDestino = rev.cidade;
-        } catch (_) {}
+      if (!resp.ok || !data.success) {
+        throw new Error(data.message || "E-mail ou senha inválidos");
       }
 
-      const valor = calcularPreco(rota.distanciaKm, cidadeDestino);
-      const cotacao = assinar(
-        {
-          t: "cot",
-          valor,
-          distanciaKm: rota.distanciaKm,
-          cidadeDestino: cidadeDestino || "Balneário Camboriú",
-          veiculo,
-          mapsLink: rota.mapsLink,
-        },
-        30 * 60 * 1000,
-      );
+      if (lembrar) localStorage.setItem("ng_lembrar_email", email);
+      else localStorage.removeItem("ng_lembrar_email");
 
-      res.json({
-        success: true,
-        rota: { ...rota, origem, destino },
-        cidadeDestino: cidadeDestino || "Balneário Camboriú",
-        valor,
-        veiculo,
-        cotacao,
-      });
-    } catch (e) {
-      console.error("Erro calcular rota:", e.message);
-      res.status(500).json({ success: false, message: e.message });
-    }
-  },
-);
+      sessionStorage.setItem("usuario", JSON.stringify(data.usuario));
+      localStorage.setItem("usuario", JSON.stringify(data.usuario));
+      if (data.token) {
+        sessionStorage.setItem("ng_token", data.token);
+        localStorage.setItem("ng_token", data.token);
+      }
 
-// =============================================================
-// HISTÓRICO DO CLIENTE
-// =============================================================
-app.get("/api/orcamentos/historico", exigirUsuario, async (req, res) => {
-  try {
-    const orcamentos = await todos(
-      "SELECT * FROM historico_orcamentos WHERE usuario_id = $1 ORDER BY COALESCE(data_orcamento, criado) DESC",
-      [req.uid],
-    );
-    res.json({ success: true, orcamentos });
-  } catch (e) {
-    console.error("Erro histórico:", e);
-    res.status(500).json({ success: false, message: "Erro interno" });
-  }
-});
+      window.fecharModal("login-modal");
+      atualizarMenuUsuario(data.usuario);
+      preencherFormulario();
 
-// =============================================================
-// PIX (MERCADO PAGO)
-// =============================================================
-function mpReq(method, endpoint, body) {
-  return new Promise((resolve, reject) => {
-    const data = body ? JSON.stringify(body) : null;
-    const opts = {
-      hostname: "api.mercadopago.com",
-      path: endpoint,
-      method,
-      headers: {
-        Authorization: `Bearer ${MP_ACCESS_TOKEN}`,
-        "Content-Type": "application/json",
-        "X-Idempotency-Key": uuid(),
-      },
-    };
-    if (data) opts.headers["Content-Length"] = Buffer.byteLength(data);
-    const req = https.request(opts, (res) => {
-      let raw = "";
-      res.on("data", (c) => (raw += c));
-      res.on("end", () => {
-        try {
-          resolve({ status: res.statusCode, body: JSON.parse(raw) });
-        } catch (e) {
-          reject(new Error("Resposta inválida do Mercado Pago"));
-        }
-      });
-    });
-    req.on("error", reject);
-    req.setTimeout(20000, () =>
-      req.destroy(new Error("Mercado Pago: tempo esgotado")),
-    );
-    if (data) req.write(data);
-    req.end();
-  });
-}
-
-const STATUS_MP = {
-  approved: "aprovado",
-  pending: "pendente",
-  in_process: "pendente",
-  authorized: "pendente",
-  cancelled: "cancelado",
-  rejected: "cancelado",
-  refunded: "cancelado",
-  charged_back: "cancelado",
-};
-
-async function sincronizarPagamento(paymentId) {
-  const resp = await mpReq(
-    "GET",
-    `/v1/payments/${encodeURIComponent(paymentId)}`,
-    null,
-  );
-  if (resp.status !== 200) return null;
-  const statusMp = resp.body.status;
-  const novo = STATUS_MP[statusMp] || "pendente";
-
-  if (novo === "aprovado") {
-    await rodar(
-      `UPDATE historico_orcamentos
-       SET status_pagamento = 'aprovado', data_pagamento = COALESCE(data_pagamento, $1)
-       WHERE payment_id = $2 AND status_pagamento <> 'aprovado'`,
-      [agora(), String(paymentId)],
-    );
-  } else {
-    await rodar(
-      `UPDATE historico_orcamentos SET status_pagamento = $1
-       WHERE payment_id = $2 AND status_pagamento <> 'aprovado'`,
-      [novo, String(paymentId)],
-    );
-  }
-  return statusMp;
-}
-
-app.post(
-  "/api/pix/criar",
-  exigirUsuario,
-  limitar(20, 10 * 60 * 1000),
-  async (req, res) => {
-    try {
-      const { cotacao, pedido } = req.body || {};
-      const cot = verificarToken(cotacao);
-      if (!cot || cot.t !== "cot")
-        return res.status(400).json({
-          success: false,
-          erro: "Cotação expirada. Volte e calcule o valor novamente.",
-        });
-      if (!pedido || typeof pedido !== "object")
-        return res
-          .status(400)
-          .json({ success: false, erro: "Dados do pedido ausentes" });
-
-      const u = await um(
-        "SELECT id,nome,email,telefone FROM usuarios WHERE id = $1",
-        [req.uid],
-      );
-      if (!u)
-        return res
-          .status(401)
-          .json({ success: false, erro: "Usuário não encontrado" });
-
-      const numeroPedido = `NG${Date.now().toString().slice(-8)}`;
-      const partesNome = (u.nome || "Cliente Entrega").trim().split(/\s+/);
-      const primeiroNome = partesNome[0] || "Cliente";
-      const sobrenome = partesNome.slice(1).join(" ") || "NGExpress";
-
-      const mpBody = {
-        transaction_amount: Number(cot.valor),
-        description: `Entrega N&G Express #${numeroPedido}`,
-        payment_method_id: "pix",
-        payer: {
-          email: u.email || "cliente@ngexpress.com.br",
-          first_name: primeiroNome,
-          last_name: sobrenome,
-        },
-        external_reference: numeroPedido,
-      };
-      if (BASE_URL.startsWith("https://"))
-        mpBody.notification_url = `${BASE_URL}/api/pix/webhook`;
-
-      const resp = await mpReq("POST", "/v1/payments", mpBody);
-      const pix = resp.body?.point_of_interaction?.transaction_data;
-      if (![200, 201].includes(resp.status) || !pix) {
-        console.error(
-          "Erro Mercado Pago:",
-          resp.status,
-          JSON.stringify(resp.body),
+      if (window.__aguardandoLoginParaPix) {
+        window.__aguardandoLoginParaPix = false;
+        mostrarToast(
+          `Bem-vindo(a), ${data.usuario.nome.split(" ")[0]}! Gerando seu PIX...`,
+          "success",
         );
-        return res.status(502).json({
-          success: false,
-          erro: resp.body?.message || "Não foi possível gerar o PIX agora",
+        document.getElementById("btn-pagar")?.click();
+      } else if (window.location.pathname.includes("novo-pedido")) {
+        mostrarToast(
+          `Bem-vindo(a), ${data.usuario.nome.split(" ")[0]}!`,
+          "success",
+        );
+      } else {
+        mostrarToast(
+          "Login realizado! Redirecionando para seu painel...",
+          "success",
+        );
+        setTimeout(() => {
+          window.location.href = "dashboard.html";
+        }, 600);
+      }
+    } catch (err) {
+      mostrarToast(err.message || "Erro ao fazer login", "error");
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = txtOriginal;
+      }
+    }
+  };
+
+  window.fazerCadastro = async function (event) {
+    event.preventDefault();
+    const nome = document.getElementById("cadastro-nome")?.value.trim();
+    const email = document.getElementById("cadastro-email")?.value.trim();
+    const telefone = document.getElementById("cadastro-telefone")?.value.trim();
+    const senha = document.getElementById("cadastro-senha")?.value;
+    const confirmar = document.getElementById(
+      "cadastro-confirmar-senha",
+    )?.value;
+    const btn = event.target.querySelector('button[type="submit"]');
+    const txtOriginal = btn ? btn.innerHTML : "Cadastrar";
+
+    if (!nome || nome.split(/\s+/).length < 2) {
+      return mostrarToast("Informe seu nome e sobrenome.", "warning");
+    }
+    if (senha !== confirmar) {
+      return mostrarToast("As senhas não coincidem.", "error");
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner spinner-sm"></span> Cadastrando...';
+    }
+
+    try {
+      const resp = await fetch(`${API_BASE_URL}/usuarios/cadastrar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ nome, email, telefone, senha }),
+      });
+      const data = await resp.json();
+
+      if (!resp.ok || !data.success) {
+        throw new Error(data.message || "Erro ao realizar cadastro");
+      }
+
+      sessionStorage.setItem("usuario", JSON.stringify(data.usuario));
+      localStorage.setItem("usuario", JSON.stringify(data.usuario));
+      if (data.token) {
+        sessionStorage.setItem("ng_token", data.token);
+        localStorage.setItem("ng_token", data.token);
+      }
+
+      window.fecharModal("cadastro-modal");
+      atualizarMenuUsuario(data.usuario);
+      preencherFormulario();
+
+      if (window.__aguardandoLoginParaPix) {
+        window.__aguardandoLoginParaPix = false;
+        mostrarToast("Cadastro concluído! Gerando seu PIX...", "success");
+        document.getElementById("btn-pagar")?.click();
+      } else if (window.location.pathname.includes("novo-pedido")) {
+        mostrarToast("Cadastro realizado com sucesso!", "success");
+      } else {
+        mostrarToast("Cadastro realizado! Abrindo seu painel...", "success");
+        setTimeout(() => {
+          window.location.href = "dashboard.html";
+        }, 600);
+      }
+    } catch (err) {
+      mostrarToast(err.message || "Erro ao cadastrar", "error");
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = txtOriginal;
+      }
+    }
+  };
+
+  window.fazerLogout = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/usuarios/logout`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+    } catch (e) {}
+    sessionStorage.removeItem("usuario");
+    sessionStorage.removeItem("ng_token");
+    localStorage.removeItem("usuario");
+    localStorage.removeItem("ng_token");
+    window.location.href = "index.html";
+  };
+
+  // =============================================
+  // SESSÃO E PREENCHIMENTO AUTOMÁTICO
+  // =============================================
+  function atualizarMenuUsuario(usuario) {
+    if (usuario) {
+      document
+        .querySelectorAll(".login-item")
+        .forEach((el) => (el.style.display = "none"));
+      document
+        .querySelectorAll(".perfil-item")
+        .forEach((el) => (el.style.display = "block"));
+      const pn = document.getElementById("menu-perfil-nome");
+      if (pn && usuario.nome) pn.textContent = usuario.nome.split(" ")[0];
+    } else {
+      document
+        .querySelectorAll(".login-item")
+        .forEach((el) => (el.style.display = "block"));
+      document
+        .querySelectorAll(".perfil-item")
+        .forEach((el) => (el.style.display = "none"));
+    }
+  }
+
+  async function verificarSessao() {
+    const cacheLocal =
+      sessionStorage.getItem("usuario") || localStorage.getItem("usuario");
+    if (cacheLocal) {
+      try {
+        const u = JSON.parse(cacheLocal);
+        atualizarMenuUsuario(u);
+        preencherFormulario();
+      } catch (_) {}
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/usuarios/verificar`, {
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      const data = await response.json();
+
+      if (data.logado && data.usuario) {
+        sessionStorage.setItem("usuario", JSON.stringify(data.usuario));
+        localStorage.setItem("usuario", JSON.stringify(data.usuario));
+        atualizarMenuUsuario(data.usuario);
+        preencherFormulario();
+      } else {
+        sessionStorage.removeItem("usuario");
+        localStorage.removeItem("usuario");
+        atualizarMenuUsuario(null);
+      }
+    } catch (e) {
+      console.warn("Sessão offline ou não verificada.");
+    }
+  }
+
+  function obterUsuarioLogado() {
+    const raw =
+      sessionStorage.getItem("usuario") || localStorage.getItem("usuario");
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function preencherFormulario() {
+    const u = obterUsuarioLogado();
+    const bannerContainer = document.getElementById("banner-usuario-container");
+    if (!u) {
+      if (bannerContainer) {
+        bannerContainer.innerHTML = `
+          <div class="banner-usuario aviso">
+            <i class="bi bi-info-circle-fill"></i>
+            <span>Faça <a href="#" onclick="abrirModalLogin();return false;"><strong>login</strong></a> ou <a href="#" onclick="abrirModalCadastro();return false;"><strong>cadastre-se</strong></a> para preencher seus dados automaticamente e salvar no seu histórico.</span>
+          </div>
+        `;
+      }
+      return;
+    }
+
+    const cn = document.getElementById("cliente-nome");
+    const ce = document.getElementById("cliente-email");
+    const ct = document.getElementById("cliente-telefone");
+
+    if (cn) cn.value = u.nome || "";
+    if (ce) ce.value = u.email || "";
+    if (ct && u.telefone) ct.value = u.telefone;
+
+    if (bannerContainer) {
+      bannerContainer.innerHTML = `
+        <div class="banner-usuario" id="banner-usuario">
+          <i class="bi bi-check-circle-fill"></i>
+          <span>Olá, <strong>${u.nome.split(" ")[0]}</strong>! Seus dados foram preenchidos automaticamente.</span>
+        </div>
+      `;
+    }
+
+    sincronizarReceptor();
+  }
+
+  // =============================================
+  // RÁDIO QUEM VAI RECEBER
+  // =============================================
+  function sincronizarReceptor() {
+    const radioSelecionado = document.querySelector(
+      'input[name="quem-recebe"]:checked',
+    )?.value;
+    const reqNome = document.getElementById("receptor-nome");
+    const reqTel = document.getElementById("receptor-telefone");
+    const dica = document.getElementById("receptor-dica");
+    if (!reqNome || !reqTel) return;
+
+    const u = obterUsuarioLogado();
+    const nomeCliente =
+      document.getElementById("cliente-nome")?.value.trim() || u?.nome || "";
+    const telCliente =
+      document.getElementById("cliente-telefone")?.value.trim() ||
+      u?.telefone ||
+      "";
+
+    if (radioSelecionado === "eu") {
+      reqNome.value = nomeCliente;
+      reqTel.value = telCliente;
+      reqNome.readOnly = true;
+      reqTel.readOnly = true;
+      reqNome.required = false;
+      reqTel.required = false;
+      reqNome.classList.remove("campo-erro");
+      reqTel.classList.remove("campo-erro");
+      if (dica) {
+        dica.textContent =
+          "Seus dados de cliente foram preenchidos automaticamente como recebedor.";
+      }
+    } else {
+      if (reqNome.readOnly) {
+        reqNome.value = "";
+        reqTel.value = "";
+      }
+      reqNome.readOnly = false;
+      reqTel.readOnly = false;
+      reqNome.required = true;
+      reqTel.required = true;
+      if (dica) {
+        dica.textContent =
+          "Obrigatório informar o nome completo (nome e sobrenome) e o WhatsApp/Telefone de quem irá receber.";
+      }
+      reqNome.focus();
+    }
+  }
+
+  document.querySelectorAll('input[name="quem-recebe"]').forEach((radio) => {
+    radio.addEventListener("change", sincronizarReceptor);
+  });
+
+  document
+    .getElementById("cliente-nome")
+    ?.addEventListener("input", sincronizarReceptor);
+  document
+    .getElementById("cliente-telefone")
+    ?.addEventListener("input", sincronizarReceptor);
+
+  // =============================================
+  // SINCRONIZAÇÃO SIMULTÂNEA ENDEREÇO <-> NÚMERO
+  // =============================================
+  function configurarSincronizacaoEnderecoNumero(tipo) {
+    const inputEnd = document.getElementById(`endereco-${tipo}`);
+    const inputNum = document.getElementById(`numero-${tipo}`);
+    if (!inputEnd || !inputNum) return;
+
+    inputEnd.addEventListener("input", () => {
+      const valor = inputEnd.value;
+      const matchNumero = valor.match(/,\s*(\d+[a-zA-Z]*)/);
+      if (matchNumero && matchNumero[1] && !inputNum.value) {
+        inputNum.value = matchNumero[1];
+      }
+    });
+
+    inputNum.addEventListener("input", () => {
+      if (window.coordenadasCache && window.coordenadasCache[tipo]) {
+        window.coordenadasCache[tipo].numero = inputNum.value;
+      }
+    });
+  }
+
+  configurarSincronizacaoEnderecoNumero("coleta");
+  configurarSincronizacaoEnderecoNumero("entrega");
+
+  // =============================================
+  // GOOGLE MAPS E AUTOCOMPLETE (100% GOOGLE PLACES NEW)
+  // =============================================
+  function quandoGoogleMapsCarregar(cb) {
+    if (window.__googleMapsLoaded) return cb();
+    window.addEventListener("google-maps-ready", cb, { once: true });
+  }
+
+  function inicializarGoogleMaps() {
+    const mapEl = document.getElementById("map");
+    if (!mapEl || typeof google === "undefined" || !google.maps) return;
+    if (googleMap) return;
+
+    const cfg = window.GOOGLE_MAPS_CONFIG || {};
+    googleMap = new google.maps.Map(mapEl, {
+      center: cfg.center || { lat: -26.9906, lng: -48.6347 },
+      zoom: 16,
+      mapTypeControl: false,
+      streetViewControl: false,
+      styles: cfg.styles || [],
+    });
+
+    // Permite clicar no mapa para ajustar a precisão do pino de entrega
+    googleMap.addListener("click", async (event) => {
+      const lat = event.latLng.lat();
+      const lng = event.latLng.lng();
+      adicionarMarcador("entrega", { lat, lng });
+      await atualizarCoordenadasPin("entrega", lat, lng);
+    });
+  }
+
+  function adicionarMarcador(tipo, position) {
+    if (!googleMap) return;
+    if (markers[tipo]) markers[tipo].setMap(null);
+
+    markers[tipo] = new google.maps.Marker({
+      position,
+      map: googleMap,
+      title:
+        tipo === "coleta"
+          ? "Coleta (C) - Arraste ou clique"
+          : "Entrega (E) - Arraste ou clique",
+      draggable: true,
+      animation: google.maps.Animation.DROP,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 12,
+        fillColor: tipo === "coleta" ? "#FF6B00" : "#00C48C",
+        fillOpacity: 1,
+        strokeColor: "#fff",
+        strokeWeight: 2.5,
+      },
+      label: {
+        text: tipo === "coleta" ? "C" : "E",
+        color: "#fff",
+        fontSize: "11px",
+        fontWeight: "bold",
+      },
+    });
+
+    markers[tipo].addListener("dragend", async (event) => {
+      await atualizarCoordenadasPin(
+        tipo,
+        event.latLng.lat(),
+        event.latLng.lng(),
+      );
+    });
+  }
+
+  async function atualizarCoordenadasPin(tipo, lat, lng) {
+    if (window.orcamentoAtual) {
+      if (tipo === "coleta") {
+        window.orcamentoAtual.coordsColeta = { lat, lng };
+        window.orcamentoAtual.mapsLinkColeta = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+      } else {
+        window.orcamentoAtual.coordsEntrega = { lat, lng };
+        window.orcamentoAtual.mapsLinkEntrega = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+      }
+    }
+
+    try {
+      const resp = await fetch(
+        `${API_BASE_URL}/enderecos/reverso?lat=${lat}&lng=${lng}`,
+      );
+      const data = await resp.json();
+      if (data.success && data.endereco) {
+        if (tipo === "coleta") {
+          window.orcamentoAtual.enderecoColeta = data.endereco;
+          document.getElementById("resumo-coleta").textContent = data.endereco;
+        } else {
+          window.orcamentoAtual.enderecoEntrega = data.endereco;
+          document.getElementById("resumo-entrega").textContent = data.endereco;
+          const linkEntrega = document.getElementById("link-maps-entrega");
+          if (linkEntrega)
+            linkEntrega.href = window.orcamentoAtual.mapsLinkEntrega;
+        }
+        mostrarToast(
+          `Ponto ${tipo === "coleta" ? "Coleta (C)" : "Entrega (E)"} ajustado com precisão cirúrgica!`,
+          "success",
+        );
+      }
+    } catch (err) {
+      console.warn("Erro ao atualizar endereço exato:", err);
+    }
+  }
+
+  function inicializarAutocomplete() {
+    function configurarCampoEndereco(tipo) {
+      const inputEl = document.getElementById(`endereco-${tipo}`);
+      const boxSugestoes = document.getElementById(`sugestoes-${tipo}`);
+      const selInfo = document.getElementById(`sel-${tipo}`);
+      const inputNum = document.getElementById(`numero-${tipo}`);
+      const btnGps = document.getElementById(`btn-gps-${tipo}`);
+      if (!inputEl) return;
+
+      let timer = null;
+
+      inputEl.addEventListener("input", () => {
+        const valor = inputEl.value.trim();
+        window.coordenadasCache[tipo] = { endereco: valor };
+        if (selInfo) selInfo.innerHTML = "";
+
+        clearTimeout(timer);
+        if (valor.length < 3) {
+          if (boxSugestoes) boxSugestoes.style.display = "none";
+          return;
+        }
+
+        timer = setTimeout(async () => {
+          try {
+            const r = await fetch(
+              `${API_BASE_URL}/enderecos/sugerir?q=${encodeURIComponent(valor)}`,
+            );
+            const d = await r.json();
+            if (!boxSugestoes) return;
+
+            if (!d.sugestoes || d.sugestoes.length === 0) {
+              boxSugestoes.style.display = "none";
+              return;
+            }
+
+            boxSugestoes.innerHTML = d.sugestoes
+              .map(
+                (s, idx) => `
+              <div class="sugestao-item" data-idx="${idx}">
+                <i class="bi bi-geo-alt-fill"></i>
+                <span>${s.descricao}</span>
+              </div>`,
+              )
+              .join("");
+            boxSugestoes.style.display = "block";
+
+            boxSugestoes.querySelectorAll(".sugestao-item").forEach((item) => {
+              item.addEventListener("click", async () => {
+                const escolhido = d.sugestoes[Number(item.dataset.idx)];
+                inputEl.value = escolhido.descricao;
+                boxSugestoes.style.display = "none";
+
+                window.coordenadasCache[tipo] = {
+                  placeId: escolhido.placeId,
+                  endereco: escolhido.descricao,
+                };
+
+                if (escolhido.placeId) {
+                  try {
+                    const detResp = await fetch(
+                      `${API_BASE_URL}/enderecos/detalhes?placeId=${encodeURIComponent(escolhido.placeId)}`,
+                    );
+                    const det = await detResp.json();
+                    if (det.success) {
+                      window.coordenadasCache[tipo] = {
+                        lat: det.lat,
+                        lng: det.lng,
+                        placeId: escolhido.placeId,
+                        endereco: det.endereco || escolhido.descricao,
+                        cidade: det.cidade || null,
+                      };
+                      if (det.numero && inputNum && !inputNum.value) {
+                        inputNum.value = det.numero;
+                      }
+                      if (det.lat && det.lng) {
+                        adicionarMarcador(tipo, { lat: det.lat, lng: det.lng });
+                      }
+                    }
+                  } catch (_) {}
+                }
+
+                if (selInfo) {
+                  selInfo.innerHTML = `<i class="bi bi-check-circle-fill"></i> <span>${escolhido.descricao}</span>`;
+                }
+              });
+            });
+          } catch (_) {
+            if (boxSugestoes) boxSugestoes.style.display = "none";
+          }
+        }, 300);
+      });
+
+      document.addEventListener("click", (e) => {
+        if (
+          boxSugestoes &&
+          !inputEl.contains(e.target) &&
+          !boxSugestoes.contains(e.target)
+        ) {
+          boxSugestoes.style.display = "none";
+        }
+      });
+
+      if (btnGps) {
+        btnGps.addEventListener("click", () => {
+          if (!navigator.geolocation) {
+            return mostrarToast("Seu navegador não suporta GPS.", "error");
+          }
+          const htmlOriginal = btnGps.innerHTML;
+          btnGps.innerHTML = '<span class="spinner spinner-sm"></span>';
+          btnGps.disabled = true;
+
+          navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+              try {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+
+                const r = await fetch(
+                  `${API_BASE_URL}/enderecos/reverso?lat=${lat}&lng=${lng}`,
+                );
+                const d = await r.json();
+                if (!r.ok || !d.success) {
+                  throw new Error(
+                    d.message || "Erro ao buscar localização no Google Maps",
+                  );
+                }
+
+                const endFormatado = d.endereco;
+                inputEl.value = endFormatado;
+                window.coordenadasCache[tipo] = {
+                  lat,
+                  lng,
+                  endereco: endFormatado,
+                  cidade: d.cidade || null,
+                };
+
+                if (d.numero && inputNum) inputNum.value = d.numero;
+                if (selInfo) {
+                  selInfo.innerHTML = `<i class="bi bi-check-circle-fill"></i> <span>Google Maps GPS: ${endFormatado}</span>`;
+                }
+
+                adicionarMarcador(tipo, { lat, lng });
+                mostrarToast("Localização obtida pelo Google Maps!", "success");
+              } catch (err) {
+                mostrarToast(err.message, "error");
+              } finally {
+                btnGps.innerHTML = htmlOriginal;
+                btnGps.disabled = false;
+              }
+            },
+            () => {
+              mostrarToast(
+                "Permissão de localização negada. Ative o GPS no navegador.",
+                "warning",
+              );
+              btnGps.innerHTML = htmlOriginal;
+              btnGps.disabled = false;
+            },
+            { enableHighAccuracy: true, timeout: 12000 },
+          );
+        });
+      }
+    }
+
+    configurarCampoEndereco("coleta");
+    configurarCampoEndereco("entrega");
+  }
+
+  // =============================================
+  // WIZARD (ETAPAS DO PEDIDO)
+  // =============================================
+  let currentStep = 0;
+  const totalSteps = 6;
+
+  function validarEtapaAtual() {
+    if (currentStep === 0) {
+      const nome = document.getElementById("cliente-nome")?.value.trim();
+      const tel = document.getElementById("cliente-telefone")?.value.trim();
+      const email = document.getElementById("cliente-email")?.value.trim();
+      if (!nome) {
+        mostrarToast("Informe seu nome completo.", "warning");
+        document.getElementById("cliente-nome")?.focus();
+        return false;
+      }
+      if (!tel || tel.replace(/\D/g, "").length < 10) {
+        mostrarToast("Informe um WhatsApp/Telefone válido com DDD.", "warning");
+        document.getElementById("cliente-telefone")?.focus();
+        return false;
+      }
+      if (!email || !email.includes("@")) {
+        mostrarToast("Informe um e-mail válido.", "warning");
+        document.getElementById("cliente-email")?.focus();
+        return false;
+      }
+    }
+
+    if (currentStep === 2) {
+      const endColeta = document
+        .getElementById("endereco-coleta")
+        ?.value.trim();
+      if (!endColeta && !window.coordenadasCache.coleta?.lat) {
+        mostrarToast("Informe o endereço de coleta.", "warning");
+        document.getElementById("endereco-coleta")?.focus();
+        return false;
+      }
+    }
+
+    if (currentStep === 3) {
+      const endEntrega = document
+        .getElementById("endereco-entrega")
+        ?.value.trim();
+      if (!endEntrega && !window.coordenadasCache.entrega?.lat) {
+        mostrarToast("Informe o endereço de entrega.", "warning");
+        document.getElementById("endereco-entrega")?.focus();
+        return false;
+      }
+    }
+
+    if (currentStep === 4) {
+      const quemRecebe = document.querySelector(
+        'input[name="quem-recebe"]:checked',
+      )?.value;
+      const inputNome = document.getElementById("receptor-nome");
+      const inputTel = document.getElementById("receptor-telefone");
+      const nome = inputNome?.value.trim() || "";
+      const tel = inputTel?.value.trim() || "";
+
+      if (quemRecebe === "outro") {
+        if (nome.split(/\s+/).length < 2) {
+          inputNome?.classList.add("campo-erro");
+          inputNome?.focus();
+          mostrarToast(
+            "Informe o nome completo (nome e sobrenome) de quem irá receber.",
+            "warning",
+          );
+          return false;
+        }
+        inputNome?.classList.remove("campo-erro");
+
+        if (tel.replace(/\D/g, "").length < 10) {
+          inputTel?.classList.add("campo-erro");
+          inputTel?.focus();
+          mostrarToast(
+            "Informe o Telefone / WhatsApp com DDD de quem irá receber.",
+            "warning",
+          );
+          return false;
+        }
+        inputTel?.classList.remove("campo-erro");
+      }
+    }
+
+    return true;
+  }
+
+  function updateSteps() {
+    const btnVoltar = document.getElementById("btn-voltar");
+    const btnAvancar = document.getElementById("btn-avancar");
+    if (!btnVoltar || !btnAvancar) return;
+
+    document.querySelectorAll(".step").forEach((s, i) => {
+      s.classList.toggle("completed", i < currentStep);
+      s.classList.toggle("active", i === currentStep);
+    });
+    document.querySelectorAll(".step-content").forEach((c, i) => {
+      if (i < totalSteps) c.classList.toggle("active", i === currentStep);
+    });
+
+    btnVoltar.disabled = currentStep === 0;
+    btnAvancar.innerHTML =
+      currentStep === totalSteps - 1
+        ? 'Ver Resumo e Valor <i class="bi bi-check-lg"></i>'
+        : 'Avançar <i class="bi bi-arrow-right"></i>';
+
+    if (currentStep === 0) preencherFormulario();
+    if (currentStep === 4) sincronizarReceptor();
+  }
+
+  document.getElementById("btn-avancar")?.addEventListener("click", () => {
+    if (!validarEtapaAtual()) return;
+    if (currentStep === totalSteps - 1) finalizarPedido();
+    else {
+      currentStep++;
+      updateSteps();
+    }
+  });
+
+  document.getElementById("btn-voltar")?.addEventListener("click", () => {
+    if (currentStep > 0) {
+      currentStep--;
+      updateSteps();
+    }
+  });
+
+  document.getElementById("btn-cancelar")?.addEventListener("click", () => {
+    document.getElementById("checkout-screen").style.display = "none";
+    document.getElementById("wizard-container").style.display = "block";
+  });
+
+  // =============================================
+  // FINALIZAR E CALCULAR ROTA
+  // =============================================
+  function montarEnderecoCompleto(tipo) {
+    const base =
+      document.getElementById(`endereco-${tipo}`)?.value.trim() ||
+      window.coordenadasCache[tipo]?.endereco ||
+      "";
+    const num = document.getElementById(`numero-${tipo}`)?.value.trim() || "";
+    const comp =
+      document.getElementById(`complemento-${tipo}`)?.value.trim() || "";
+    let final = base;
+    if (num && !base.includes(num)) final += `, ${num}`;
+    if (comp) final += ` (${comp})`;
+    return final;
+  }
+
+  async function finalizarPedido() {
+    const endColetaTexto = montarEnderecoCompleto("coleta");
+    const endEntregaTexto = montarEnderecoCompleto("entrega");
+
+    const payloadColeta = {
+      ...(window.coordenadasCache.coleta || {}),
+      endereco: endColetaTexto,
+    };
+
+    const payloadEntrega = {
+      ...(window.coordenadasCache.entrega || {}),
+      endereco: endEntregaTexto,
+    };
+
+    const veiculo =
+      document.querySelector('input[name="tipo-veiculo"]:checked')?.value ||
+      "moto";
+    const quemRecebe = document.querySelector(
+      'input[name="quem-recebe"]:checked',
+    )?.value;
+
+    const nomeCliente = document.getElementById("cliente-nome").value.trim();
+    const telCliente = document.getElementById("cliente-telefone").value.trim();
+    const emailCliente = document.getElementById("cliente-email").value.trim();
+
+    const receptorNome =
+      quemRecebe === "outro"
+        ? document.getElementById("receptor-nome").value.trim()
+        : nomeCliente;
+    const receptorTelefone =
+      quemRecebe === "outro"
+        ? document.getElementById("receptor-telefone").value.trim()
+        : telCliente;
+
+    const categoriasSelecionadas = Array.from(
+      document.querySelectorAll('input[name="categoria"]:checked'),
+    ).map((el) => el.value);
+    const descricao = document.getElementById("descricao")?.value.trim() || "";
+
+    document.getElementById("wizard-container").style.display = "none";
+    document.getElementById("checkout-screen").style.display = "block";
+
+    document.getElementById("resumo-nome").textContent = nomeCliente;
+    document.getElementById("resumo-telefone").textContent = telCliente;
+    document.getElementById("resumo-veiculo").textContent =
+      veiculo === "carro" ? "🚗 Carro" : "🏍️ Moto";
+    document.getElementById("resumo-coleta").textContent = endColetaTexto;
+    document.getElementById("resumo-entrega").textContent = endEntregaTexto;
+    document.getElementById("resumo-receptor").textContent =
+      `${receptorNome} (${receptorTelefone})`;
+    document.getElementById("resumo-categorias").textContent =
+      categoriasSelecionadas.length > 0
+        ? categoriasSelecionadas.join(", ")
+        : descricao || "Geral";
+
+    const btn = document.getElementById("btn-pagar");
+    btn.disabled = true;
+    btn.innerHTML =
+      '<span class="spinner spinner-sm"></span> Calculando rota no Google Maps...';
+
+    try {
+      const resp = await fetch(`${API_BASE_URL}/rotas/calcular`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          coleta: payloadColeta,
+          entrega: payloadEntrega,
+          veiculo,
+        }),
+      });
+      const data = await resp.json();
+      if (!data.success)
+        throw new Error(data.message || "Falha ao calcular rota");
+
+      const endColetaReal = data.rota.origem?.endereco || endColetaTexto;
+      const endEntregaReal = data.rota.destino?.endereco || endEntregaTexto;
+
+      document.getElementById("resumo-coleta").textContent = endColetaReal;
+      document.getElementById("resumo-entrega").textContent = endEntregaReal;
+      document.getElementById("distancia-final").textContent =
+        data.rota.distanciaTexto;
+      document.getElementById("tempo-final").textContent =
+        data.rota.duracaoTexto;
+      document.getElementById("cidade-destino").textContent =
+        data.cidadeDestino || "Balneário Camboriú";
+      document.getElementById("valor-final").textContent = formatarMoeda(
+        data.valor,
+      );
+      document.getElementById("valor-info").textContent =
+        "Valor calculado pela distância oficial do Google Maps";
+
+      document.getElementById("mapa-wrapper").style.display = "block";
+      inicializarGoogleMaps();
+
+      if (
+        googleMap &&
+        typeof google !== "undefined" &&
+        google.maps?.geometry &&
+        data.rota.polyline
+      ) {
+        if (routePolyline) routePolyline.setMap(null);
+        const path = google.maps.geometry.encoding.decodePath(
+          data.rota.polyline,
+        );
+        routePolyline = new google.maps.Polyline({
+          path,
+          map: googleMap,
+          strokeColor: "#FF6B00",
+          strokeWeight: 5,
+        });
+        adicionarMarcador("coleta", data.rota.origem);
+        adicionarMarcador("entrega", data.rota.destino);
+        const bounds = new google.maps.LatLngBounds();
+        path.forEach((p) => bounds.extend(p));
+        googleMap.fitBounds(bounds);
+      }
+
+      window.orcamentoAtual = {
+        cotacao: data.cotacao,
+        valor: data.valor,
+        preco: data.valor,
+        nome: nomeCliente,
+        telefone: telCliente,
+        email: emailCliente,
+        tipoVeiculo: veiculo,
+        enderecoColeta: endColetaReal,
+        enderecoEntrega: endEntregaReal,
+        cidadeDestino: data.cidadeDestino || "Balneário Camboriú",
+        distancia: data.rota.distanciaTexto,
+        duracao: data.rota.duracaoTexto,
+        distanciaNum: data.rota.distanciaKm,
+        receptorNome,
+        receptorTelefone,
+        categorias: categoriasSelecionadas,
+        descricao,
+        mapsLinkRota: data.rota.mapsLink,
+        mapsLinkColeta: `https://www.google.com/maps/search/?api=1&query=${data.rota.origem.lat},${data.rota.origem.lng}`,
+        mapsLinkEntrega: `https://www.google.com/maps/search/?api=1&query=${data.rota.destino.lat},${data.rota.destino.lng}`,
+        coordsColeta: data.rota.origem,
+        coordsEntrega: data.rota.destino,
+      };
+
+      const linkColeta = document.getElementById("link-maps-coleta");
+      const linkEntrega = document.getElementById("link-maps-entrega");
+      if (linkColeta) linkColeta.href = window.orcamentoAtual.mapsLinkColeta;
+      if (linkEntrega) linkEntrega.href = window.orcamentoAtual.mapsLinkEntrega;
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-qr-code"></i> Pagar via PIX';
+    } catch (e) {
+      mostrarToast("Erro ao calcular a rota: " + e.message, "error");
+      document.getElementById("valor-final").textContent = "Erro no cálculo";
+      document.getElementById("valor-info").textContent = e.message;
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-arrow-left"></i> Revisar Endereços';
+      btn.onclick = () => {
+        document.getElementById("checkout-screen").style.display = "none";
+        document.getElementById("wizard-container").style.display = "block";
+        currentStep = 2;
+        updateSteps();
+        btn.onclick = null;
+      };
+    }
+  }
+
+  // =============================================
+  // PAGAMENTO PIX (POP-UP MERCADO PAGO + POLLING)
+  // =============================================
+  let paymentData = { paymentId: null, intervalId: null, confirmado: false };
+
+  function mostrarViewModalPix(view) {
+    ["qr", "ok", "erro"].forEach((v) => {
+      const el = document.getElementById(`pay-view-${v}`);
+      if (el) el.style.display = v === view ? "block" : "none";
+    });
+  }
+
+  window.fecharModalPagamento = function () {
+    if (paymentData.intervalId) {
+      clearInterval(paymentData.intervalId);
+      paymentData.intervalId = null;
+    }
+    const modal = document.getElementById("modal-pagamento");
+    if (modal) modal.style.display = "none";
+  };
+
+  window.copiarPix = () => {
+    const el = document.getElementById("pix-codigo");
+    const codigo = el?.getAttribute("data-codigo") || el?.textContent || "";
+    if (!codigo || codigo.includes("Gerando")) return;
+    navigator.clipboard
+      .writeText(codigo)
+      .then(() => mostrarToast("Código PIX copiado!", "success"));
+  };
+
+  document.getElementById("btn-pagar")?.addEventListener("click", async () => {
+    if (!window.orcamentoAtual) return;
+
+    const u = obterUsuarioLogado();
+    if (!u) {
+      window.__aguardandoLoginParaPix = true;
+      mostrarToast(
+        "Entre na sua conta ou cadastre-se rapidinho para gerar o PIX e registrar seu pedido!",
+        "warning",
+      );
+      window.abrirModalLogin();
+      return;
+    }
+
+    const o = window.orcamentoAtual;
+    paymentData.confirmado = false;
+    mostrarViewModalPix("qr");
+
+    document.getElementById("modal-pagamento").style.display = "flex";
+    document.getElementById("modal-valor").textContent = formatarMoeda(o.valor);
+    document.getElementById("qr-container").innerHTML =
+      '<div class="spinner"></div><span>Gerando QR Code no Mercado Pago...</span>';
+    document.getElementById("pix-codigo").textContent = "Gerando código PIX...";
+    document.getElementById("pay-wait").style.display = "none";
+
+    try {
+      const resp = await fetch(`${API_BASE_URL}/pix/criar`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify({
+          cotacao: o.cotacao,
+          pedido: {
+            enderecoColeta: o.enderecoColeta,
+            enderecoEntrega: o.enderecoEntrega,
+            coordsColeta: o.coordsColeta,
+            coordsEntrega: o.coordsEntrega,
+            receptorNome: o.receptorNome,
+            receptorTelefone: o.receptorTelefone,
+            categorias: o.categorias,
+            descricao: o.descricao,
+          },
+        }),
+      });
+
+      if (resp.status === 401) {
+        window.fecharModalPagamento();
+        window.__aguardandoLoginParaPix = true;
+        mostrarToast("Sua sessão expirou. Faça login novamente.", "warning");
+        window.abrirModalLogin();
+        return;
+      }
+
+      const data = await resp.json();
+      if (!data.success) {
+        throw new Error(data.erro || "Não foi possível gerar o PIX.");
+      }
+
+      paymentData.paymentId = data.paymentId;
+      window.orcamentoAtual.numeroPedido = data.numeroPedido;
+      window.orcamentoAtual.paymentId = data.paymentId;
+
+      const qrContainer = document.getElementById("qr-container");
+      qrContainer.innerHTML = "";
+      if (data.qrCodeBase64) {
+        qrContainer.innerHTML = `<img src="data:image/png;base64,${data.qrCodeBase64}" alt="QR Code PIX">`;
+      } else if (typeof QRCode !== "undefined") {
+        new QRCode(qrContainer, {
+          text: data.qrCode,
+          width: 180,
+          height: 180,
         });
       }
 
-      const cc = pedido.coordsColeta || {};
-      const ce = pedido.coordsEntrega || {};
-      const coordsColeta = cc.lat && cc.lng ? `${cc.lat},${cc.lng}` : "";
-      const coordsEntrega = ce.lat && ce.lng ? `${ce.lat},${ce.lng}` : "";
-      const categorias = Array.isArray(pedido.categorias)
-        ? pedido.categorias.map((c) => texto(c, 40)).join(", ")
-        : texto(pedido.categorias || "", 200);
-      const now = agora();
+      const pixCodigoEl = document.getElementById("pix-codigo");
+      pixCodigoEl.textContent = data.qrCode;
+      pixCodigoEl.setAttribute("data-codigo", data.qrCode);
 
-      await rodar(
-        `INSERT INTO historico_orcamentos (
-          id, usuario_id, numero_pedido, tipo_veiculo, endereco_coleta, endereco_entrega,
-          cidade_destino, descricao, valor_total, distancia_km, coords_coleta, coords_entrega,
-          maps_link, payment_id, status_pagamento, data_orcamento, criado,
-          receptor_nome, receptor_telefone, categorias
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)`,
-        [
-          uuid(),
-          u.id,
-          numeroPedido,
-          cot.veiculo,
-          texto(pedido.enderecoColeta, 400),
-          texto(pedido.enderecoEntrega, 400),
-          texto(cot.cidadeDestino, 120),
-          texto(pedido.descricao, 500),
-          cot.valor,
-          Math.round(cot.distanciaKm * 100) / 100,
-          coordsColeta,
-          coordsEntrega,
-          cot.mapsLink || "",
-          String(resp.body.id),
-          "pendente",
-          now,
-          now,
-          texto(pedido.receptorNome, 120),
-          texto(pedido.receptorTelefone, 30),
-          categorias,
-        ],
-      );
-
-      res.json({
-        success: true,
-        paymentId: String(resp.body.id),
-        numeroPedido,
-        qrCode: pix.qr_code,
-        qrCodeBase64: pix.qr_code_base64,
-        valor: resp.body.transaction_amount,
-      });
+      document.getElementById("pay-wait").style.display = "flex";
+      iniciarVerificacaoPagamento(data.paymentId);
     } catch (e) {
-      console.error("Erro PIX criar:", e);
-      res.status(500).json({
-        success: false,
-        erro: "Erro ao gerar o PIX. Tente novamente.",
+      mostrarViewModalPix("erro");
+      document.getElementById("pay-erro-msg").textContent =
+        e.message || "Erro ao comunicar com o Mercado Pago.";
+    }
+  });
+
+  async function checarStatusPix(paymentId, manual = false) {
+    if (!paymentId || paymentData.confirmado) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/pix/status/${paymentId}`, {
+        headers: getAuthHeaders(),
+        credentials: "include",
       });
+      if (res.ok) {
+        const data = await res.json();
+        if (
+          data.status === "approved" ||
+          data.pedido?.status_pagamento === "aprovado"
+        ) {
+          paymentData.confirmado = true;
+          if (paymentData.intervalId) clearInterval(paymentData.intervalId);
+          pagamentoConfirmado();
+          return;
+        }
+      }
+      if (manual) {
+        mostrarToast(
+          "Pagamento ainda pendente. Assim que confirmado, liberaremos automaticamente!",
+          "warning",
+        );
+      }
+    } catch (e) {
+      console.warn("Polling PIX:", e.message);
     }
-  },
-);
-
-app.get("/api/pix/status/:paymentId", exigirUsuario, async (req, res) => {
-  try {
-    const id = String(req.params.paymentId);
-    let pedido = await um(
-      "SELECT * FROM historico_orcamentos WHERE payment_id = $1 AND usuario_id = $2",
-      [id, req.uid],
-    );
-    if (!pedido)
-      return res.status(404).json({ success: false, status: "not_found" });
-
-    let status = pedido.status_pagamento === "aprovado" ? "approved" : null;
-    if (!status) {
-      status = await sincronizarPagamento(id);
-      pedido = await um(
-        "SELECT * FROM historico_orcamentos WHERE payment_id = $1",
-        [id],
-      );
-      if (pedido?.status_pagamento === "aprovado") status = "approved";
-    }
-    res.json({ success: true, status: status || "pending", pedido });
-  } catch (e) {
-    console.error("Erro PIX status:", e.message);
-    res.status(500).json({ success: false, erro: e.message });
   }
+
+  window.verificarPagamentoAgora = function () {
+    if (paymentData.paymentId) {
+      checarStatusPix(paymentData.paymentId, true);
+    }
+  };
+
+  function iniciarVerificacaoPagamento(paymentId) {
+    if (!paymentId) return;
+    if (paymentData.intervalId) clearInterval(paymentData.intervalId);
+    paymentData.intervalId = setInterval(() => {
+      checarStatusPix(paymentId, false);
+    }, 3000);
+  }
+
+  function pagamentoConfirmado() {
+    const o = window.orcamentoAtual || {};
+    const u = obterUsuarioLogado();
+    const primeiroNome = (u?.nome || o.nome || "Cliente").split(" ")[0];
+
+    mostrarViewModalPix("ok");
+    document.getElementById("ok-msg").innerHTML =
+      `Muito obrigado, <strong>${primeiroNome}</strong>! Seu pagamento foi confirmado com sucesso e nossa equipe já recebeu sua solicitação de entrega.`;
+    document.getElementById("ok-pedido").textContent =
+      `#${o.numeroPedido || "—"}`;
+    document.getElementById("ok-valor").textContent = formatarMoeda(o.valor);
+
+    const urlWhats = gerarLinkComprovanteWhatsApp();
+    const btnWhats = document.getElementById("btn-whats");
+    if (btnWhats) btnWhats.href = urlWhats;
+
+    const statusWhats = document.getElementById("whats-status");
+    if (statusWhats) {
+      statusWhats.textContent =
+        "Encaminhando comprovante automaticamente para o WhatsApp da N&G Express...";
+    }
+
+    mostrarToast("Pagamento confirmado com sucesso!", "success");
+
+    setTimeout(() => {
+      const win = window.open(urlWhats, "_blank");
+      if (statusWhats) {
+        statusWhats.textContent = win
+          ? "Comprovante encaminhado para o WhatsApp!"
+          : "Clique no botão verde acima para abrir o comprovante no WhatsApp.";
+      }
+    }, 1200);
+  }
+
+  function gerarLinkComprovanteWhatsApp() {
+    const o = window.orcamentoAtual || {};
+    const numeroWhats = window.WHATSAPP_CONFIG?.numero || "5547999123260";
+
+    const receptorNome = o.receptorNome || o.nome;
+    const receptorTel = o.receptorTelefone || o.telefone;
+
+    const mensagem = `COMPROVANTE DE PAGAMENTO - N&G EXPRESS
+
+PEDIDO: #${o.numeroPedido || "NOVO"}
+DATA: ${new Date().toLocaleString("pt-BR")}
+
+CLIENTE
+- Nome: ${o.nome}
+- WhatsApp: ${o.telefone}
+- E-mail: ${o.email}
+
+DADOS DA CORRIDA
+- Veículo: ${o.tipoVeiculo === "carro" ? "Carro" : "Moto"}
+- Coleta: ${o.enderecoColeta}
+- Entrega: ${o.enderecoEntrega}
+- Cidade Destino: ${o.cidadeDestino}
+- Distância: ${o.distancia} (${o.duracao})
+
+QUEM VAI RECEBER
+- Nome: ${receptorNome}
+- Telefone: ${receptorTel}
+- Produto: ${(o.categorias || []).join(", ") || "Geral"} ${o.descricao ? `(${o.descricao})` : ""}
+
+VALOR PAGO: *${formatarMoeda(o.preco)}* (PIX Confirmado)
+Rota no Maps: ${o.mapsLinkRota || ""}`;
+
+    return `https://wa.me/${numeroWhats}?text=${encodeURIComponent(mensagem)}`;
+  }
+
+  quandoGoogleMapsCarregar(() => {
+    inicializarGoogleMaps();
+  });
+
+  inicializarAutocomplete();
+  verificarSessao();
+  updateSteps();
 });
 
-app.post("/api/pix/webhook", async (req, res) => {
-  res.sendStatus(200);
-  try {
-    const tipo = req.body?.type || req.query.type;
-    const id = req.body?.data?.id || req.query["data.id"];
-    if (tipo === "payment" && id) await sincronizarPagamento(id);
-  } catch (e) {
-    console.error("Erro webhook MP:", e.message);
-  }
-});
+module.exports = app;
 
-// =============================================================
-// START
-// =============================================================
-(async () => {
-  try {
-    await query("SELECT 1");
-    console.log("✅ PostgreSQL conectado");
-    await initDb();
-
-    const adminEmail = (
-      process.env.ADMIN_EMAIL || "admin@ngexpress.com.br"
-    ).toLowerCase();
-    const adm = await um("SELECT id FROM admins WHERE email = $1", [
-      adminEmail,
-    ]);
-    if (!adm) {
-      const senhaAdmin = process.env.ADMIN_PASSWORD || "admin123";
-      const h = await bcrypt.hash(senhaAdmin, 10);
-      await rodar(
-        "INSERT INTO admins (id,nome,email,senha_hash,criado) VALUES ($1,$2,$3,$4,$5)",
-        [uuid(), "Administrador", adminEmail, h, agora()],
-      );
-    }
-
-    app.listen(PORT, () =>
-      console.log(`🚚 N&G Express rodando em http://localhost:${PORT}`),
-    );
-  } catch (err) {
-    console.error("❌ Falha:", err);
-    process.exit(1);
-  }
-})();
+if (process.env.NODE_ENV !== "production" && !process.env.NETLIFY) {
+  app.listen(PORT, () =>
+    console.log(`🚚 N&G Express rodando em http://localhost:${PORT}`),
+  );
+}
