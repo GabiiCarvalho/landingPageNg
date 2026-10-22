@@ -268,16 +268,6 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   async function verificarSessao() {
-    const cacheLocal =
-      sessionStorage.getItem("usuario") || localStorage.getItem("usuario");
-    if (cacheLocal) {
-      try {
-        const u = JSON.parse(cacheLocal);
-        atualizarMenuUsuario(u);
-        preencherFormulario();
-      } catch (_) {}
-    }
-
     try {
       const response = await fetch(`${API_BASE_URL}/usuarios/verificar`, {
         headers: getAuthHeaders(),
@@ -286,16 +276,14 @@ document.addEventListener("DOMContentLoaded", function () {
       const data = await response.json();
 
       if (data.logado && data.usuario) {
-        sessionStorage.setItem("usuario", JSON.stringify(data.usuario));
-        localStorage.setItem("usuario", JSON.stringify(data.usuario));
         atualizarMenuUsuario(data.usuario);
         preencherFormulario();
       } else {
-        sessionStorage.removeItem("usuario");
-        localStorage.removeItem("usuario");
         atualizarMenuUsuario(null);
       }
-    } catch (e) {}
+    } catch (e) {
+      atualizarMenuUsuario(null);
+    }
   }
 
   function obterUsuarioLogado() {
@@ -685,11 +673,17 @@ document.addEventListener("DOMContentLoaded", function () {
         mapsLinkRota: data.rota.mapsLink,
         mapsLinkColeta: `https://www.google.com/maps/search/?api=1&query=${data.rota.origem.lat},${data.rota.origem.lng}`,
         mapsLinkEntrega: `https://www.google.com/maps/search/?api=1&query=${data.rota.destino.lat},${data.rota.destino.lng}`,
-        coordsColeta: data.rota.origem,
-        coordsEntrega: data.rota.destino,
+        receptorNome:
+          document.getElementById("receptor-nome")?.value.trim() || nomeCliente,
+        receptorTelefone:
+          document.getElementById("receptor-telefone")?.value.trim() ||
+          telCliente,
+        categorias: Array.from(
+          document.querySelectorAll('input[name="categoria"]:checked'),
+        ).map((el) => el.value),
+        descricao: document.getElementById("descricao")?.value.trim() || "",
       };
 
-      // Salva no sessionStorage para nunca zerar o valor após o login no celular
       sessionStorage.setItem(
         "ng_orcamento_atual",
         JSON.stringify(window.orcamentoAtual),
@@ -746,8 +740,25 @@ document.addEventListener("DOMContentLoaded", function () {
     document.body.removeChild(textarea);
   }
 
+  let paymentData = { paymentId: null, intervalId: null, confirmado: false };
+
+  function mostrarViewModalPix(view) {
+    ["qr", "ok", "erro"].forEach((v) => {
+      const el = document.getElementById(`pay-view-${v}`);
+      if (el) el.style.display = v === view ? "block" : "none";
+    });
+  }
+
+  window.fecharModalPagamento = function () {
+    if (paymentData.intervalId) {
+      clearInterval(paymentData.intervalId);
+      paymentData.intervalId = null;
+    }
+    const modal = document.getElementById("modal-pagamento");
+    if (modal) modal.style.display = "none";
+  };
+
   document.getElementById("btn-pagar")?.addEventListener("click", async () => {
-    // Garante a recuperação imediata do orçamento no celular ou desktop se a referência estiver limpa
     if (!window.orcamentoAtual) {
       const cacheRecuperado = sessionStorage.getItem("ng_orcamento_atual");
       if (cacheRecuperado) {
@@ -760,7 +771,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const o = window.orcamentoAtual;
     if (!o || (!o.valor && !o.preco)) {
       mostrarToast(
-        "Erro: Os dados do orçamento expiraram. Por favor, calcule a rota novamente.",
+        "Erro: Os dados do orçamento expiraram. Calcule a rota novamente.",
         "error",
       );
       return;
@@ -773,10 +784,12 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
+    paymentData.confirmado = false;
+    mostrarViewModalPix("qr");
+
     const valorAtualCalculado = o.valor || o.preco || 0;
     const valorFormatado = formatarMoeda(valorAtualCalculado);
 
-    // Abre o modal e injeta o valor em todos os seletores comuns de preço para evitar o R$ 0,00 no celular
     const modalPagamento = document.getElementById("modal-pagamento");
     if (modalPagamento) modalPagamento.style.display = "flex";
 
@@ -805,28 +818,28 @@ document.addEventListener("DOMContentLoaded", function () {
     if (payWait) payWait.style.display = "none";
 
     try {
+      // Monta objeto limpo para envio sem referências circulares
+      const payloadLimpo = {
+        cotacao: o.cotacao,
+        pedido: {
+          enderecoColeta: o.enderecoColeta,
+          enderecoEntrega: o.enderecoEntrega,
+          receptorNome: o.receptorNome,
+          receptorTelefone: o.receptorTelefone,
+          categorias: o.categorias,
+          descricao: o.descricao,
+        },
+      };
+
       const resp = await fetch(`${API_BASE_URL}/pix/criar`, {
         method: "POST",
         headers: getAuthHeaders(),
         credentials: "include",
-        body: JSON.stringify({
-          cotacao: o.cotacao,
-          pedido: o,
-        }),
+        body: JSON.stringify(payloadLimpo),
       });
       const data = await resp.json();
       if (!data.success)
         throw new Error(data.erro || "Não foi possível gerar o PIX.");
-
-      // Se o servidor retornar o valor exato atualizado, reaplica nos elementos
-      if (data.valor) {
-        o.valor = data.valor;
-        o.preco = data.valor;
-        const valStr = formatarMoeda(data.valor);
-        elementosPreco.forEach((el) => {
-          if (el) el.textContent = valStr;
-        });
-      }
 
       paymentData.paymentId = data.paymentId;
       window.orcamentoAtual.numeroPedido = data.numeroPedido;
@@ -849,9 +862,76 @@ document.addEventListener("DOMContentLoaded", function () {
     } catch (e) {
       mostrarViewModalPix("erro");
       const errEl = document.getElementById("pay-erro-msg");
-      if (errEl) errEl.textContent = e.message;
+      if (errEl)
+        errEl.textContent =
+          e.message || "Erro ao comunicar com o Mercado Pago.";
     }
   });
+
+  async function checarStatusPix(paymentId, manual = false) {
+    if (!paymentId || paymentData.confirmado) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/pix/status/${paymentId}`, {
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (
+          data.status === "approved" ||
+          data.pedido?.status_pagamento === "aprovado"
+        ) {
+          paymentData.confirmado = true;
+          if (paymentData.intervalId) clearInterval(paymentData.intervalId);
+          pagamentoConfirmado();
+          return;
+        }
+      }
+      if (manual) {
+        mostrarToast("Pagamento ainda pendente.", "warning");
+      }
+    } catch (e) {}
+  }
+
+  window.verificarPagamentoAgora = function () {
+    if (paymentData.paymentId) {
+      checarStatusPix(paymentData.paymentId, true);
+    }
+  };
+
+  function iniciarVerificacaoPagamento(paymentId) {
+    if (!paymentId) return;
+    if (paymentData.intervalId) clearInterval(paymentData.intervalId);
+    paymentData.intervalId = setInterval(() => {
+      checarStatusPix(paymentId, false);
+    }, 3000);
+  }
+
+  function pagamentoConfirmado() {
+    const o = window.orcamentoAtual || {};
+    const u = obterUsuarioLogado();
+    const primeiroNome = (u?.nome || o.nome || "Cliente").split(" ")[0];
+
+    mostrarViewModalPix("ok");
+    const okMsg = document.getElementById("ok-msg");
+    if (okMsg) {
+      okMsg.innerHTML = `Muito obrigado, <strong>${primeiroNome}</strong>! Seu pagamento foi confirmado com sucesso.`;
+    }
+    const okPed = document.getElementById("ok-pedido");
+    if (okPed) okPed.textContent = `#${o.numeroPedido || "—"}`;
+    const okVal = document.getElementById("ok-valor");
+    if (okVal) okVal.textContent = formatarMoeda(o.valor);
+
+    const urlWhats = gerarLinkComprovanteWhatsApp();
+    const btnWhats = document.getElementById("btn-whats");
+    if (btnWhats) btnWhats.href = urlWhats;
+
+    mostrarToast("Pagamento confirmado com sucesso!", "success");
+
+    setTimeout(() => {
+      window.open(urlWhats, "_blank");
+    }, 1200);
+  }
 
   function gerarLinkComprovanteWhatsApp() {
     const o = window.orcamentoAtual || {};
