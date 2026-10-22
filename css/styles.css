@@ -779,26 +779,6 @@ footer {
 .whatsapp-float:hover {
     background-color: #20ba5a;
     transform: scale(1.1);
-    color: #FFF;
-}
-
-.whatsapp-tooltip {
-    position: absolute;
-    right: 70px;
-    background: #fff;
-    color: #333;
-    padding: 6px 12px;
-    border-radius: 6px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-    font-size: 0.85rem;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s;
-}
-
-.whatsapp-float:hover .whatsapp-tooltip {
-    opacity: 1;
 }
 
 @keyframes modalFadeIn {
