@@ -781,6 +781,35 @@ footer {
     transform: scale(1.1);
 }
 
+.whatsapp-tooltip {
+    position: absolute;
+    right: 70px;
+    background: #fff;
+    color: #333;
+    padding: 6px 12px;
+    border-radius: 6px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    font-size: 0.85rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+
+@media (min-width: 769px) {
+    .whatsapp-float:hover .whatsapp-tooltip {
+        opacity: 1;
+    }
+}
+
+
+@media (max-width: 768px) {
+    .whatsapp-tooltip {
+        display: none !important;
+    }
+}
+
 @keyframes modalFadeIn {
     from { opacity: 0; transform: translateY(-16px) scale(0.96); }
     to { opacity: 1; transform: translateY(0) scale(1); }
