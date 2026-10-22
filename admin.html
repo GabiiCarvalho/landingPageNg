@@ -7,234 +7,97 @@
     <link rel="icon" href="img/logoAba.png" type="image/x-icon">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="css/styles.css">
+    <script src="js/config.js"></script>
     <style>
-        * { box-sizing: border-box; }
-        body { overflow-x: hidden; }
+        *, *::before, *::after { box-sizing: border-box; }
+        body { overflow-x: hidden; font-size: 14.5px; }
 
-        /* ===== LOGO ===== */
         .logo, .logo:hover, .logo:focus, .logo:visited, .logo * { text-decoration: none !important; }
-        .logo img {
-            width: 72px; height: 72px; border-radius: 50%; object-fit: cover;
-            box-shadow: 0 2px 14px rgba(0,0,0,.45); transition: transform .2s;
-        }
-        .logo:hover img { transform: scale(1.05); }
-        @media (max-width: 1024px) { .logo img { width: 66px; height: 66px; } }
-        @media (max-width: 768px)  { .logo img { width: 60px; height: 60px; } }
-        @media (max-width: 480px)  { .logo img { width: 56px; height: 56px; } }
-        @media (max-width: 375px)  { .logo img { width: 52px; height: 52px; } }
+        .logo img { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; }
 
-        /* ===== LAYOUT ===== */
-        .admin-page { padding: 24px 0 80px; background: var(--bg-primary); width: 100%; overflow-x: hidden; }
-        .admin-grid { display: grid; grid-template-columns: 280px 1fr; gap: 32px; align-items: start; }
+        .admin-page { padding: 24px 0 60px; background: var(--bg-primary); }
+        .admin-page .container { max-width: 1220px; }
+        .admin-grid { display: grid; grid-template-columns: 230px 1fr; gap: 20px; align-items: start; }
 
-        /* ===== PAGE HEADER ===== */
-        .page-header {
-            background: linear-gradient(135deg, #1a0533, #0a0a1f);
-            border-bottom: 1px solid rgba(255,107,0,.3);
-            color: var(--text-primary); padding: 48px 0 36px; margin-top: 80px;
-        }
-        .page-header h1 { font-size: 2.2rem; margin: 0 0 6px; }
-        .page-header p  { margin: 0; color: var(--text-secondary); font-size: 1rem; }
+        .page-header { background: linear-gradient(135deg, #1a0533, #0a0a1f); border-bottom: 1px solid rgba(255,107,0,.3); color: var(--text-primary); padding: 24px 0 18px; margin-top: 68px; }
+        .page-header h1 { font-size: 1.4rem; margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
+        .page-header p { margin: 0; color: var(--text-secondary); font-size: .85rem; }
 
-        /* ===== SIDEBAR ===== */
-        .admin-sidebar {
-            background: var(--bg-secondary); border-radius: var(--radius-lg);
-            border: 1px solid rgba(255,107,0,.2); overflow: hidden;
-            box-shadow: var(--shadow-md); position: sticky; top: 100px;
-        }
-        .admin-profile {
-            background: linear-gradient(135deg, #FF6B00, #003366);
-            padding: 32px 20px; text-align: center; color: white;
-            position: relative; overflow: hidden;
-        }
-        .admin-profile::before {
-            content: ''; position: absolute; top: -40px; right: -40px;
-            width: 140px; height: 140px; background: rgba(255,255,255,.08); border-radius: 50%;
-        }
-        .admin-avatar {
-            width: 80px; height: 80px; border-radius: 50%;
-            background: rgba(255,255,255,.2);
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 14px; font-size: 2.2rem;
-        }
-        .admin-profile h3 { font-size: 1.15rem; margin: 0 0 4px; font-weight: 700; }
-        .admin-profile p  { font-size: .84rem; opacity: .8; margin: 0; }
-        .admin-badge {
-            display: inline-block; background: rgba(255,255,255,.2);
-            border: 1px solid rgba(255,255,255,.3); border-radius: 20px;
-            padding: 4px 14px; font-size: .75rem; font-weight: 700;
-            margin-top: 10px; letter-spacing: .5px;
-        }
-        .admin-profile-info { flex: 1; min-width: 0; }
+        .admin-sidebar { background: var(--bg-secondary); border-radius: var(--radius-lg); border: 1px solid rgba(255,107,0,.2); overflow: hidden; box-shadow: var(--shadow-md); position: sticky; top: 86px; }
+        .admin-profile { background: linear-gradient(135deg, #FF6B00, #003366); padding: 20px 14px; text-align: center; color: white; }
+        .admin-avatar { width: 52px; height: 52px; border-radius: 50%; background: rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-size: 1.4rem; }
+        .admin-profile h3 { font-size: .95rem; margin: 0 0 2px; font-weight: 700; }
+        .admin-profile p { font-size: .74rem; opacity: .85; margin: 0; word-break: break-all; }
+        .admin-badge { display: inline-block; background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.3); border-radius: 20px; padding: 2px 10px; font-size: .65rem; font-weight: 700; margin-top: 8px; }
 
-        /* ===== NAV ===== */
-        .admin-nav { padding: 10px 0; }
-        .admin-nav a {
-            display: flex; align-items: center; gap: 12px; padding: 13px 22px;
-            color: var(--text-secondary); font-weight: 500; text-decoration: none;
-            transition: var(--transition-fast); font-size: .95rem; border-right: 3px solid transparent;
-        }
-        .admin-nav a i { font-size: 1.15rem; width: 22px; }
-        .admin-nav a:hover, .admin-nav a.active {
-            background: rgba(255,107,0,.08); color: var(--primary-color); border-right-color: var(--primary-color);
-        }
+        .admin-nav { padding: 8px 0; }
+        .admin-nav a { display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: var(--text-secondary); font-weight: 500; text-decoration: none; font-size: .86rem; border-right: 3px solid transparent; }
+        .admin-nav a:hover, .admin-nav a.active { background: rgba(255,107,0,.08); color: var(--primary-color); border-right-color: var(--primary-color); }
         .admin-nav .logout-link { color: var(--danger-color); }
-        .admin-nav .logout-link:hover { background: rgba(255,92,92,.08); color: var(--danger-color); border-right-color: var(--danger-color); }
-        .admin-nav-divider { height: 1px; background: var(--border-light); margin: 8px 16px; }
+        .admin-nav-divider { height: 1px; background: var(--border-light); margin: 6px 14px; }
 
-        /* ===== CARDS ===== */
-        .admin-main { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
-        .admin-card {
-            background: var(--bg-secondary); border-radius: var(--radius-lg);
-            border: 1px solid var(--border-light); overflow: hidden; box-shadow: var(--shadow-md);
-            width: 100%; min-width: 0;
-        }
+        .admin-main { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+        .admin-card { background: var(--bg-secondary); border-radius: var(--radius-lg); border: 1px solid var(--border-light); overflow: hidden; box-shadow: var(--shadow-md); }
         .table-scroll { overflow-x: auto; max-height: 520px; overflow-y: auto; }
-        .admin-card-header {
-            padding: 20px 24px; border-bottom: 1px solid var(--border-light);
-            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
-        }
-        .admin-card-header h3 { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
-        .admin-card-body { padding: 20px; }
+        .admin-card-header { padding: 14px 18px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+        .admin-card-header h3 { margin: 0; font-size: .96rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .admin-card-body { padding: 18px; }
 
-        /* ===== STATS ===== */
-        .stats-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; }
-        .stat-box {
-            background: var(--bg-tertiary); border: 1px solid var(--border-light);
-            border-radius: var(--radius-md); padding: 20px 12px; text-align: center;
-            transition: var(--transition-base); min-width: 0; overflow: hidden;
-        }
-        .stat-box:hover { border-color: var(--primary-color); box-shadow: var(--shadow-glow); transform: translateY(-2px); }
-        .stat-box .num { font-size: 1.8rem; font-weight: 800; color: var(--primary-color); display: block; word-break: break-all; }
-        .stat-box .lbl { font-size: .68rem; color: var(--text-tertiary); margin-top: 6px; display: block; text-transform: uppercase; letter-spacing: .3px; }
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .stat-box { background: var(--bg-tertiary); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px 10px; text-align: center; }
+        .stat-box .num { font-size: 1.3rem; font-weight: 800; color: var(--primary-color); display: block; }
+        .stat-box .lbl { font-size: .64rem; color: var(--text-tertiary); margin-top: 4px; display: block; text-transform: uppercase; }
 
-        /* ===== TABELAS ===== */
-        .hist-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
-        .hist-table thead th {
-            background: var(--bg-tertiary); position: sticky; top: 0; z-index: 1;
-            padding: 11px 14px; text-align: left; color: var(--text-tertiary); font-weight: 600;
-            font-size: .75rem; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border-medium);
-        }
-        .hist-table td { padding: 12px 14px; border-bottom: 1px solid var(--border-light); color: var(--text-primary); vertical-align: middle; }
-        .hist-table tr:last-child td { border-bottom: none; }
+        .hist-table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+        .hist-table thead th { background: var(--bg-tertiary); position: sticky; top: 0; z-index: 1; padding: 9px 10px; text-align: left; color: var(--text-tertiary); font-weight: 600; font-size: .68rem; text-transform: uppercase; border-bottom: 1px solid var(--border-medium); }
+        .hist-table td { padding: 10px; border-bottom: 1px solid var(--border-light); vertical-align: middle; }
         .hist-table tr:hover td { background: var(--bg-tertiary); }
 
-        .pill { display: inline-block; padding: 3px 8px; border-radius: var(--radius-full); font-size: .72rem; font-weight: 600; white-space: nowrap; }
-        .pill-moto  { background: rgba(0,163,255,.12); color: var(--info-color); border: 1px solid rgba(0,163,255,.2); }
-        .pill-carro { background: rgba(0,196,140,.12); color: var(--success-color); border: 1px solid rgba(0,196,140,.2); }
+        .pill { display: inline-block; padding: 2px 8px; border-radius: var(--radius-full); font-size: .68rem; font-weight: 600; white-space: nowrap; }
+        .pill-moto { background: rgba(0,163,255,.12); color: #00A3FF; border: 1px solid rgba(0,163,255,.2); }
+        .pill-carro { background: rgba(0,196,140,.12); color: #00C48C; border: 1px solid rgba(0,196,140,.2); }
 
-        .addr-cell { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary); font-size: .83rem; }
+        .addr-cell { max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary); font-size: .76rem; }
         .badge-valor { font-weight: 700; color: var(--success-color); white-space: nowrap; }
-        .num-pedido  { font-weight: 700; color: var(--primary-color); font-size: .85rem; white-space: nowrap; }
-        .badge-status { display: inline-block; padding: 3px 10px; border-radius: var(--radius-full); font-size: .72rem; font-weight: 700; background: rgba(0,196,140,.12); color: var(--success-color); border: 1px solid rgba(0,196,140,.2); white-space: nowrap; }
+        .num-pedido { font-weight: 700; color: var(--primary-color); font-size: .78rem; white-space: nowrap; }
+        .badge-status { display: inline-block; padding: 3px 8px; border-radius: var(--radius-full); font-size: .68rem; font-weight: 700; border: 1px solid; white-space: nowrap; }
+        .badge-aprovado { background: rgba(0,196,140,.12); color: var(--success-color); border-color: rgba(0,196,140,.25); }
+        .badge-pendente { background: rgba(255,184,0,.12); color: var(--warning-color); border-color: rgba(255,184,0,.25); }
+
+        .btn-confirmar-pix {
+            background: var(--success-color); color: #fff; border: none; border-radius: 6px;
+            padding: 4px 9px; font-size: .7rem; font-weight: 600; cursor: pointer; margin-left: 6px;
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .btn-confirmar-pix:hover { filter: brightness(1.1); }
 
         .user-cell { display: flex; flex-direction: column; min-width: 0; }
-        .user-cell span { font-weight: 600; font-size: .85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .user-cell small { color: var(--text-tertiary); font-size: .75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-cell span { font-weight: 600; font-size: .78rem; }
+        .user-cell small { color: var(--text-tertiary); font-size: .7rem; }
 
-        /* ===== VEÍCULO BARS ===== */
-        .veiculo-bars { display: flex; gap: 12px; flex-wrap: wrap; width: 100%; }
-        .veiculo-bar-item { flex: 1; min-width: 0; background: var(--bg-tertiary); border-radius: var(--radius-md); padding: 14px 10px; border: 1px solid var(--border-light); text-align: center; }
-        .veiculo-bar-item .vb-label { font-size: .75rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .3px; }
-        .veiculo-bar-item .vb-num { font-size: 1.8rem; font-weight: 800; color: var(--primary-color); }
+        .veiculo-bars { display: flex; gap: 10px; flex-wrap: wrap; }
+        .veiculo-bar-item { flex: 1; min-width: 110px; background: var(--bg-tertiary); border-radius: var(--radius-md); padding: 12px 8px; border: 1px solid var(--border-light); text-align: center; }
+        .veiculo-bar-item .vb-label { font-size: .7rem; color: var(--text-tertiary); text-transform: uppercase; }
+        .veiculo-bar-item .vb-num { font-size: 1.35rem; font-weight: 800; color: var(--primary-color); }
 
-        /* ===== EMPTY / LOADING ===== */
-        .empty-state { text-align: center; padding: 32px 16px; color: var(--text-tertiary); }
-        .empty-state i { font-size: 2.5rem; margin-bottom: 10px; display: block; }
-        .loading-spinner {
-            display: inline-block; width: 18px; height: 18px;
-            border: 2px solid var(--border-medium); border-top-color: var(--primary-color);
-            border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px;
-        }
+        .empty-state { text-align: center; padding: 28px 16px; color: var(--text-tertiary); }
+        .loading-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border-medium); border-top-color: var(--primary-color); border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ===== LOGIN ===== */
-        .admin-login-wrap {
-            min-height: 100vh; display: flex; align-items: center; justify-content: center;
-            background: var(--bg-primary); padding: 20px;
-        }
-        .admin-login-box {
-            background: var(--bg-secondary); border-radius: var(--radius-xl);
-            border: 1px solid rgba(255,107,0,.2); padding: 48px 40px;
-            width: 100%; max-width: 440px; box-shadow: var(--shadow-lg);
-        }
-        .admin-login-logo { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 10px; }
-        .admin-login-logo img {
-            width: 84px; height: 84px; border-radius: 50%; object-fit: cover;
-            box-shadow: 0 4px 18px rgba(0,0,0,.45);
-        }
-        .admin-login-logo-text .main {
-            font-size: 1.5rem; font-weight: 700;
-            background: linear-gradient(135deg, var(--primary-color), #003366);
-            background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2;
-        }
-        .admin-login-logo-text .sub { font-size: .72rem; color: var(--text-tertiary); letter-spacing: 1px; margin-top: 2px; }
-        .admin-login-box > p { text-align: center; color: var(--text-tertiary); margin: 0 0 32px; font-size: .9rem; }
-        .admin-login-box .form-group { margin-bottom: 20px; }
-        .admin-login-box label { display: block; margin-bottom: 8px; font-size: .85rem; font-weight: 500; color: var(--text-secondary); }
-        .admin-login-box input {
-            width: 100%; padding: 13px 16px; background: var(--bg-tertiary);
-            border: 1.5px solid var(--border-medium); border-radius: var(--radius-md);
-            font-size: .95rem; color: var(--text-primary); transition: var(--transition-fast);
-        }
-        .admin-login-box input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-glow); }
-        .btn-admin-login {
-            width: 100%; padding: 14px; background: linear-gradient(135deg, var(--primary-color), #003366);
-            color: white; border: none; border-radius: var(--radius-full); font-size: 1rem;
-            font-weight: 600; cursor: pointer; transition: var(--transition-base);
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        .btn-admin-login:hover { opacity: .88; transform: translateY(-2px); }
-        .btn-admin-login:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+        .admin-login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg-primary); padding: 20px; }
+        .admin-login-box { background: var(--bg-secondary); border-radius: var(--radius-xl); border: 1px solid rgba(255,107,0,.2); padding: 32px 28px; width: 100%; max-width: 380px; box-shadow: var(--shadow-lg); }
+        .admin-login-logo { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px; }
+        .admin-login-logo img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
+        .admin-login-logo-text .main { font-size: 1.2rem; font-weight: 700; color: #fff; }
+        .admin-login-logo-text .main span { color: var(--primary-color); }
+        .admin-login-logo-text .sub { font-size: .64rem; color: var(--text-tertiary); letter-spacing: 1px; }
+        .admin-login-box > p { text-align: center; color: var(--text-tertiary); margin: 0 0 20px; font-size: .8rem; }
+        .btn-admin-login { width: 100%; padding: 11px; background: linear-gradient(135deg, var(--primary-color), #003366); color: white; border: none; border-radius: var(--radius-full); font-size: .9rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
 
-        /* ===== TOAST ===== */
-        #toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
-        .toast { background: var(--bg-elevated); color: var(--text-primary); padding: 12px 24px; border-radius: var(--radius-full); font-size: 0.9rem; border: 1px solid var(--border-medium); pointer-events: none; display: flex; align-items: center; gap: 8px; }
-        .toast-success { border-color: var(--success-color); color: var(--success-color); }
-        .toast-error { border-color: var(--danger-color); color: var(--danger-color); }
-        .toast-warning { border-color: var(--warning-color); color: var(--warning-color); }
-
-        /* ===== RESPONSIVO ===== */
-        @media (min-width: 1440px) {
-            .admin-grid { grid-template-columns: 300px 1fr; gap: 36px; }
-            .stats-row { grid-template-columns: repeat(4, 1fr); gap: 20px; }
-        }
-        @media (min-width: 1280px) and (max-width: 1439px) {
-            .stats-row { grid-template-columns: repeat(4, 1fr); gap: 16px; }
-        }
-        @media (max-width: 1280px) {
-            .admin-grid { grid-template-columns: 240px 1fr; gap: 24px; }
-            .stats-row { grid-template-columns: repeat(4, 1fr); gap: 14px; }
-        }
-        @media (max-width: 1024px) {
-            .admin-grid { grid-template-columns: 210px 1fr; gap: 18px; }
-            .stats-row { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        }
-        @media (max-width: 768px) {
-            .admin-grid { grid-template-columns: 1fr; gap: 14px; }
+        @media (max-width: 900px) {
+            .admin-grid { grid-template-columns: 1fr; }
             .admin-sidebar { position: relative; top: 0; }
-            .admin-profile { padding: 16px 18px; display: flex; align-items: center; gap: 14px; text-align: left; }
-            .admin-profile::before { display: none; }
-            .admin-avatar { width: 54px; height: 54px; font-size: 1.4rem; margin: 0; flex-shrink: 0; }
-            .admin-nav { display: flex; overflow-x: auto; padding: 0; border-top: 1px solid var(--border-light); -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-            .admin-nav::-webkit-scrollbar { display: none; }
-            .admin-nav a { flex-shrink: 0; flex-direction: column; justify-content: center; padding: 12px 16px; border-right: none; border-bottom: 3px solid transparent; font-size: .78rem; white-space: nowrap; gap: 5px; min-width: 76px; text-align: center; }
-            .admin-nav a i { width: auto; font-size: 1.1rem; }
-            .admin-nav a:hover, .admin-nav a.active { border-right: none; border-bottom-color: var(--primary-color); }
-            .admin-nav .logout-link:hover { border-bottom-color: var(--danger-color); }
-            .admin-nav-divider { width: 1px; height: 44px; margin: auto 2px; flex-shrink: 0; }
-            .stats-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-            .page-header { padding: 24px 0 20px; margin-top: 70px; }
-            .page-header h1 { font-size: 1.4rem; }
-            .admin-login-box { padding: 32px 24px; }
-        }
-        @media (max-width: 480px) {
-            .stats-row { gap: 8px; }
-            .stat-box { padding: 14px 8px; }
-            .stat-box .num { font-size: 1.4rem; }
-            .page-header h1 { font-size: 1.2rem; }
-            .admin-login-box { padding: 28px 18px; }
-            .admin-login-logo img { width: 64px; height: 64px; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
@@ -250,7 +113,7 @@
                     <div class="sub">PAINEL ADMINISTRATIVO</div>
                 </div>
             </div>
-            <p style="margin-top:12px;">Acesso restrito a administradores</p>
+            <p style="margin-top:8px;">Acesso restrito a administradores</p>
             <form onsubmit="fazerLoginAdmin(event)">
                 <div class="form-group">
                     <label>E-mail</label>
@@ -263,14 +126,13 @@
                 <button type="submit" class="btn-admin-login" id="btn-admin-login">
                     <i class="bi bi-box-arrow-in-right"></i> Entrar
                 </button>
-                <div id="admin-login-erro" style="margin-top:16px;text-align:center;color:var(--danger-color);font-size:.88rem;display:none;"></div>
+                <div id="admin-login-erro" style="margin-top:14px;text-align:center;color:var(--danger-color);font-size:.84rem;display:none;"></div>
             </form>
         </div>
     </div>
 
     <!-- PAINEL ADMIN -->
     <div id="admin-painel" style="display:none;">
-
         <header>
             <div class="container">
                 <nav class="navbar">
@@ -283,6 +145,7 @@
                     </a>
                     <ul class="nav-links">
                         <li><a href="index.html">Ver site</a></li>
+                        <li><a href="#" onclick="carregarDados(); return false;"><i class="bi bi-arrow-clockwise"></i> Atualizar</a></li>
                         <li><a href="#" onclick="fazerLogoutAdmin(); return false;" style="color:var(--danger-color);">
                             <i class="bi bi-box-arrow-right"></i> Sair
                         </a></li>
@@ -294,18 +157,17 @@
         <div class="page-header">
             <div class="container">
                 <h1><i class="bi bi-shield-lock-fill"></i> Painel Administrativo</h1>
-                <p>Visão geral de todos os pedidos e usuários</p>
+                <p>Gerencie pedidos, confirme pagamentos PIX em tempo real e acompanhe os clientes</p>
             </div>
         </div>
 
         <section class="admin-page">
             <div class="container">
                 <div class="admin-grid">
-
                     <aside class="admin-sidebar">
                         <div class="admin-profile">
                             <div class="admin-avatar"><i class="bi bi-person-fill"></i></div>
-                            <div class="admin-profile-info">
+                            <div>
                                 <h3 id="admin-nome-display">Admin</h3>
                                 <p id="admin-email-display">—</p>
                                 <div class="admin-badge">ADMINISTRADOR</div>
@@ -316,7 +178,7 @@
                                 <i class="bi bi-speedometer2"></i> Resumo
                             </a>
                             <a href="#" onclick="mostrarTabAdmin('corridas', this); return false;">
-                                <i class="bi bi-clock-history"></i> Corridas
+                                <i class="bi bi-clock-history"></i> Corridas / PIX
                             </a>
                             <a href="#" onclick="mostrarTabAdmin('usuarios', this); return false;">
                                 <i class="bi bi-people-fill"></i> Usuários
@@ -329,17 +191,19 @@
                     </aside>
 
                     <div class="admin-main">
-
                         <!-- ABA RESUMO -->
                         <div id="tab-admin-resumo" class="admin-card">
                             <div class="admin-card-header">
                                 <h3><i class="bi bi-speedometer2" style="color:var(--primary-color)"></i> Resumo Geral</h3>
+                                <button class="btn btn-secondary" style="padding:5px 12px;font-size:.76rem;" onclick="carregarDados()">
+                                    <i class="bi bi-arrow-clockwise"></i> Atualizar agora
+                                </button>
                             </div>
                             <div class="admin-card-body">
                                 <div class="stats-row">
                                     <div class="stat-box">
                                         <span class="num" id="admin-stat-corridas">—</span>
-                                        <span class="lbl">Total de corridas</span>
+                                        <span class="lbl">Corridas pagas</span>
                                     </div>
                                     <div class="stat-box">
                                         <span class="num" id="admin-stat-faturado">—</span>
@@ -356,27 +220,18 @@
                                 </div>
 
                                 <div style="margin-top:20px;">
-                                    <h4 style="margin:0 0 12px;color:var(--text-primary);font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">
-                                        Corridas por veículo
-                                    </h4>
-                                    <div class="veiculo-bars" id="admin-veiculo-bars">
-                                        <div class="empty-state"><span class="loading-spinner"></span></div>
-                                    </div>
+                                    <h4 style="margin:0 0 10px;font-size:.78rem;text-transform:uppercase;color:var(--text-secondary);">Corridas por veículo</h4>
+                                    <div class="veiculo-bars" id="admin-veiculo-bars"></div>
                                 </div>
 
                                 <div style="margin-top:20px;">
-                                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
-                                        <h4 style="margin:0;color:var(--text-primary);font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">
-                                            Últimas 5 corridas
-                                        </h4>
-                                        <a href="#" onclick="mostrarTabAdmin('corridas', null); return false;"
-                                           style="font-size:.8rem;font-weight:600;color:var(--primary-color);text-decoration:none;white-space:nowrap;">
-                                            Ver todas <i class="bi bi-arrow-right"></i>
+                                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                                        <h4 style="margin:0;font-size:.78rem;text-transform:uppercase;color:var(--text-secondary);">Últimos pedidos (clique em Confirmar PIX para liberar o cliente)</h4>
+                                        <a href="#" onclick="mostrarTabAdmin('corridas', null); return false;" style="font-size:.78rem;font-weight:600;color:var(--primary-color);text-decoration:none;">
+                                            Ver todos <i class="bi bi-arrow-right"></i>
                                         </a>
                                     </div>
-                                    <div id="admin-ultimas-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-                                        <div class="empty-state"><span class="loading-spinner"></span> Carregando...</div>
-                                    </div>
+                                    <div id="admin-ultimas-wrap" style="overflow-x:auto;"></div>
                                 </div>
                             </div>
                         </div>
@@ -393,19 +248,16 @@
                                         <tr>
                                             <th>Pedido</th>
                                             <th>Cliente</th>
+                                            <th>Recebedor</th>
                                             <th>Veículo</th>
                                             <th>Coleta</th>
                                             <th>Entrega</th>
                                             <th>Valor</th>
                                             <th>Data</th>
-                                            <th>Status</th>
+                                            <th>Status / Ação</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="admin-corridas-tbody">
-                                        <tr><td colspan="8" style="text-align:center;padding:28px;">
-                                            <span class="loading-spinner"></span> Carregando...
-                                        </td></tr>
-                                    </tbody>
+                                    <tbody id="admin-corridas-tbody"></tbody>
                                 </table>
                             </div>
                         </div>
@@ -421,19 +273,14 @@
                                         <tr>
                                             <th>Nome</th>
                                             <th>Telefone</th>
-                                            <th>Pedidos</th>
-                                            <th>Total gasto</th>
+                                            <th>Pedidos Pagos</th>
+                                            <th>Total Gasto</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="admin-usuarios-tbody">
-                                        <tr><td colspan="4" style="text-align:center;padding:28px;">
-                                            <span class="loading-spinner"></span> Carregando...
-                                        </td></tr>
-                                    </tbody>
+                                    <tbody id="admin-usuarios-tbody"></tbody>
                                 </table>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </div>
@@ -443,43 +290,71 @@
     <div id="toast-container"></div>
 
     <script>
-    // =============================================
-    // CONFIGURAÇÕES
-    // =============================================
-    const API = (typeof window.API_BASE_URL !== 'undefined') 
-    ? window.API_BASE_URL 
-    : 'https://landingpageng-production.up.railway.app/api';
-    
+    const API = (window.API_BASE_URL || 'http://localhost:3000/api').replace(/\/$/, '');
     let adminData = null;
-    let dadosCache = null;
+    let pollAdminInterval = null;
 
-    // =============================================
-    // FUNÇÕES UTILITÁRIAS
-    // =============================================
+    function getAdminHeaders() {
+        const tk = sessionStorage.getItem('ng_admin_token') || localStorage.getItem('ng_admin_token');
+        const h = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+        if (tk) h['Authorization'] = `Bearer ${tk}`;
+        return h;
+    }
+
     function mostrarToast(msg, tipo = 'success') {
         const container = document.getElementById('toast-container');
         if (!container) return;
         const icone = tipo === 'success' ? 'check-circle' : 'exclamation-circle';
         const toast = document.createElement('div');
         toast.className = `toast toast-${tipo}`;
-        toast.innerHTML = `<i class="bi bi-${icone}"></i> ${msg}`;
+        toast.innerHTML = `<i class="bi bi-${icone}"></i> <span>${msg}</span>`;
         container.appendChild(toast);
-        setTimeout(() => { 
-            toast.style.opacity = '0'; 
-            toast.style.transition = 'opacity 0.4s'; 
-            setTimeout(() => toast.remove(), 400); 
-        }, 4600);
+        setTimeout(() => toast.remove(), 4000);
     }
 
-    function formatarValor(v) { 
-        return 'R$ ' + parseFloat(v || 0).toFixed(2).replace('.', ','); 
+    function formatarValor(v) {
+        return 'R$ ' + parseFloat(v || 0).toFixed(2).replace('.', ',');
     }
 
-    function formatarData(str) {
-        if (!str) return '—';
-        const d = new Date(str.includes('T') ? str : str.replace(' ', 'T'));
-        if (isNaN(d)) return str;
+    function formatarData(val) {
+        if (!val) return '—';
+        const num = Number(val);
+        const d = !isNaN(num) && num > 1000000000
+            ? new Date(num)
+            : new Date(String(val).includes('T') ? String(val) : String(val).replace(' ', 'T'));
+        if (isNaN(d.getTime())) return String(val);
         return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+    }
+
+    function badgePagamento(o) {
+        const s = String(o.status_pagamento || o.status || '').toLowerCase();
+        if (s === 'aprovado' || s === 'approved') {
+            return '<span class="badge-status badge-aprovado">✅ Pago</span>';
+        }
+        return `<span class="badge-status badge-pendente">⏳ Aguardando</span>
+                <button class="btn-confirmar-pix" onclick="confirmarPagamentoManual('${o.id}', '${o.numero_pedido || ''}')">
+                    <i class="bi bi-check2-circle"></i> Confirmar PIX
+                </button>`;
+    }
+
+    async function confirmarPagamentoManual(id, numeroPedido) {
+        try {
+            const r = await fetch(`${API}/admin/confirmar-pagamento`, {
+                method: 'POST',
+                headers: getAdminHeaders(),
+                credentials: 'include',
+                body: JSON.stringify({ id })
+            });
+            const d = await r.json();
+            if (d.success) {
+                mostrarToast(`Pagamento do pedido #${numeroPedido} confirmado! O cliente já foi notificado.`, 'success');
+                carregarDados();
+            } else {
+                mostrarToast(d.message || 'Erro ao confirmar', 'error');
+            }
+        } catch (e) {
+            mostrarToast('Erro de conexão: ' + e.message, 'error');
+        }
     }
 
     function mostrarTabAdmin(tab, el) {
@@ -491,80 +366,58 @@
         if (alvo) alvo.style.display = 'block';
         document.querySelectorAll('.admin-nav a').forEach(a => a.classList.remove('active'));
         if (el) el.classList.add('active');
-        else {
-            document.querySelectorAll('.admin-nav a').forEach(a => {
-                if (a.textContent.toLowerCase().includes(tab)) a.classList.add('active');
-            });
-        }
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // =============================================
-    // LOGIN ADMIN 
-    // =============================================
     async function fazerLoginAdmin(event) {
-    event.preventDefault();
-    const email = document.getElementById('admin-email').value.trim();
-    const senha = document.getElementById('admin-senha').value;
-    const btn = document.getElementById('btn-admin-login');
-    const erro = document.getElementById('admin-login-erro');
+        event.preventDefault();
+        const email = document.getElementById('admin-email').value.trim();
+        const senha = document.getElementById('admin-senha').value;
+        const btn = document.getElementById('btn-admin-login');
+        const erro = document.getElementById('admin-login-erro');
 
-    btn.disabled = true;
-    btn.innerHTML = '<span class="loading-spinner"></span> Entrando...';
-    erro.style.display = 'none';
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-spinner"></span> Entrando...';
+        erro.style.display = 'none';
 
-    try {
-        const baseUrl = API.endsWith('/api') ? API : API + '/api';
-        const url = `${baseUrl}/admin/login.php`;
-
-        console.log('Tentando login em:', url);
-
-        const r = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ email, senha })
-        });
-
-        const text = await r.text();
-        console.log('Resposta bruta do login:', text);
-
-        let d;
         try {
-            d = JSON.parse(text);
-        } catch (e) {
-            console.error('Resposta não é JSON:', text);
-            throw new Error('Resposta inválida do servidor');
-        }
+            const r = await fetch(`${API}/admin/login`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, senha })
+            });
+            const d = await r.json();
 
-        if (d.success && d.admin) {
-            adminData = d.admin;
-            sessionStorage.setItem('admin', JSON.stringify(adminData));
-            iniciarPainel();
-            mostrarToast(`Bem-vindo, ${adminData.nome}!`, 'success');
-        } else {
-            erro.textContent = d.message || 'E-mail ou senha inválidos';
+            if (d.success && d.admin) {
+                adminData = d.admin;
+                sessionStorage.setItem('admin', JSON.stringify(adminData));
+                if (d.token) {
+                    sessionStorage.setItem('ng_admin_token', d.token);
+                    localStorage.setItem('ng_admin_token', d.token);
+                }
+                iniciarPainel();
+                mostrarToast(`Bem-vindo, ${adminData.nome}!`, 'success');
+            } else {
+                erro.textContent = d.message || 'E-mail ou senha inválidos';
+                erro.style.display = 'block';
+            }
+        } catch (e) {
+            erro.textContent = 'Erro ao conectar com o servidor.';
             erro.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Entrar';
         }
-    } catch (e) {
-        console.error('Erro no login admin:', e);
-        erro.textContent = 'Erro ao conectar com o servidor: ' + e.message;
-        erro.style.display = 'block';
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Entrar';
     }
-}
 
     async function fazerLogoutAdmin() {
-        try { 
-            await fetch(`${API}/admin/logout.php`, { method: 'POST' }); 
-        } catch (e) {
-            console.warn('Erro no logout:', e);
-        }
+        if (pollAdminInterval) clearInterval(pollAdminInterval);
+        try {
+            await fetch(`${API}/admin/logout`, { method: 'POST', headers: getAdminHeaders(), credentials: 'include' });
+        } catch (_) {}
         sessionStorage.removeItem('admin');
+        sessionStorage.removeItem('ng_admin_token');
+        localStorage.removeItem('ng_admin_token');
         document.getElementById('admin-login-screen').style.display = 'flex';
         document.getElementById('admin-painel').style.display = 'none';
     }
@@ -572,41 +425,30 @@
     function iniciarPainel() {
         document.getElementById('admin-login-screen').style.display = 'none';
         document.getElementById('admin-painel').style.display = 'block';
-        document.getElementById('admin-nome-display').textContent  = adminData.nome;
+        document.getElementById('admin-nome-display').textContent = adminData.nome;
         document.getElementById('admin-email-display').textContent = adminData.email;
         carregarDados();
+        if (pollAdminInterval) clearInterval(pollAdminInterval);
+        pollAdminInterval = setInterval(carregarDados, 8000);
     }
 
-    // =============================================
-    // CARREGAR DADOS 
-    // =============================================
     async function carregarDados() {
-    try {
-        const url = `${API}/admin/dados.php?aid=${adminData.id}`;
-        console.log('Carregando dados de:', url);
-
-        const r = await fetch(url);
-        const text = await r.text();
-        console.log('Resposta bruta de dados:', text);
-
-        let d;
         try {
-            d = JSON.parse(text);
-        } catch (e) {
-            console.error('Resposta não é JSON:', text);
-            throw new Error('Resposta inválida do servidor (não é JSON)');
-        }
+            const r = await fetch(`${API}/admin/dados`, {
+                headers: getAdminHeaders(),
+                credentials: 'include'
+            });
+            if (r.status === 401) return fazerLogoutAdmin();
+            const d = await r.json();
+            if (!d.success) throw new Error(d.message || 'Erro ao carregar');
 
-        if (!d.success) throw new Error(d.message || 'Erro ao carregar dados');
-        dadosCache = d;
-        renderizarResumo(d);
-        renderizarCorridas(d.corridas);
-        renderizarUsuarios(d.topUsuarios);
-    } catch (e) {
-        console.error('Erro ao carregar dados:', e);
-        mostrarToast('Erro ao carregar dados: ' + e.message, 'error');
+            renderizarResumo(d);
+            renderizarCorridas(d.corridas || []);
+            renderizarUsuarios(d.topUsuarios || []);
+        } catch (e) {
+            console.warn('Erro admin:', e.message);
+        }
     }
-}
 
     function renderizarResumo(d) {
         document.getElementById('admin-stat-corridas').textContent = d.totalCorridas || 0;
@@ -621,57 +463,58 @@
                 <div class="veiculo-bar-item">
                     <div class="vb-label">${v.tipo_veiculo === 'carro' ? '🚗 Carro' : '🏍️ Moto'}</div>
                     <div class="vb-num">${v.total}</div>
-                    <div style="font-size:.72rem;color:var(--text-tertiary);">corridas</div>
+                    <div style="font-size:.7rem;color:var(--text-tertiary);">corridas pagas</div>
                 </div>`).join('');
         } else {
-            barsWrap.innerHTML = '<div style="color:var(--text-tertiary);font-size:.85rem;padding:10px;">Nenhuma corrida ainda</div>';
+            barsWrap.innerHTML = '<div style="color:var(--text-tertiary);font-size:.82rem;">Nenhuma corrida paga ainda</div>';
         }
 
-        const wrap    = document.getElementById('admin-ultimas-wrap');
-        const ultimas = (d.corridas || []).slice(0, 5);
+        const wrap = document.getElementById('admin-ultimas-wrap');
+        const ultimas = (d.corridas || []).slice(0, 6);
         if (ultimas.length === 0) {
-            wrap.innerHTML = '<div class="empty-state"><i class="bi bi-inbox"></i><p>Nenhuma corrida ainda</p></div>';
+            wrap.innerHTML = '<div class="empty-state">Nenhuma corrida registrada</div>';
         } else {
             wrap.innerHTML = `
                 <table class="hist-table">
                     <thead><tr>
-                        <th>Pedido</th><th>Cliente</th><th>Veículo</th><th>Valor</th><th>Data</th>
+                        <th>Pedido</th><th>Cliente</th><th>Veículo</th><th>Valor</th><th>Data</th><th>Status / Ação</th>
                     </tr></thead>
                     <tbody>${ultimas.map(o => `<tr>
                         <td><span class="num-pedido">#${o.numero_pedido || '—'}</span></td>
                         <td><div class="user-cell"><span>${o.usuario_nome || '—'}</span><small>${o.usuario_telefone || ''}</small></div></td>
-                        <td><span class="pill pill-${o.tipo_veiculo}">${o.tipo_veiculo === 'carro' ? '🚗' : '🏍️'}</span></td>
+                        <td><span class="pill pill-${o.tipo_veiculo}">${o.tipo_veiculo === 'carro' ? '🚗 Carro' : '🏍️ Moto'}</span></td>
                         <td class="badge-valor">${formatarValor(o.valor_total)}</td>
-                        <td style="white-space:nowrap;color:var(--text-tertiary);font-size:.78rem;">${formatarData(o.data_orcamento)}</td>
+                        <td style="white-space:nowrap;color:var(--text-tertiary);font-size:.75rem;">${formatarData(o.data_orcamento || o.criado)}</td>
+                        <td>${badgePagamento(o)}</td>
                     </tr>`).join('')}</tbody>
                 </table>`;
         }
-
-        document.getElementById('admin-corridas-count').textContent = `${d.totalCorridas || 0} corrida(s)`;
+        document.getElementById('admin-corridas-count').textContent = `${(d.corridas || []).length} corrida(s)`;
     }
 
     function renderizarCorridas(corridas) {
         const tbody = document.getElementById('admin-corridas-tbody');
-        if (!corridas || corridas.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="bi bi-inbox"></i><p>Nenhuma corrida ainda</p></div></td></tr>`;
+        if (!corridas.length) {
+            tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">Nenhuma corrida registrada</div></td></tr>`;
             return;
         }
         tbody.innerHTML = corridas.map(o => `<tr>
             <td><span class="num-pedido">#${o.numero_pedido || '—'}</span></td>
-            <td><div class="user-cell"><span>${o.usuario_nome || '—'}</span><small>${o.usuario_email || ''}</small></div></td>
+            <td><div class="user-cell"><span>${o.usuario_nome || '—'}</span><small>${o.usuario_telefone || o.usuario_email || ''}</small></div></td>
+            <td><div class="user-cell"><span>${o.receptor_nome || 'Próprio'}</span><small>${o.receptor_telefone || ''}</small></div></td>
             <td><span class="pill pill-${o.tipo_veiculo}">${o.tipo_veiculo === 'carro' ? '🚗 Carro' : '🏍️ Moto'}</span></td>
-            <td class="addr-cell" title="${o.endereco_coleta||''}">${o.endereco_coleta||'—'}</td>
-            <td class="addr-cell" title="${o.endereco_entrega||''}">${o.endereco_entrega||'—'}</td>
+            <td class="addr-cell" title="${o.endereco_coleta || ''}">${o.endereco_coleta || '—'}</td>
+            <td class="addr-cell" title="${o.endereco_entrega || ''}">${o.endereco_entrega || '—'}</td>
             <td class="badge-valor">${formatarValor(o.valor_total)}</td>
-            <td style="white-space:nowrap;color:var(--text-tertiary);font-size:.78rem;">${formatarData(o.data_orcamento)}</td>
-            <td><span class="badge-status">Confirmado</span></td>
+            <td style="white-space:nowrap;color:var(--text-tertiary);font-size:.75rem;">${formatarData(o.data_orcamento || o.criado)}</td>
+            <td>${badgePagamento(o)}</td>
         </tr>`).join('');
     }
 
     function renderizarUsuarios(usuarios) {
         const tbody = document.getElementById('admin-usuarios-tbody');
-        if (!usuarios || usuarios.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><i class="bi bi-people"></i><p>Nenhum usuário ainda</p></div></td></tr>`;
+        if (!usuarios.length) {
+            tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">Nenhum usuário cadastrado</div></td></tr>`;
             return;
         }
         tbody.innerHTML = usuarios.map(u => `<tr>
@@ -682,23 +525,21 @@
         </tr>`).join('');
     }
 
-    // =============================================
-    // INICIALIZAÇÃO
-    // =============================================
     const adminCached = sessionStorage.getItem('admin');
     if (adminCached) {
         try {
             adminData = JSON.parse(adminCached);
             iniciarPainel();
-        } catch (e) {
+        } catch (_) {
             sessionStorage.removeItem('admin');
         }
     }
 
-    // Expor funções globalmente
     window.fazerLoginAdmin = fazerLoginAdmin;
     window.fazerLogoutAdmin = fazerLogoutAdmin;
     window.mostrarTabAdmin = mostrarTabAdmin;
+    window.confirmarPagamentoManual = confirmarPagamentoManual;
+    window.carregarDados = carregarDados;
     </script>
 </body>
 </html>

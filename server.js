@@ -4,95 +4,984 @@ const express = require("express");
 const path = require("path");
 const fs = require("fs");
 const https = require("https");
+const crypto = require("crypto");
 const { v4: uuid } = require("uuid");
 const bcrypt = require("bcryptjs");
+const session = require("express-session");
 const { um, todos, rodar, query, initDb } = require("./config/db");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const IS_PROD = process.env.NODE_ENV === "production";
 
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
-const MP_WEBHOOK_SECRET = process.env.MP_WEBHOOK_SECRET;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || "";
+const SESSION_SECRET =
+  process.env.SESSION_SECRET || "ng-express-super-secret-key-2026";
+const TOKEN_SECRET = process.env.TOKEN_SECRET || SESSION_SECRET;
 
-console.log(
-  "🔑 MP_ACCESS_TOKEN:",
-  MP_ACCESS_TOKEN ? "✅ OK" : "❌ NÃO CONFIGURADO",
-);
-console.log(
-  "🔐 MP_WEBHOOK_SECRET:",
-  MP_WEBHOOK_SECRET ? "✅ OK" : "❌ NÃO CONFIGURADO",
-);
+console.log("🔑 MP_ACCESS_TOKEN:", MP_ACCESS_TOKEN ? "✅ OK" : "❌ FALTANDO");
 console.log("🌐 BASE_URL:", BASE_URL);
 console.log(
-  "🐘 DATABASE_URL:",
-  process.env.DATABASE_URL ? "✅ OK" : "❌ NÃO CONFIGURADO",
+  "🗺️ GOOGLE_MAPS_API_KEY:",
+  GOOGLE_MAPS_API_KEY ? "✅ OK" : "❌ FALTANDO",
 );
 
-function isValidWebhookUrl(url) {
-  try {
-    const p = new URL(url);
-    return p.protocol === "https:";
-  } catch {
-    return false;
-  }
+// =============================================================
+// PRICING
+// =============================================================
+const PRICING = {
+  cidadePrincipal: "Balneário Camboriú",
+  dentroCidadePrincipal: {
+    valorBase: 15.0,
+    limiteKmBase: 7,
+    valorPorKmExcedente: 2.3,
+  },
+  foraCidadePrincipal: { valorPorKm: 2.3, valorMinimo: 15.0 },
+  valorMaximo: 500.0,
+};
+
+function normalizarTexto(txt) {
+  return (txt || "")
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
 }
-const WEBHOOK_URL = isValidWebhookUrl(`${BASE_URL}/api/pix/webhook`)
-  ? `${BASE_URL}/api/pix/webhook`
-  : null;
-console.log("🔗 Webhook URL:", WEBHOOK_URL || "❌ não configurado");
+
+function calcularPreco(distanciaKm, cidadeDestino) {
+  distanciaKm = Math.round(distanciaKm * 10) / 10;
+  const ehPrincipal =
+    normalizarTexto(cidadeDestino) === normalizarTexto(PRICING.cidadePrincipal);
+
+  let valor = 0;
+  if (ehPrincipal) {
+    const r = PRICING.dentroCidadePrincipal;
+    valor =
+      distanciaKm <= r.limiteKmBase
+        ? r.valorBase
+        : r.valorBase + (distanciaKm - r.limiteKmBase) * r.valorPorKmExcedente;
+  } else {
+    const r = PRICING.foraCidadePrincipal;
+    valor = Math.max(r.valorMinimo, distanciaKm * r.valorPorKm);
+  }
+  return Math.min(Math.round(valor * 100) / 100, PRICING.valorMaximo);
+}
 
 // =============================================================
-// CORS
+// UTILITÁRIOS
+// =============================================================
+const agora = () => Date.now();
+const texto = (v, max = 300) =>
+  String(v ?? "")
+    .trim()
+    .slice(0, max);
+
+function limitar(max, janelaMs) {
+  const mapa = new Map();
+  return (req, res, next) => {
+    const agoraMs = Date.now();
+    const lista = (mapa.get(req.ip) || []).filter(
+      (t) => agoraMs - t < janelaMs,
+    );
+    if (lista.length >= max)
+      return res.status(429).json({
+        success: false,
+        message: "Muitas tentativas. Aguarde alguns minutos e tente de novo.",
+      });
+    lista.push(agoraMs);
+    mapa.set(req.ip, lista);
+    next();
+  };
+}
+
+// =============================================================
+// TOKENS ASSINADOS
+// =============================================================
+function assinar(payload, ttlMs) {
+  const corpo = Buffer.from(
+    JSON.stringify({ ...payload, exp: Date.now() + ttlMs }),
+  ).toString("base64url");
+  const sig = crypto
+    .createHmac("sha256", TOKEN_SECRET)
+    .update(corpo)
+    .digest("base64url");
+  return `${corpo}.${sig}`;
+}
+
+function verificarToken(token) {
+  try {
+    const [corpo, sig] = String(token || "").split(".");
+    if (!corpo || !sig) return null;
+    const esperado = crypto
+      .createHmac("sha256", TOKEN_SECRET)
+      .update(corpo)
+      .digest("base64url");
+    const a = Buffer.from(sig);
+    const b = Buffer.from(esperado);
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+    const p = JSON.parse(Buffer.from(corpo, "base64url").toString());
+    if (!p.exp || p.exp < Date.now()) return null;
+    return p;
+  } catch (_) {
+    return null;
+  }
+}
+
+function lerAuth(req) {
+  const h = req.headers.authorization || "";
+  if (h.startsWith("Bearer ")) {
+    const p = verificarToken(h.slice(7));
+    if (p && (p.t === "u" || p.t === "a")) return p;
+  }
+  if (req.session?.usuario) return { t: "u", id: req.session.usuario.id };
+  if (req.session?.admin) return { t: "a", id: req.session.admin.id };
+  return null;
+}
+
+function exigirUsuario(req, res, next) {
+  const a = lerAuth(req);
+  if (!a || a.t !== "u")
+    return res
+      .status(401)
+      .json({ success: false, message: "Faça login para continuar" });
+  req.uid = a.id;
+  next();
+}
+
+function exigirAdmin(req, res, next) {
+  const a = lerAuth(req);
+  if (!a || a.t !== "a")
+    return res.status(401).json({ success: false, message: "Acesso negado" });
+  req.aid = a.id;
+  next();
+}
+
+const usuarioPublico = (u) => ({
+  id: u.id,
+  nome: u.nome,
+  email: u.email,
+  telefone: u.telefone || "",
+});
+
+// =============================================================
+// CORS + SESSÃO
 // =============================================================
 const ORIGENS_OK = [
   "https://ng-express.netlify.app",
   "http://localhost:3000",
   "http://localhost:5500",
   "http://127.0.0.1:5500",
+  ...(process.env.EXTRA_ORIGINS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean),
 ];
+
+app.set("trust proxy", 1);
 
 app.use((req, res, next) => {
   const origem = req.headers.origin || "";
-  if (ORIGENS_OK.includes(origem)) {
-    res.setHeader("Access-Control-Allow-Origin", origem);
-    res.setHeader("Vary", "Origin");
-  } else {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-  }
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    ORIGENS_OK.includes(origem) ? origem : ORIGENS_OK[0],
+  );
+  res.setHeader("Vary", "Origin");
   res.setHeader(
     "Access-Control-Allow-Methods",
     "GET, POST, PUT, PATCH, DELETE, OPTIONS",
   );
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.setHeader("Access-Control-Allow-Credentials", "true");
-  if (req.method === "OPTIONS") {
-    res.sendStatus(204);
-    return;
-  }
+  if (req.method === "OPTIONS") return res.sendStatus(204);
   next();
 });
 
-app.use(express.json({ limit: "25mb" }));
+app.use(express.json({ limit: "1mb" }));
 
+app.use(
+  session({
+    secret: SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: IS_PROD,
+      sameSite: IS_PROD ? "none" : "lax",
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    },
+  }),
+);
+
+// =============================================================
+// ARQUIVOS ESTÁTICOS
+// =============================================================
 const publicDir = path.join(__dirname, "public");
 if (fs.existsSync(publicDir)) app.use(express.static(publicDir));
-app.use(express.static(__dirname, { index: false }));
-
-app.use((req, res, next) => {
-  if (req.path.endsWith(".php")) {
-    const qs = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
-    req.url = req.path.replace(/\.php$/, "") + qs;
-  }
-  next();
+["css", "js", "img"].forEach((pasta) => {
+  const p = path.join(__dirname, pasta);
+  if (fs.existsSync(p)) app.use(`/${pasta}`, express.static(p));
 });
 
-function agora() {
-  return Date.now();
+const paginas = ["index", "novo-pedido", "admin", "dashboard"];
+paginas.forEach((nome) =>
+  app.get(`/${nome}.html`, (req, res) =>
+    res.sendFile(path.join(__dirname, `${nome}.html`)),
+  ),
+);
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
+
+// =============================================================
+// 100% GOOGLE MAPS PLATFORM (PLACES API NEW v1 + ROUTES API v2)
+// =============================================================
+function googleRequest(options, bodyObj = null) {
+  return new Promise((resolve, reject) => {
+    if (!GOOGLE_MAPS_API_KEY) {
+      return reject(new Error("GOOGLE_MAPS_API_KEY não configurada no .env"));
+    }
+    const data = bodyObj ? JSON.stringify(bodyObj) : null;
+    const headers = {
+      Referer: BASE_URL || "http://localhost:3000",
+      ...(options.headers || {}),
+    };
+    if (data) {
+      headers["Content-Type"] = "application/json";
+      headers["Content-Length"] = Buffer.byteLength(data);
+    }
+    const req = https.request({ ...options, headers }, (res) => {
+      let raw = "";
+      res.on("data", (c) => (raw += c));
+      res.on("end", () => {
+        try {
+          resolve({ status: res.statusCode, body: JSON.parse(raw || "{}") });
+        } catch (e) {
+          reject(
+            new Error("Resposta inválida do Google: " + raw.slice(0, 180)),
+          );
+        }
+      });
+    });
+    req.on("error", reject);
+    req.setTimeout(15000, () =>
+      req.destroy(new Error("Google Maps: tempo esgotado")),
+    );
+    if (data) req.write(data);
+    req.end();
+  });
+}
+
+function extrairCidadePlaceNew(addressComponents) {
+  if (!Array.isArray(addressComponents)) return null;
+  const comp = addressComponents.find(
+    (c) =>
+      c.types?.includes("administrative_area_level_2") ||
+      c.types?.includes("locality") ||
+      c.types?.includes("sublocality_level_1"),
+  );
+  return comp?.longText || comp?.shortText || null;
+}
+
+function extrairNumeroPlaceNew(addressComponents) {
+  if (!Array.isArray(addressComponents)) return "";
+  const comp = addressComponents.find((c) =>
+    c.types?.includes("street_number"),
+  );
+  return comp?.shortText || comp?.longText || "";
+}
+
+// 1) Busca endereço por texto usando Google Places API (New) v1
+async function geocodificarEndereco(endereco) {
+  const resp = await googleRequest(
+    {
+      hostname: "places.googleapis.com",
+      path: "/v1/places:searchText",
+      method: "POST",
+      headers: {
+        "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
+        "X-Goog-FieldMask":
+          "places.location,places.formattedAddress,places.addressComponents,places.displayName",
+      },
+    },
+    {
+      textQuery: endereco,
+      languageCode: "pt-BR",
+      regionCode: "BR",
+      locationBias: {
+        circle: {
+          center: { latitude: -26.9906, longitude: -48.6347 },
+          radius: 50000.0,
+        },
+      },
+    },
+  );
+
+  const place = resp.body?.places?.[0];
+  if (resp.status === 200 && place?.location) {
+    return {
+      lat: place.location.latitude,
+      lng: place.location.longitude,
+      enderecoFormatado:
+        place.formattedAddress || place.displayName?.text || endereco,
+      cidade: extrairCidadePlaceNew(place.addressComponents),
+      numero: extrairNumeroPlaceNew(place.addressComponents),
+    };
+  }
+
+  const msgErro =
+    resp.body?.error?.message ||
+    `Endereço não encontrado no Google Maps: ${endereco}`;
+  throw new Error(msgErro);
+}
+
+// 2) Detalhes de um Place ID via Google Places API (New) v1
+async function detalhesPlaceId(placeId) {
+  const resp = await googleRequest({
+    hostname: "places.googleapis.com",
+    path: `/v1/places/${encodeURIComponent(placeId)}?languageCode=pt-BR&regionCode=BR`,
+    method: "GET",
+    headers: {
+      "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
+      "X-Goog-FieldMask":
+        "id,formattedAddress,location,addressComponents,displayName",
+    },
+  });
+
+  if (resp.status === 200 && resp.body?.location) {
+    return {
+      lat: resp.body.location.latitude,
+      lng: resp.body.location.longitude,
+      endereco: resp.body.formattedAddress || resp.body.displayName?.text || "",
+      cidade: extrairCidadePlaceNew(resp.body.addressComponents),
+      numero: extrairNumeroPlaceNew(resp.body.addressComponents),
+    };
+  }
+  throw new Error(
+    resp.body?.error?.message || "Não foi possível obter detalhes do local",
+  );
+}
+
+// 3) GPS Reverso 100% Google (Geocoding API ou Places API SearchNearby)
+async function geocodificarReversoGoogle(lat, lng) {
+  const latitude = Number(lat);
+  const longitude = Number(lng);
+
+  try {
+    const qs = new URLSearchParams({
+      latlng: `${latitude},${longitude}`,
+      language: "pt-BR",
+      region: "br",
+      key: GOOGLE_MAPS_API_KEY,
+    });
+    const geo = await googleRequest({
+      hostname: "maps.googleapis.com",
+      path: `/maps/api/geocode/json?${qs.toString()}`,
+      method: "GET",
+    });
+
+    if (
+      geo.status === 200 &&
+      geo.body.status === "OK" &&
+      geo.body.results?.[0]
+    ) {
+      const r = geo.body.results[0];
+      const num =
+        r.address_components?.find((c) => c.types.includes("street_number"))
+          ?.short_name || "";
+      const cid =
+        r.address_components?.find(
+          (c) =>
+            c.types.includes("administrative_area_level_2") ||
+            c.types.includes("locality"),
+        )?.long_name || "Balneário Camboriú";
+      return {
+        lat: latitude,
+        lng: longitude,
+        endereco: r.formatted_address,
+        numero: num,
+        cidade: cid,
+      };
+    }
+  } catch (_) {}
+
+  const nearby = await googleRequest(
+    {
+      hostname: "places.googleapis.com",
+      path: "/v1/places:searchNearby",
+      method: "POST",
+      headers: {
+        "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
+        "X-Goog-FieldMask":
+          "places.formattedAddress,places.location,places.addressComponents,places.displayName",
+      },
+    },
+    {
+      languageCode: "pt-BR",
+      regionCode: "BR",
+      maxResultCount: 1,
+      rankPreference: "DISTANCE",
+      locationRestriction: {
+        circle: {
+          center: { latitude, longitude },
+          radius: 150.0,
+        },
+      },
+    },
+  );
+
+  const place = nearby.body?.places?.[0];
+  if (nearby.status === 200 && place) {
+    return {
+      lat: latitude,
+      lng: longitude,
+      endereco:
+        place.formattedAddress ||
+        place.displayName?.text ||
+        `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
+      numero: extrairNumeroPlaceNew(place.addressComponents),
+      cidade:
+        extrairCidadePlaceNew(place.addressComponents) || "Balneário Camboriú",
+    };
+  }
+
+  throw new Error(
+    nearby.body?.error?.message ||
+      "Não foi possível localizar o endereço no Google Maps.",
+  );
+}
+
+// Rota: Autocomplete 100% Google Places API (New) v1
+app.get("/api/enderecos/sugerir", async (req, res) => {
+  try {
+    const q = String(req.query.q || "").trim();
+    if (q.length < 3) return res.json({ success: true, sugestoes: [] });
+
+    const autoResp = await googleRequest(
+      {
+        hostname: "places.googleapis.com",
+        path: "/v1/places:autocomplete",
+        method: "POST",
+        headers: {
+          "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
+        },
+      },
+      {
+        input: q,
+        languageCode: "pt-BR",
+        regionCode: "BR",
+        includedRegionCodes: ["br"],
+        locationBias: {
+          circle: {
+            center: { latitude: -26.9906, longitude: -48.6347 },
+            radius: 50000.0,
+          },
+        },
+      },
+    );
+
+    if (autoResp.status === 200 && Array.isArray(autoResp.body?.suggestions)) {
+      const sugestoes = autoResp.body.suggestions
+        .map((s) => s.placePrediction)
+        .filter(Boolean)
+        .slice(0, 5)
+        .map((p) => ({
+          placeId: p.placeId,
+          descricao:
+            p.text?.text ||
+            [
+              p.structuredFormat?.mainText?.text,
+              p.structuredFormat?.secondaryText?.text,
+            ]
+              .filter(Boolean)
+              .join(" - "),
+        }));
+
+      return res.json({ success: true, sugestoes });
+    }
+
+    if (autoResp.body?.error) {
+      console.error("Erro Google Places (New):", autoResp.body.error.message);
+    }
+    res.json({ success: true, sugestoes: [] });
+  } catch (e) {
+    console.error("Falha /api/enderecos/sugerir:", e.message);
+    res.json({ success: false, sugestoes: [], message: e.message });
+  }
+});
+
+// Rota: Detalhes de um Place ID
+app.get("/api/enderecos/detalhes", async (req, res) => {
+  try {
+    const placeId = String(req.query.placeId || "").trim();
+    if (!placeId)
+      return res
+        .status(400)
+        .json({ success: false, message: "placeId obrigatório" });
+    const dados = await detalhesPlaceId(placeId);
+    res.json({ success: true, ...dados });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// Rota: GPS Reverso
+app.get("/api/enderecos/reverso", async (req, res) => {
+  try {
+    const { lat, lng } = req.query;
+    if (!lat || !lng)
+      return res
+        .status(400)
+        .json({ success: false, message: "Coordenadas ausentes" });
+    const dados = await geocodificarReversoGoogle(lat, lng);
+    res.json({ success: true, ...dados });
+  } catch (e) {
+    console.error("Erro GPS Google:", e.message);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// 4) Cálculo de Rota 100% Google Routes API v2
+function rotaPorModo(origem, destino, modo) {
+  return new Promise((resolve, reject) => {
+    const corpo = {
+      origin: {
+        location: { latLng: { latitude: origem.lat, longitude: origem.lng } },
+      },
+      destination: {
+        location: { latLng: { latitude: destino.lat, longitude: destino.lng } },
+      },
+      travelMode: modo,
+      computeAlternativeRoutes: false,
+      languageCode: "pt-BR",
+      units: "METRIC",
+    };
+    if (modo === "DRIVE") corpo.routingPreference = "TRAFFIC_AWARE";
+    const data = JSON.stringify(corpo);
+
+    const req = https.request(
+      {
+        hostname: "routes.googleapis.com",
+        path: "/directions/v2:computeRoutes",
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(data),
+          "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
+          "X-Goog-FieldMask":
+            "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline",
+        },
+      },
+      (res) => {
+        let raw = "";
+        res.on("data", (c) => (raw += c));
+        res.on("end", () => {
+          try {
+            const body = JSON.parse(raw);
+            if (res.statusCode !== 200 || !body.routes?.[0])
+              throw new Error(body.error?.message || "Rota não encontrada");
+            const route = body.routes[0];
+            const distanciaKm = route.distanceMeters / 1000;
+            const duracaoMin = Math.max(
+              1,
+              Math.round(
+                parseInt(String(route.duration).replace("s", ""), 10) / 60,
+              ),
+            );
+            resolve({
+              distanciaKm,
+              distanciaTexto: `${distanciaKm.toFixed(1)} km`,
+              duracaoMin,
+              duracaoTexto:
+                duracaoMin < 60
+                  ? `${duracaoMin} min`
+                  : `${Math.floor(duracaoMin / 60)}h ${duracaoMin % 60}min`,
+              polyline: route.polyline?.encodedPolyline || "",
+              mapsLink: `https://www.google.com/maps/dir/?api=1&origin=${origem.lat},${origem.lng}&destination=${destino.lat},${destino.lng}&travelmode=driving`,
+            });
+          } catch (e) {
+            reject(e);
+          }
+        });
+      },
+    );
+    req.on("error", reject);
+    req.setTimeout(15000, () =>
+      req.destroy(new Error("Routes API: tempo esgotado")),
+    );
+    req.write(data);
+    req.end();
+  });
+}
+
+async function calcularRota(origem, destino, veiculo) {
+  const modos = veiculo === "moto" ? ["TWO_WHEELER", "DRIVE"] : ["DRIVE"];
+  let ultimoErro;
+  for (const modo of modos) {
+    try {
+      return await rotaPorModo(origem, destino, modo);
+    } catch (e) {
+      ultimoErro = e;
+      console.warn(`Rota (${modo}) falhou:`, e.message);
+    }
+  }
+  throw ultimoErro;
 }
 
 // =============================================================
-// MERCADO PAGO
+// USUÁRIOS
+// =============================================================
+app.post(
+  "/api/usuarios/cadastrar",
+  limitar(10, 10 * 60 * 1000),
+  async (req, res) => {
+    try {
+      const { nome, email, telefone, senha } = req.body || {};
+      if (!nome || !email || !telefone || !senha)
+        return res.status(400).json({
+          success: false,
+          message: "Todos os campos são obrigatórios",
+        });
+      if (String(senha).length < 6)
+        return res
+          .status(400)
+          .json({ success: false, message: "Senha mínimo 6 caracteres" });
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+        return res
+          .status(400)
+          .json({ success: false, message: "E-mail inválido" });
+
+      const emailNorm = String(email).toLowerCase().trim();
+      const existe = await um("SELECT id FROM usuarios WHERE email = $1", [
+        emailNorm,
+      ]);
+      if (existe)
+        return res
+          .status(409)
+          .json({ success: false, message: "E-mail já cadastrado" });
+
+      const id = uuid();
+      const hash = await bcrypt.hash(String(senha), 10);
+      await rodar(
+        "INSERT INTO usuarios (id,nome,email,telefone,senha_hash,criado) VALUES ($1,$2,$3,$4,$5,$6)",
+        [id, texto(nome, 120), emailNorm, texto(telefone, 30), hash, agora()],
+      );
+
+      const usuario = {
+        id,
+        nome: texto(nome, 120),
+        email: emailNorm,
+        telefone: texto(telefone, 30),
+      };
+      req.session.usuario = usuario;
+      const token = assinar({ t: "u", id }, 7 * 24 * 3600 * 1000);
+      req.session.save(() =>
+        res.json({
+          success: true,
+          message: "Cadastro realizado!",
+          usuario,
+          token,
+        }),
+      );
+    } catch (e) {
+      console.error("Erro cadastro:", e);
+      res.status(500).json({ success: false, message: "Erro interno" });
+    }
+  },
+);
+
+app.post(
+  "/api/usuarios/login",
+  limitar(15, 10 * 60 * 1000),
+  async (req, res) => {
+    try {
+      const { email, senha } = req.body || {};
+      if (!email || !senha)
+        return res
+          .status(400)
+          .json({ success: false, message: "E-mail e senha obrigatórios" });
+
+      const u = await um("SELECT * FROM usuarios WHERE email = $1", [
+        String(email).toLowerCase().trim(),
+      ]);
+      const ok = u && (await bcrypt.compare(String(senha), u.senha_hash));
+      if (!ok)
+        return res
+          .status(401)
+          .json({ success: false, message: "E-mail ou senha inválidos" });
+
+      const usuario = usuarioPublico(u);
+      req.session.usuario = usuario;
+      const token = assinar({ t: "u", id: u.id }, 7 * 24 * 3600 * 1000);
+      req.session.save(() => res.json({ success: true, usuario, token }));
+    } catch (e) {
+      console.error("Erro login:", e);
+      res.status(500).json({ success: false, message: "Erro interno" });
+    }
+  },
+);
+
+app.post("/api/usuarios/logout", (req, res) =>
+  req.session.destroy(() => res.json({ success: true })),
+);
+
+app.get("/api/usuarios/verificar", async (req, res) => {
+  try {
+    const a = lerAuth(req);
+    if (!a || a.t !== "u") return res.json({ logado: false, usuario: null });
+    const u = await um(
+      "SELECT id,nome,email,telefone FROM usuarios WHERE id = $1",
+      [a.id],
+    );
+    if (!u) return res.json({ logado: false, usuario: null });
+    res.json({ logado: true, usuario: usuarioPublico(u) });
+  } catch (e) {
+    res.status(500).json({ logado: false, usuario: null });
+  }
+});
+
+app.post("/api/usuarios/atualizar", exigirUsuario, async (req, res) => {
+  try {
+    const { nome, telefone, senha } = req.body || {};
+    if (!texto(nome))
+      return res
+        .status(400)
+        .json({ success: false, message: "Informe o nome" });
+    if (senha && String(senha).length < 6)
+      return res
+        .status(400)
+        .json({ success: false, message: "Senha mínimo 6 caracteres" });
+
+    if (senha) {
+      const hash = await bcrypt.hash(String(senha), 10);
+      await rodar(
+        "UPDATE usuarios SET nome=$1, telefone=$2, senha_hash=$3 WHERE id=$4",
+        [texto(nome, 120), texto(telefone, 30), hash, req.uid],
+      );
+    } else {
+      await rodar("UPDATE usuarios SET nome=$1, telefone=$2 WHERE id=$3", [
+        texto(nome, 120),
+        texto(telefone, 30),
+        req.uid,
+      ]);
+    }
+    const u = await um(
+      "SELECT id,nome,email,telefone FROM usuarios WHERE id = $1",
+      [req.uid],
+    );
+    if (req.session) req.session.usuario = usuarioPublico(u);
+    res.json({ success: true, usuario: usuarioPublico(u) });
+  } catch (e) {
+    console.error("Erro atualizar:", e);
+    res.status(500).json({ success: false, message: "Erro interno" });
+  }
+});
+
+// =============================================================
+// ADMIN
+// =============================================================
+app.post("/api/admin/login", limitar(10, 10 * 60 * 1000), async (req, res) => {
+  try {
+    const { email, senha } = req.body || {};
+    if (!email || !senha)
+      return res
+        .status(400)
+        .json({ success: false, message: "E-mail e senha obrigatórios" });
+    const a = await um("SELECT * FROM admins WHERE email = $1", [
+      String(email).toLowerCase().trim(),
+    ]);
+    const ok = a && (await bcrypt.compare(String(senha), a.senha_hash));
+    if (!ok)
+      return res
+        .status(401)
+        .json({ success: false, message: "E-mail ou senha inválidos" });
+
+    const adminObj = { id: a.id, nome: a.nome, email: a.email };
+    req.session.admin = adminObj;
+    const token = assinar({ t: "a", id: a.id }, 12 * 3600 * 1000);
+    req.session.save(() =>
+      res.json({
+        success: true,
+        admin: adminObj,
+        token,
+      }),
+    );
+  } catch (e) {
+    console.error("Erro login admin:", e);
+    res.status(500).json({ success: false, message: "Erro interno" });
+  }
+});
+
+app.post("/api/admin/logout", (req, res) =>
+  req.session.destroy(() => res.json({ success: true })),
+);
+
+app.get("/api/admin/dados", exigirAdmin, async (req, res) => {
+  try {
+    const PAGO = "status_pagamento = 'aprovado'";
+    const nCorridas = await um(
+      `SELECT COUNT(*)::int AS c FROM historico_orcamentos WHERE ${PAGO}`,
+    );
+    const nFaturado = await um(
+      `SELECT COALESCE(SUM(valor_total), 0) AS s FROM historico_orcamentos WHERE ${PAGO}`,
+    );
+    const nUsuarios = await um("SELECT COUNT(*)::int AS c FROM usuarios");
+    const porVeiculo = await todos(
+      `SELECT tipo_veiculo, COUNT(*)::int AS total FROM historico_orcamentos WHERE ${PAGO} GROUP BY tipo_veiculo`,
+    );
+    const corridas = await todos(
+      `SELECT h.*, u.nome AS usuario_nome, u.telefone AS usuario_telefone, u.email AS usuario_email
+       FROM historico_orcamentos h LEFT JOIN usuarios u ON u.id = h.usuario_id
+       ORDER BY COALESCE(h.data_orcamento, h.criado) DESC LIMIT 100`,
+    );
+    const topUsuarios = await todos(
+      `SELECT u.nome, u.email, u.telefone, COUNT(h.id)::int AS total_pedidos,
+              COALESCE(SUM(h.valor_total), 0) AS total_gasto
+       FROM usuarios u
+       LEFT JOIN historico_orcamentos h ON h.usuario_id = u.id AND h.status_pagamento = 'aprovado'
+       GROUP BY u.id, u.nome, u.email, u.telefone
+       ORDER BY total_pedidos DESC, u.nome LIMIT 50`,
+    );
+
+    res.json({
+      success: true,
+      totalCorridas: nCorridas?.c || 0,
+      totalFaturado: parseFloat(nFaturado?.s || 0),
+      totalUsuarios: nUsuarios?.c || 0,
+      porVeiculo,
+      corridas,
+      topUsuarios,
+    });
+  } catch (e) {
+    console.error("Erro admin dados:", e);
+    res.status(500).json({ success: false, message: "Erro interno" });
+  }
+});
+
+app.post("/api/admin/confirmar-pagamento", exigirAdmin, async (req, res) => {
+  try {
+    const { id } = req.body || {};
+    if (!id)
+      return res.status(400).json({ success: false, message: "ID ausente" });
+    await rodar(
+      `UPDATE historico_orcamentos SET status_pagamento = 'aprovado', data_pagamento = $1 WHERE id = $2`,
+      [agora(), String(id)],
+    );
+    res.json({ success: true });
+  } catch (e) {
+    console.error("Erro confirmar pagamento admin:", e);
+    res.status(500).json({ success: false, message: "Erro interno" });
+  }
+});
+
+// =============================================================
+// ROTA E PREÇO (100% GOOGLE MAPS)
+// =============================================================
+app.post(
+  "/api/rotas/calcular",
+  limitar(40, 10 * 60 * 1000),
+  async (req, res) => {
+    try {
+      const { coleta, entrega } = req.body || {};
+      const veiculo = req.body?.veiculo === "carro" ? "carro" : "moto";
+      if (!coleta || !entrega)
+        return res
+          .status(400)
+          .json({ success: false, message: "Informe coleta e entrega" });
+
+      const resolver = async (p) => {
+        if (p.lat && p.lng) {
+          return {
+            lat: Number(p.lat),
+            lng: Number(p.lng),
+            endereco: p.endereco || `${p.lat}, ${p.lng}`,
+            cidade: p.cidade || null,
+          };
+        }
+        if (p.placeId) {
+          const det = await detalhesPlaceId(p.placeId);
+          return {
+            lat: det.lat,
+            lng: det.lng,
+            endereco: p.endereco || det.endereco,
+            cidade: det.cidade || null,
+          };
+        }
+        if (p.endereco) {
+          const g = await geocodificarEndereco(p.endereco);
+          return {
+            lat: g.lat,
+            lng: g.lng,
+            endereco: g.enderecoFormatado || p.endereco,
+            cidade: g.cidade || null,
+          };
+        }
+        return null;
+      };
+
+      const origem = await resolver(coleta);
+      const destino = await resolver(entrega);
+      if (!origem || !destino)
+        return res
+          .status(400)
+          .json({ success: false, message: "Endereços inválidos" });
+
+      const rota = await calcularRota(origem, destino, veiculo);
+
+      let cidadeDestino = destino.cidade;
+      if (!cidadeDestino) {
+        try {
+          const rev = await geocodificarReversoGoogle(destino.lat, destino.lng);
+          cidadeDestino = rev.cidade;
+        } catch (_) {}
+      }
+
+      const valor = calcularPreco(rota.distanciaKm, cidadeDestino);
+      const cotacao = assinar(
+        {
+          t: "cot",
+          valor,
+          distanciaKm: rota.distanciaKm,
+          cidadeDestino: cidadeDestino || "Balneário Camboriú",
+          veiculo,
+          mapsLink: rota.mapsLink,
+        },
+        30 * 60 * 1000,
+      );
+
+      res.json({
+        success: true,
+        rota: { ...rota, origem, destino },
+        cidadeDestino: cidadeDestino || "Balneário Camboriú",
+        valor,
+        veiculo,
+        cotacao,
+      });
+    } catch (e) {
+      console.error("Erro calcular rota:", e.message);
+      res.status(500).json({ success: false, message: e.message });
+    }
+  },
+);
+
+// =============================================================
+// HISTÓRICO DO CLIENTE
+// =============================================================
+app.get("/api/orcamentos/historico", exigirUsuario, async (req, res) => {
+  try {
+    const orcamentos = await todos(
+      "SELECT * FROM historico_orcamentos WHERE usuario_id = $1 ORDER BY COALESCE(data_orcamento, criado) DESC",
+      [req.uid],
+    );
+    res.json({ success: true, orcamentos });
+  } catch (e) {
+    console.error("Erro histórico:", e);
+    res.status(500).json({ success: false, message: "Erro interno" });
+  }
+});
+
+// =============================================================
+// PIX (MERCADO PAGO)
 // =============================================================
 function mpReq(method, endpoint, body) {
   return new Promise((resolve, reject) => {
@@ -115,859 +1004,209 @@ function mpReq(method, endpoint, body) {
         try {
           resolve({ status: res.statusCode, body: JSON.parse(raw) });
         } catch (e) {
-          reject(new Error("MP resposta inválida: " + raw.slice(0, 200)));
+          reject(new Error("Resposta inválida do Mercado Pago"));
         }
       });
     });
     req.on("error", reject);
+    req.setTimeout(20000, () =>
+      req.destroy(new Error("Mercado Pago: tempo esgotado")),
+    );
     if (data) req.write(data);
     req.end();
   });
 }
 
-// =============================================================
-// PÁGINAS
-// =============================================================
-app.get("/", (req, res) => {
-  const f = fs.existsSync(path.join(publicDir, "chatbot-cliente.html"))
-    ? path.join(publicDir, "chatbot-cliente.html")
-    : path.join(__dirname, "index.html");
-  res.sendFile(f);
-});
-app.get("/painel", (req, res) => {
-  const f = path.join(__dirname, "painel-atendentes.html");
-  fs.existsSync(f) ? res.sendFile(f) : res.status(404).send("Não encontrado");
-});
+const STATUS_MP = {
+  approved: "aprovado",
+  pending: "pendente",
+  in_process: "pendente",
+  authorized: "pendente",
+  cancelled: "cancelado",
+  rejected: "cancelado",
+  refunded: "cancelado",
+  charged_back: "cancelado",
+};
 
-// =============================================================
-// USUÁRIOS
-// =============================================================
-app.post("/api/usuarios/cadastrar", async (req, res) => {
-  try {
-    const { nome, email, telefone, senha } = req.body || {};
-    if (!nome || !email || !telefone || !senha)
-      return res
-        .status(400)
-        .json({ success: false, message: "Todos os campos são obrigatórios" });
-    if (senha.length < 6)
-      return res
-        .status(400)
-        .json({ success: false, message: "Senha mínimo 6 caracteres" });
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      return res
-        .status(400)
-        .json({ success: false, message: "E-mail inválido" });
+async function sincronizarPagamento(paymentId) {
+  const resp = await mpReq(
+    "GET",
+    `/v1/payments/${encodeURIComponent(paymentId)}`,
+    null,
+  );
+  if (resp.status !== 200) return null;
+  const statusMp = resp.body.status;
+  const novo = STATUS_MP[statusMp] || "pendente";
 
-    const existe = await um("SELECT id FROM usuarios WHERE email = $1", [
-      email.toLowerCase().trim(),
-    ]);
-    if (existe)
-      return res
-        .status(409)
-        .json({ success: false, message: "E-mail já cadastrado" });
-
-    const id = uuid(),
-      hash = await bcrypt.hash(senha, 10);
+  if (novo === "aprovado") {
     await rodar(
-      "INSERT INTO usuarios (id,nome,email,telefone,senha_hash,criado) VALUES ($1,$2,$3,$4,$5,$6)",
-      [
-        id,
-        nome.trim(),
-        email.toLowerCase().trim(),
-        String(telefone).trim(),
-        hash,
-        agora(),
-      ],
+      `UPDATE historico_orcamentos
+       SET status_pagamento = 'aprovado', data_pagamento = COALESCE(data_pagamento, $1)
+       WHERE payment_id = $2 AND status_pagamento <> 'aprovado'`,
+      [agora(), String(paymentId)],
     );
-    res.json({
-      success: true,
-      message: "Cadastro realizado!",
-      usuario: {
-        id,
-        nome: nome.trim(),
-        email: email.toLowerCase().trim(),
-        telefone: String(telefone).trim(),
-      },
-    });
-  } catch (e) {
-    console.error("Erro cadastro:", e.message);
-    res.status(500).json({ success: false, message: e.message });
+  } else {
+    await rodar(
+      `UPDATE historico_orcamentos SET status_pagamento = $1
+       WHERE payment_id = $2 AND status_pagamento <> 'aprovado'`,
+      [novo, String(paymentId)],
+    );
   }
-});
+  return statusMp;
+}
 
-app.post("/api/usuarios/login", async (req, res) => {
-  try {
-    const { email, senha } = req.body || {};
-    if (!email || !senha)
-      return res
-        .status(400)
-        .json({ success: false, message: "E-mail e senha obrigatórios" });
+app.post(
+  "/api/pix/criar",
+  exigirUsuario,
+  limitar(20, 10 * 60 * 1000),
+  async (req, res) => {
+    try {
+      const { cotacao, pedido } = req.body || {};
+      const cot = verificarToken(cotacao);
+      if (!cot || cot.t !== "cot")
+        return res.status(400).json({
+          success: false,
+          erro: "Cotação expirada. Volte e calcule o valor novamente.",
+        });
+      if (!pedido || typeof pedido !== "object")
+        return res
+          .status(400)
+          .json({ success: false, erro: "Dados do pedido ausentes" });
 
-    const u = await um("SELECT * FROM usuarios WHERE email = $1", [
-      email.toLowerCase().trim(),
-    ]);
-    if (!u)
-      return res
-        .status(401)
-        .json({ success: false, message: "E-mail ou senha inválidos" });
-
-    const ok = await bcrypt.compare(senha, u.senha_hash);
-    if (!ok)
-      return res
-        .status(401)
-        .json({ success: false, message: "E-mail ou senha inválidos" });
-
-    res.json({
-      success: true,
-      usuario: {
-        id: u.id,
-        nome: u.nome,
-        email: u.email,
-        telefone: u.telefone || "",
-      },
-    });
-  } catch (e) {
-    console.error("Erro login:", e.message);
-    res.status(500).json({ success: false, message: "Erro interno" });
-  }
-});
-
-app.post("/api/usuarios/logout", (req, res) => res.json({ success: true }));
-app.get("/api/usuarios/verificar", (req, res) => res.json({ logado: false }));
-
-app.post("/api/usuarios/atualizar", async (req, res) => {
-  try {
-    const { id, nome, telefone, senha } = req.body || {};
-    if (!id)
-      return res
-        .status(400)
-        .json({ success: false, message: "id obrigatório" });
-
-    const campos = [],
-      vals = [];
-    let i = 1;
-    if (nome) {
-      campos.push(`nome = $${i++}`);
-      vals.push(nome.trim());
-    }
-    if (telefone) {
-      campos.push(`telefone = $${i++}`);
-      vals.push(String(telefone).trim());
-    }
-    if (senha?.length >= 6) {
-      campos.push(`senha_hash = $${i++}`);
-      vals.push(await bcrypt.hash(senha, 10));
-    }
-    if (campos.length) {
-      vals.push(id);
-      await rodar(
-        `UPDATE usuarios SET ${campos.join(", ")} WHERE id = $${i}`,
-        vals,
+      const u = await um(
+        "SELECT id,nome,email,telefone FROM usuarios WHERE id = $1",
+        [req.uid],
       );
-    }
-    res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
-});
+      if (!u)
+        return res
+          .status(401)
+          .json({ success: false, erro: "Usuário não encontrado" });
 
-// =============================================================
-// ADMIN
-// =============================================================
-app.post("/api/admin/login", async (req, res) => {
-  try {
-    const { email, senha } = req.body || {};
-    if (!email || !senha)
-      return res
-        .status(400)
-        .json({ success: false, message: "E-mail e senha obrigatórios" });
+      const numeroPedido = `NG${Date.now().toString().slice(-8)}`;
+      const partesNome = (u.nome || "Cliente Entrega").trim().split(/\s+/);
+      const primeiroNome = partesNome[0] || "Cliente";
+      const sobrenome = partesNome.slice(1).join(" ") || "NGExpress";
 
-    const a = await um("SELECT * FROM admins WHERE email = $1", [
-      email.toLowerCase().trim(),
-    ]);
-    if (!a)
-      return res
-        .status(401)
-        .json({ success: false, message: "E-mail ou senha inválidos" });
+      const mpBody = {
+        transaction_amount: Number(cot.valor),
+        description: `Entrega N&G Express #${numeroPedido}`,
+        payment_method_id: "pix",
+        payer: {
+          email: u.email || "cliente@ngexpress.com.br",
+          first_name: primeiroNome,
+          last_name: sobrenome,
+        },
+        external_reference: numeroPedido,
+      };
+      if (BASE_URL.startsWith("https://"))
+        mpBody.notification_url = `${BASE_URL}/api/pix/webhook`;
 
-    const ok = await bcrypt.compare(senha, a.senha_hash);
-    if (!ok)
-      return res
-        .status(401)
-        .json({ success: false, message: "E-mail ou senha inválidos" });
+      const resp = await mpReq("POST", "/v1/payments", mpBody);
+      const pix = resp.body?.point_of_interaction?.transaction_data;
+      if (![200, 201].includes(resp.status) || !pix) {
+        console.error(
+          "Erro Mercado Pago:",
+          resp.status,
+          JSON.stringify(resp.body),
+        );
+        return res.status(502).json({
+          success: false,
+          erro: resp.body?.message || "Não foi possível gerar o PIX agora",
+        });
+      }
 
-    res.json({
-      success: true,
-      admin: { id: a.id, nome: a.nome, email: a.email },
-    });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
-});
+      const cc = pedido.coordsColeta || {};
+      const ce = pedido.coordsEntrega || {};
+      const coordsColeta = cc.lat && cc.lng ? `${cc.lat},${cc.lng}` : "";
+      const coordsEntrega = ce.lat && ce.lng ? `${ce.lat},${ce.lng}` : "";
+      const categorias = Array.isArray(pedido.categorias)
+        ? pedido.categorias.map((c) => texto(c, 40)).join(", ")
+        : texto(pedido.categorias || "", 200);
+      const now = agora();
 
-app.post("/api/admin/logout", (req, res) => res.json({ success: true }));
+      await rodar(
+        `INSERT INTO historico_orcamentos (
+          id, usuario_id, numero_pedido, tipo_veiculo, endereco_coleta, endereco_entrega,
+          cidade_destino, descricao, valor_total, distancia_km, coords_coleta, coords_entrega,
+          maps_link, payment_id, status_pagamento, data_orcamento, criado,
+          receptor_nome, receptor_telefone, categorias
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)`,
+        [
+          uuid(),
+          u.id,
+          numeroPedido,
+          cot.veiculo,
+          texto(pedido.enderecoColeta, 400),
+          texto(pedido.enderecoEntrega, 400),
+          texto(cot.cidadeDestino, 120),
+          texto(pedido.descricao, 500),
+          cot.valor,
+          Math.round(cot.distanciaKm * 100) / 100,
+          coordsColeta,
+          coordsEntrega,
+          cot.mapsLink || "",
+          String(resp.body.id),
+          "pendente",
+          now,
+          now,
+          texto(pedido.receptorNome, 120),
+          texto(pedido.receptorTelefone, 30),
+          categorias,
+        ],
+      );
 
-app.get("/api/admin/dados", async (req, res) => {
-  try {
-    let aid = req.query.aid;
-    if (!aid) {
-      const auth = req.headers.authorization || "";
-      if (auth.startsWith("Bearer ")) aid = auth.slice(7).trim();
-    }
-    if (!aid || aid === "undefined" || aid === "null")
-      return res
-        .status(401)
-        .json({ success: false, message: "Acesso negado: aid não informado" });
-
-    const adm = await um("SELECT id FROM admins WHERE id = $1", [aid]);
-    if (!adm)
-      return res.status(401).json({
-        success: false,
-        message: "Acesso negado: admin não encontrado",
+      res.json({
+        success: true,
+        paymentId: String(resp.body.id),
+        numeroPedido,
+        qrCode: pix.qr_code,
+        qrCodeBase64: pix.qr_code_base64,
+        valor: resp.body.transaction_amount,
       });
-
-    const nCorreidas = await um(
-      "SELECT COUNT(*)::int AS c FROM historico_orcamentos",
-    );
-    const nFaturado = await um(
-      "SELECT COALESCE(SUM(valor_total), 0)::numeric AS s FROM historico_orcamentos",
-    );
-    const nUsuarios = await um("SELECT COUNT(*)::int AS c FROM usuarios");
-    const porVeiculo = await todos(
-      `SELECT tipo_veiculo, COUNT(*)::int AS total FROM historico_orcamentos GROUP BY tipo_veiculo`,
-    );
-    const corridas = await todos(`
-            SELECT h.id, h.numero_pedido, h.tipo_veiculo,
-                   h.endereco_coleta, h.endereco_entrega, h.cidade_destino,
-                   h.valor_total, h.status_pagamento AS status, h.data_orcamento,
-                   h.distancia_km, h.maps_link,
-                   u.nome AS usuario_nome, u.email AS usuario_email, u.telefone AS usuario_telefone
-            FROM historico_orcamentos h
-            LEFT JOIN usuarios u ON u.id = h.usuario_id
-            ORDER BY COALESCE(h.data_orcamento, h.criado) DESC LIMIT 50`);
-    const topUsuarios = await todos(`
-            SELECT u.nome, u.email, u.telefone,
-                   COUNT(h.id)::int AS total_pedidos,
-                   COALESCE(SUM(h.valor_total), 0)::numeric AS total_gasto
-            FROM usuarios u
-            LEFT JOIN historico_orcamentos h ON h.usuario_id = u.id
-            GROUP BY u.id, u.nome, u.email, u.telefone
-            ORDER BY total_pedidos DESC LIMIT 10`);
-
-    res.json({
-      success: true,
-      totalCorridas: nCorreidas?.c || 0,
-      totalFaturado: parseFloat(nFaturado?.s || 0),
-      totalUsuarios: nUsuarios?.c || 0,
-      porVeiculo,
-      corridas: corridas.map((c) => ({
-        ...c,
-        data_orcamento: c.data_orcamento
-          ? new Date(Number(c.data_orcamento)).toISOString()
-          : null,
-      })),
-      topUsuarios,
-    });
-  } catch (e) {
-    console.error("Erro admin/dados:", e.message);
-    res.status(500).json({
-      success: false,
-      message: "Erro ao carregar dados: " + e.message,
-    });
-  }
-});
-
-// =============================================================
-// ORÇAMENTOS
-// =============================================================
-app.post("/api/orcamentos/salvar", async (req, res) => {
-  try {
-    const {
-      usuario_id,
-      numero_pedido,
-      tipo_veiculo,
-      endereco_coleta,
-      endereco_entrega,
-      cidade_destino,
-      descricao,
-      valor_total,
-      distancia_km,
-      coords_coleta,
-      coords_entrega,
-      maps_link,
-    } = req.body || {};
-
-    if (!usuario_id)
-      return res
-        .status(400)
-        .json({ success: false, message: "usuario_id obrigatório" });
-
-    const id = uuid(),
-      now = agora();
-
-    // Coordenadas: aceita {lat,lng} ou "lat,lng"
-    const coordsC = coords_coleta
-      ? typeof coords_coleta === "string"
-        ? coords_coleta
-        : `${coords_coleta.lat},${coords_coleta.lng}`
-      : "";
-    const coordsE = coords_entrega
-      ? typeof coords_entrega === "string"
-        ? coords_entrega
-        : `${coords_entrega.lat},${coords_entrega.lng}`
-      : "";
-
-    // Auto-gera maps_link se não vier
-    let mapsLinkFinal = maps_link || "";
-    if (!mapsLinkFinal && coordsC && coordsE) {
-      mapsLinkFinal =
-        "https://www.google.com/maps/dir/?api=1" +
-        "&origin=" +
-        encodeURIComponent(coordsC) +
-        "&destination=" +
-        encodeURIComponent(coordsE) +
-        "&travelmode=driving";
+    } catch (e) {
+      console.error("Erro PIX criar:", e);
+      res.status(500).json({
+        success: false,
+        erro: "Erro ao gerar o PIX. Tente novamente.",
+      });
     }
+  },
+);
 
-    await rodar(
-      `INSERT INTO historico_orcamentos
-            (id, usuario_id, numero_pedido, tipo_veiculo,
-             endereco_coleta, endereco_entrega, cidade_destino,
-             descricao, valor_total, distancia_km,
-             coords_coleta, coords_entrega, maps_link,
-             data_orcamento, criado)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
-      [
-        id,
-        usuario_id,
-        numero_pedido || `NG${Date.now().toString().slice(-6)}`,
-        tipo_veiculo || "moto",
-        endereco_coleta || "",
-        endereco_entrega || "",
-        cidade_destino || "",
-        descricao || "",
-        parseFloat(valor_total) || 0,
-        parseFloat(distancia_km) || 0,
-        coordsC,
-        coordsE,
-        mapsLinkFinal,
-        now,
-        now,
-      ],
-    );
-
-    console.log(
-      `✅ Pedido salvo: #${numero_pedido} | ${cidade_destino} | R$ ${valor_total} | maps: ${mapsLinkFinal ? "sim" : "não"}`,
-    );
-    res.json({ success: true, id, mapsLink: mapsLinkFinal });
-  } catch (e) {
-    console.error("Erro salvar orçamento:", e.message);
-    res.status(500).json({ success: false, message: e.message });
-  }
-});
-
-app.get("/api/orcamentos/historico", async (req, res) => {
+app.get("/api/pix/status/:paymentId", exigirUsuario, async (req, res) => {
   try {
-    const uid = req.query.uid;
-    if (!uid)
-      return res
-        .status(400)
-        .json({ success: false, message: "uid obrigatório" });
-    const orcamentos = await todos(
-      "SELECT * FROM historico_orcamentos WHERE usuario_id = $1 ORDER BY criado DESC",
-      [uid],
+    const id = String(req.params.paymentId);
+    let pedido = await um(
+      "SELECT * FROM historico_orcamentos WHERE payment_id = $1 AND usuario_id = $2",
+      [id, req.uid],
     );
-    res.json({ success: true, orcamentos });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
-});
+    if (!pedido)
+      return res.status(404).json({ success: false, status: "not_found" });
 
-app.get("/api/orcamentos/maps/:numeroPedido", async (req, res) => {
-  try {
-    const o = await um(
-      "SELECT numero_pedido, endereco_coleta, endereco_entrega, cidade_destino, distancia_km, maps_link, coords_coleta, coords_entrega FROM historico_orcamentos WHERE numero_pedido = $1",
-      [req.params.numeroPedido],
-    );
-    if (!o)
-      return res
-        .status(404)
-        .json({ success: false, message: "Pedido não encontrado" });
-    res.json({ success: true, pedido: o });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
-});
-
-app.get("/api/orcamentos/:uid", async (req, res) => {
-  try {
-    const orcamentos = await todos(
-      "SELECT * FROM historico_orcamentos WHERE usuario_id = $1 ORDER BY criado DESC",
-      [req.params.uid],
-    );
-    res.json({ success: true, orcamentos });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
-});
-
-// =============================================================
-// PIX
-// =============================================================
-app.post("/api/pix/criar", async (req, res) => {
-  try {
-    const { convId, valor, nomeCliente, descricao } = req.body || {};
-    if (!valor || parseFloat(valor) <= 0)
-      return res.status(400).json({ success: false, erro: "Valor inválido" });
-    if (!MP_ACCESS_TOKEN)
-      return res
-        .status(503)
-        .json({ success: false, erro: "MP_ACCESS_TOKEN não configurado" });
-
-    const convIdFinal = convId || `pedido_${Date.now()}`;
-    const mpBody = {
-      transaction_amount: parseFloat(parseFloat(valor).toFixed(2)),
-      description:
-        descricao ||
-        `Entrega N&G Express #${convIdFinal.slice(-6).toUpperCase()}`,
-      payment_method_id: "pix",
-      payer: {
-        email: "cliente@ngexpress.com.br",
-        first_name: (nomeCliente || "Cliente").split(" ")[0],
-        last_name:
-          (nomeCliente || "Cliente").split(" ").slice(1).join(" ") ||
-          "NGExpress",
-        identification: { type: "CPF", number: "00000000000" },
-      },
-      external_reference: convIdFinal,
-    };
-    if (WEBHOOK_URL) mpBody.notification_url = WEBHOOK_URL;
-
-    let resp = await mpReq("POST", "/v1/payments", mpBody);
-    if (
-      resp.status !== 201 &&
-      resp.body?.cause?.[0]?.code === 4020 &&
-      mpBody.notification_url
-    ) {
-      delete mpBody.notification_url;
-      resp = await mpReq("POST", "/v1/payments", mpBody);
-    }
-    if (resp.status !== 201)
-      return res
-        .status(502)
-        .json({ success: false, erro: "Erro MP", detalhe: resp.body });
-
-    const pix = resp.body.point_of_interaction?.transaction_data;
-    if (!pix?.qr_code)
-      return res
-        .status(502)
-        .json({ success: false, erro: "MP não retornou QR Code" });
-
-    const existe = await um("SELECT id FROM conversas WHERE id = $1", [
-      convIdFinal,
-    ]);
-    if (!existe)
-      await rodar(
-        "INSERT INTO conversas (id,criada,atualizada) VALUES ($1,$2,$3)",
-        [convIdFinal, agora(), agora()],
+    let status = pedido.status_pagamento === "aprovado" ? "approved" : null;
+    if (!status) {
+      status = await sincronizarPagamento(id);
+      pedido = await um(
+        "SELECT * FROM historico_orcamentos WHERE payment_id = $1",
+        [id],
       );
-
-    await rodar(
-      "UPDATE conversas SET mp_payment_id=$1, pix=$2, aguard_pag=1, valor=$3, atualizada=$4 WHERE id=$5",
-      [
-        String(resp.body.id),
-        pix.qr_code,
-        parseFloat(valor),
-        agora(),
-        convIdFinal,
-      ],
-    );
-
-    res.json({
-      success: true,
-      paymentId: resp.body.id,
-      qrCode: pix.qr_code,
-      qrCodeBase64: pix.qr_code_base64 || null,
-      valor: resp.body.transaction_amount,
-    });
+      if (pedido?.status_pagamento === "aprovado") status = "approved";
+    }
+    res.json({ success: true, status: status || "pending", pedido });
   } catch (e) {
-    console.error("Erro pix/criar:", e.message);
+    console.error("Erro PIX status:", e.message);
     res.status(500).json({ success: false, erro: e.message });
-  }
-});
-
-app.get("/api/pix/status/:convId", async (req, res) => {
-  try {
-    const c = await um("SELECT * FROM conversas WHERE id = $1", [
-      req.params.convId,
-    ]);
-    if (!c) return res.status(404).json({ erro: "não encontrada" });
-    if (!c.mp_payment_id) return res.json({ status: "sem_cobranca" });
-
-    const resp = await mpReq("GET", `/v1/payments/${c.mp_payment_id}`, null);
-    if (resp.status !== 200) return res.status(502).json({ erro: "Erro MP" });
-
-    if (resp.body.status === "approved" && !c.pag_conf)
-      await rodar(
-        "UPDATE conversas SET pag_conf=1, aguard_pag=0, atualizada=$1 WHERE id=$2",
-        [agora(), req.params.convId],
-      );
-
-    res.json({ status: resp.body.status, valor: resp.body.transaction_amount });
-  } catch (e) {
-    res.status(500).json({ erro: e.message });
   }
 });
 
 app.post("/api/pix/webhook", async (req, res) => {
   res.sendStatus(200);
   try {
-    const { type, data } = req.body || {};
-    if (type !== "payment" || !data?.id) return;
-
-    const resp = await mpReq("GET", `/v1/payments/${data.id}`, null);
-    if (resp.status !== 200 || resp.body.status !== "approved") return;
-
-    const convId = resp.body.external_reference;
-    if (!convId) return;
-
-    const c = await um("SELECT * FROM conversas WHERE id = $1", [convId]);
-    if (!c || c.pag_conf) return;
-
-    await rodar(
-      "UPDATE conversas SET pag_conf=1, aguard_pag=0, lida=0, atualizada=$1 WHERE id=$2",
-      [agora(), convId],
-    );
-
-    const ts = agora();
-    await rodar(
-      "INSERT INTO msgs (id,conv_id,tipo,texto,atendente,ts) VALUES ($1,$2,$3,$4,$5,$6)",
-      [
-        uuid(),
-        convId,
-        "atendente",
-        "✅ Pagamento confirmado! Em breve seu pedido será atendido. 🚚",
-        "Sistema",
-        ts,
-      ],
-    );
-
-    await rodar("UPDATE conversas SET ultima=$1, atualizada=$2 WHERE id=$3", [
-      "✅ Pagamento confirmado!",
-      ts,
-      convId,
-    ]);
-
-    await rodar(
-      `UPDATE historico_orcamentos SET status_pagamento='aprovado', data_pagamento=$1, payment_id=$2 WHERE numero_pedido=$3`,
-      [agora(), String(data.id), convId],
-    );
+    const tipo = req.body?.type || req.query.type;
+    const id = req.body?.data?.id || req.query["data.id"];
+    if (tipo === "payment" && id) await sincronizarPagamento(id);
   } catch (e) {
-    console.error("❌ Webhook:", e.message);
-  }
-});
-
-// =============================================================
-// CONVERSAS (chatbot)
-// =============================================================
-async function montarConversa(c) {
-  if (!c) return null;
-  const msgs = await todos(
-    "SELECT * FROM msgs WHERE conv_id = $1 ORDER BY ts ASC",
-    [c.id],
-  );
-  const arqs = await todos(
-    "SELECT id,nome,mime,dados,ts FROM arquivos WHERE conv_id = $1 ORDER BY ts ASC",
-    [c.id],
-  );
-  return {
-    id: c.id,
-    aberta: !!c.aberta,
-    lida: !!c.lida,
-    arquivada: !!c.arquivada,
-    ultima: c.ultima,
-    ts: c.atualizada,
-    msgs: msgs.map((m) => ({
-      id: m.id,
-      tipo: m.tipo,
-      texto: m.texto,
-      atendente: m.atendente,
-      ts: m.ts,
-    })),
-    arquivos: arqs.map((a) => ({
-      id: a.id,
-      nome: a.nome,
-      mime: a.mime,
-      dados: a.dados,
-      ts: a.ts,
-    })),
-    info: {
-      nome: c.nome,
-      whatsapp: c.whatsapp,
-      userType: c.user_type,
-      atendenteAtivo: c.atendente,
-      valor: c.valor,
-      pixPayload: c.pix,
-      mpPaymentId: c.mp_payment_id,
-      aguardandoConfirmacao: !!c.aguard_pag,
-      pagamentoConfirmado: !!c.pag_conf,
-      distancia: c.distancia_km,
-      veiculo: c.veiculo,
-      coleta: { cidade: c.coleta_cidade, endereco: c.coleta_end },
-      entrega: { cidade: c.entrega_cidade, endereco: c.entrega_end },
-      destinatario: { nome: c.dest_nome, tel: c.dest_tel },
-      motoboy: { regiao: c.motoboy_regiao },
-    },
-  };
-}
-
-app.post("/api/conv", async (req, res) => {
-  try {
-    const { id } = req.body || {};
-    if (!id) return res.status(400).json({ erro: "id obrigatório" });
-
-    let c = await um("SELECT * FROM conversas WHERE id = $1", [id]);
-    if (!c) {
-      await rodar(
-        "INSERT INTO conversas (id,criada,atualizada) VALUES ($1,$2,$3)",
-        [id, agora(), agora()],
-      );
-      c = await um("SELECT * FROM conversas WHERE id = $1", [id]);
-    }
-    res.json(await montarConversa(c));
-  } catch (e) {
-    res.status(500).json({ erro: e.message });
-  }
-});
-
-app.get("/api/conv", async (req, res) => {
-  try {
-    const lista = await todos(
-      "SELECT * FROM conversas WHERE arquivada=0 ORDER BY atualizada DESC",
-    );
-    const resultado = await Promise.all(lista.map(montarConversa));
-    res.json(resultado);
-  } catch (e) {
-    res.status(500).json({ erro: e.message });
-  }
-});
-
-app.get("/api/conv/:id", async (req, res) => {
-  try {
-    const c = await um("SELECT * FROM conversas WHERE id = $1", [
-      req.params.id,
-    ]);
-    if (!c) return res.status(404).json({ erro: "não encontrada" });
-    res.json(await montarConversa(c));
-  } catch (e) {
-    res.status(500).json({ erro: e.message });
-  }
-});
-
-app.patch("/api/conv/:id", async (req, res) => {
-  try {
-    const { id } = req.params,
-      b = req.body || {};
-    const c = await um("SELECT * FROM conversas WHERE id = $1", [id]);
-    if (!c) return res.status(404).json({ erro: "não encontrada" });
-
-    const campos = [],
-      vals = [];
-    let i = 1;
-    const add = (col, val) => {
-      if (val !== undefined) {
-        campos.push(`${col} = $${i++}`);
-        vals.push(val);
-      }
-    };
-
-    add("nome", b.nome);
-    add("whatsapp", b.whatsapp);
-    add("user_type", b.userType);
-    add("atendente", b.atendente);
-    add("aberta", b.aberta !== undefined ? (b.aberta ? 1 : 0) : undefined);
-    add("lida", b.lida !== undefined ? (b.lida ? 1 : 0) : undefined);
-    add(
-      "arquivada",
-      b.arquivada !== undefined ? (b.arquivada ? 1 : 0) : undefined,
-    );
-    add("valor", b.valor);
-    add("pix", b.pixPayload);
-    add("mp_payment_id", b.mpPaymentId);
-    add(
-      "aguard_pag",
-      b.aguardandoConfirmacao !== undefined
-        ? b.aguardandoConfirmacao
-          ? 1
-          : 0
-        : undefined,
-    );
-    add(
-      "pag_conf",
-      b.pagamentoConfirmado !== undefined
-        ? b.pagamentoConfirmado
-          ? 1
-          : 0
-        : undefined,
-    );
-    add("coleta_cidade", b.coleta?.cidade);
-    add("coleta_end", b.coleta?.endereco);
-    add("entrega_cidade", b.entrega?.cidade);
-    add("entrega_end", b.entrega?.endereco);
-    add("dest_nome", b.destinatario?.nome);
-    add("dest_tel", b.destinatario?.tel);
-    add("motoboy_regiao", b.motoboy?.regiao);
-    add("distancia_km", b.distancia);
-    add("veiculo", b.veiculo);
-    add("ultima", b.ultima);
-
-    if (campos.length) {
-      campos.push(`atualizada = $${i++}`);
-      vals.push(agora());
-      vals.push(id);
-      await rodar(
-        `UPDATE conversas SET ${campos.join(", ")} WHERE id = $${i}`,
-        vals,
-      );
-    }
-    res.json(
-      await montarConversa(
-        await um("SELECT * FROM conversas WHERE id = $1", [id]),
-      ),
-    );
-  } catch (e) {
-    res.status(500).json({ erro: e.message });
-  }
-});
-
-app.delete("/api/conv/:id", async (req, res) => {
-  try {
-    await rodar("DELETE FROM msgs WHERE conv_id = $1", [req.params.id]);
-    await rodar("DELETE FROM arquivos WHERE conv_id = $1", [req.params.id]);
-    await rodar("DELETE FROM conversas WHERE id = $1", [req.params.id]);
-    res.json({ ok: true });
-  } catch (e) {
-    res.status(500).json({ erro: e.message });
-  }
-});
-
-app.get("/api/historico", async (req, res) => {
-  try {
-    const { nome, whatsapp, excluir } = req.query;
-    if (!nome || !whatsapp) return res.json(null);
-    const waNorm = whatsapp.replace(/\D/g, "");
-    const lista = await todos(
-      `SELECT * FROM conversas
-             WHERE id != $1 AND LOWER(TRIM(nome)) = LOWER(TRIM($2)) AND arquivada = 0
-             ORDER BY atualizada DESC`,
-      [excluir || "", nome],
-    );
-    const match = lista.find(
-      (c) =>
-        (c.whatsapp || "").replace(/\D/g, "") === waNorm &&
-        (c.coleta_cidade || c.entrega_cidade),
-    );
-    res.json(match ? await montarConversa(match) : null);
-  } catch (e) {
-    res.status(500).json({ erro: e.message });
-  }
-});
-
-app.post("/api/conv/:id/msgs", async (req, res) => {
-  try {
-    const { tipo, texto, atendente } = req.body || {};
-    const conv_id = req.params.id,
-      id = uuid(),
-      ts = agora();
-
-    await rodar(
-      "INSERT INTO msgs (id,conv_id,tipo,texto,atendente,ts) VALUES ($1,$2,$3,$4,$5,$6)",
-      [id, conv_id, tipo, texto || "", atendente || "", ts],
-    );
-
-    if (tipo === "user")
-      await rodar(
-        "UPDATE conversas SET ultima=$1, atualizada=$2, lida=0 WHERE id=$3",
-        [(texto || "").substring(0, 80), ts, conv_id],
-      );
-    else
-      await rodar("UPDATE conversas SET ultima=$1, atualizada=$2 WHERE id=$3", [
-        (texto || "").substring(0, 80),
-        ts,
-        conv_id,
-      ]);
-
-    res.json({ id, ts, ok: true });
-  } catch (e) {
-    res.status(500).json({ erro: e.message });
-  }
-});
-
-app.post("/api/conv/:id/arq", async (req, res) => {
-  try {
-    const { nome, mime, dados } = req.body || {};
-    if (!dados) return res.status(400).json({ erro: "dados obrigatório" });
-
-    const id = uuid(),
-      ts = agora();
-    await rodar(
-      "INSERT INTO arquivos (id,conv_id,nome,mime,dados,ts) VALUES ($1,$2,$3,$4,$5,$6)",
-      [id, req.params.id, nome || "arquivo", mime || "image/jpeg", dados, ts],
-    );
-    await rodar(
-      "UPDATE conversas SET ultima=$1, atualizada=$2, lida=0 WHERE id=$3",
-      ["📎 Comprovante enviado", ts, req.params.id],
-    );
-
-    res.json({ id, ts, ok: true });
-  } catch (e) {
-    res.status(500).json({ erro: e.message });
-  }
-});
-
-app.get("/api/conv/:id/arq", async (req, res) => {
-  try {
-    const arqs = await todos(
-      "SELECT * FROM arquivos WHERE conv_id = $1 ORDER BY ts ASC",
-      [req.params.id],
-    );
-    res.json(arqs);
-  } catch (e) {
-    res.status(500).json({ erro: e.message });
-  }
-});
-
-app.post("/api/calcular", (req, res) => {
-  const { distancia, veiculo } = req.body || {};
-  const km = parseFloat(distancia) || 0,
-    v = veiculo || "moto";
-  const p = { moto: { min: 15, pkm: 1.8 }, carro: { min: 50, pkm: 3.5 } };
-  const preco =
-    km <= 7
-      ? p[v]?.min || 15
-      : Math.min(Math.round(km * (p[v]?.pkm || 1.8) * 100) / 100, 500);
-  res.json({ distancia: km, valor: preco, veiculo: v });
-});
-
-// =============================================================
-// HEALTH CHECK
-// =============================================================
-app.get("/api/health", async (req, res) => {
-  try {
-    const nu = await um("SELECT COUNT(*)::int AS c FROM usuarios");
-    const na = await um("SELECT COUNT(*)::int AS c FROM admins");
-    const nc = await um("SELECT COUNT(*)::int AS c FROM conversas");
-    res.json({
-      ok: true,
-      banco: "postgresql",
-      usuarios: nu?.c || 0,
-      admins: na?.c || 0,
-      conversas: nc?.c || 0,
-      mp: MP_ACCESS_TOKEN ? "configurado" : "ausente",
-      webhook: WEBHOOK_URL || "não configurado",
-    });
-  } catch (e) {
-    res.status(500).json({ ok: false, erro: e.message });
+    console.error("Erro webhook MP:", e.message);
   }
 });
 
@@ -976,39 +1215,30 @@ app.get("/api/health", async (req, res) => {
 // =============================================================
 (async () => {
   try {
-    // Testa conexão
     await query("SELECT 1");
     console.log("✅ PostgreSQL conectado");
-
-    // Cria tabelas
     await initDb();
 
-    // Admin padrão
+    const adminEmail = (
+      process.env.ADMIN_EMAIL || "admin@ngexpress.com.br"
+    ).toLowerCase();
     const adm = await um("SELECT id FROM admins WHERE email = $1", [
-      "admin@ngexpress.com.br",
+      adminEmail,
     ]);
     if (!adm) {
-      const h = await bcrypt.hash("admin123", 10);
+      const senhaAdmin = process.env.ADMIN_PASSWORD || "admin123";
+      const h = await bcrypt.hash(senhaAdmin, 10);
       await rodar(
         "INSERT INTO admins (id,nome,email,senha_hash,criado) VALUES ($1,$2,$3,$4,$5)",
-        [uuid(), "Administrador", "admin@ngexpress.com.br", h, agora()],
+        [uuid(), "Administrador", adminEmail, h, agora()],
       );
-      console.log("✅ Admin criado: admin@ngexpress.com.br / admin123");
     }
 
-    app.listen(PORT, () => {
-      console.log("");
-      console.log("🚚 N&G Express rodando!");
-      console.log(`📡 http://localhost:${PORT}`);
-      console.log(`🏥 GET  /api/health`);
-      console.log(`🐘 Banco: PostgreSQL (Neon)`);
-      console.log("");
-      console.log("💡 Admin: admin@ngexpress.com.br / admin123");
-      console.log("");
-    });
+    app.listen(PORT, () =>
+      console.log(`🚚 N&G Express rodando em http://localhost:${PORT}`),
+    );
   } catch (err) {
-    console.error("❌ Falha ao iniciar:", err.message);
-    console.error(err.stack);
+    console.error("❌ Falha:", err);
     process.exit(1);
   }
 })();

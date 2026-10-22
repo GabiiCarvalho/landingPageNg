@@ -2,19 +2,23 @@
 // CONFIGURAÇÕES GLOBAIS - N&G EXPRESS
 // =============================================
 
+window.API_BASE_URL =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1"
+    ? "http://localhost:3000/api"
+    : `${window.location.origin}/api;`;
+
 // URL do backend (Railway)
-window.API_BASE_URL = "https://landingpageng-production.up.railway.app/api";
+//window.API_BASE_URL = "https://landingpageng-production.up.railway.app/api";
 
 // =============================================
 // GOOGLE MAPS PLATFORM
 // =============================================
 window.GOOGLE_MAPS_CONFIG = {
-  // 🔑 Cole sua chave do Google Cloud aqui
-  apiKey: "AIzaSyCpVfw1Lm4hq5B9f4io2oQX49mxLyl4QNs",
-
+  apiKey: "AIzaSyAifYfWzb4dhK0MnuDh0nq6jwQprj7F1jk",
   region: "BR",
   language: "pt-BR",
-  libraries: "places",
+  libraries: "places, geometry",
 
   // Centro padrão (Balneário Camboriú - SC)
   center: { lat: -26.9906, lng: -48.6347 },
@@ -57,29 +61,13 @@ window.GOOGLE_MAPS_CONFIG = {
 // =============================================
 // TABELA DE PREÇOS
 // =============================================
-window.PRICING_CONFIG = {
-  multiplicadorVolume: 0.001,
-  multiplicadorPeso: 1.5,
-  limiteVolume: 30000, // cm³
-  limitePeso: 5, // kg
-  valorMaximo: 500.0,
-};
-
-// =============================================
-// REGRAS POR MUNICÍPIO
-// Balneário Camboriú tem regra especial
-// =============================================
 window.OPERATION_CONFIG = {
   cidadePrincipal: "Balneário Camboriú",
-
-  // Dentro de Balneário Camboriú
   dentroCidadePrincipal: {
-    valorBase: 15.0, // R$ 15,00 até 7km
+    valorBase: 15.0,
     limiteKmBase: 7,
-    valorPorKmExcedente: 2.3, // R$ 2,30 por km excedente
+    valorPorKmExcedente: 2.3,
   },
-
-  // Outros municípios
   foraCidadePrincipal: {
     valorPorKm: 2.3,
     valorMinimo: 15.0,
@@ -90,5 +78,5 @@ window.OPERATION_CONFIG = {
 // WHATSAPP — número que recebe os pedidos
 // =============================================
 window.WHATSAPP_CONFIG = {
-  numero: "5547999123260", // formato internacional sem +
+  numero: "5547999123260",
 };

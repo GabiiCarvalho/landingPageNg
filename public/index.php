@@ -1,3 +1,0 @@
-echo "Hello from Railway PHP!";
-phpinfo();
-?>' > index.php

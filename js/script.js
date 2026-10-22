@@ -1,453 +1,434 @@
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("🚀 Sistema N&G EXPRESS iniciado!");
+  console.log("🚀 N&G EXPRESS iniciado (100% Google Maps)!");
 
-  // ============================================================
-  //  ESTADO GLOBAL
-  // ============================================================
-  window.orcamentoAtual = null;
-  window.distanciaAtual = null;
-  window.coordenadasCache = { coleta: null, entrega: null };
+  const API_BASE_URL = (
+    window.API_BASE_URL || "http://localhost:3000/api"
+  ).replace(/\/$/, "");
 
   let googleMap = null;
-  let googleDirectionsService = null;
-  let googleDirectionsRenderer = null;
-  let googleGeocoder = null;
+  let routePolyline = null;
   let markers = { coleta: null, entrega: null };
-  let googleMapsPronto = false;
+  window.orcamentoAtual = null;
+  window.coordenadasCache = { coleta: null, entrega: null };
 
-  const _cidadeCache = {};
-
-  // ============================================================
-  //  UTILITÁRIOS
-  // ============================================================
-  function atualizarAno() {
-    const el = document.getElementById("currentYear");
-    if (el) el.textContent = new Date().getFullYear();
+  // =============================================
+  // UTILITÁRIOS E AUTENTICAÇÃO
+  // =============================================
+  function formatarMoeda(v) {
+    return `R$ ${Number(v || 0)
+      .toFixed(2)
+      .replace(".", ",")}`;
   }
 
-  function aplicarMascaraTelefone() {
-    const tel = document.getElementById("cliente-telefone");
-    if (!tel) return;
-    function mascara(valor) {
-      let v = valor.replace(/\D/g, "").substring(0, 11);
-      if (v.length <= 10)
-        return v.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3");
-      return v.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3");
-    }
-    tel.addEventListener("input", (e) => {
-      e.target.value = mascara(e.target.value);
-    });
-    tel.addEventListener("paste", (e) => {
-      e.preventDefault();
-      const texto = (e.clipboardData || window.clipboardData).getData("text");
-      e.target.value = mascara(texto);
-    });
-  }
-
-  function formatarMoeda(valor) {
-    return `R$ ${Number(valor).toFixed(2).replace(".", ",")}`;
-  }
-
-  function normalizarTexto(txt) {
-    return (txt || "")
-      .toString()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .trim();
+  function getAuthHeaders(extra = {}) {
+    const token =
+      localStorage.getItem("ng_token") || sessionStorage.getItem("ng_token");
+    const headers = { "Content-Type": "application/json", ...extra };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    return headers;
   }
 
   function mostrarToast(msg, tipo = "success") {
     const container = document.getElementById("toast-container");
     if (!container) return;
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${tipo}`;
     const icone =
       tipo === "success"
         ? "check-circle"
         : tipo === "warning"
           ? "exclamation-triangle"
           : "exclamation-circle";
-    const toast = document.createElement("div");
-    toast.className = `toast toast-${tipo}`;
-    toast.innerHTML = `<i class="bi bi-${icone}"></i> ${msg}`;
+    toast.innerHTML = `<i class="bi bi-${icone}"></i> <span>${msg}</span>`;
     container.appendChild(toast);
     setTimeout(() => {
       toast.style.opacity = "0";
       toast.style.transition = "opacity 0.4s";
       setTimeout(() => toast.remove(), 400);
-    }, 4600);
+    }, 4000);
   }
   window.mostrarToast = mostrarToast;
 
-  // ============================================================
-  //  UI LOGADO/DESLOGADO
-  // ============================================================
-  function inicializarLembrarEmail() {
-    const campoEmail = document.getElementById("login-email");
-    const checkbox = document.getElementById("lembrar-email");
-    if (!campoEmail || !checkbox) return;
-    const emailSalvo = localStorage.getItem("ng_email_salvo");
-    if (emailSalvo) {
-      campoEmail.value = emailSalvo;
-      checkbox.checked = true;
-    }
-  }
+  const yearEl = document.getElementById("currentYear");
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-  function atualizarUILogado(usuario) {
-    document
-      .querySelectorAll(".login-item")
-      .forEach((el) => (el.style.display = "none"));
-    document
-      .querySelectorAll(".perfil-item")
-      .forEach((el) => (el.style.display = "block"));
-    const perfilNome = document.getElementById("menu-perfil-nome");
-    if (perfilNome && usuario?.nome)
-      perfilNome.textContent = usuario.nome.split(" ")[0];
-  }
-
-  function atualizarUIDeslogado() {
-    document
-      .querySelectorAll(".login-item")
-      .forEach((el) => (el.style.display = "block"));
-    document
-      .querySelectorAll(".perfil-item")
-      .forEach((el) => (el.style.display = "none"));
-  }
-
-  function preencherFormularioComUsuario(usuario) {
-    if (!usuario) return;
-    const campos = {
-      "cliente-nome": usuario.nome,
-      "cliente-email": usuario.email,
-      "cliente-telefone": usuario.telefone,
-    };
-    Object.entries(campos).forEach(([id, valor]) => {
-      const campo = document.getElementById(id);
-      if (campo && !campo.value && valor) campo.value = valor;
+  const mobileBtn = document.querySelector(".mobile-menu-btn");
+  const navLinks = document.querySelector(".nav-links");
+  if (mobileBtn && navLinks) {
+    mobileBtn.addEventListener("click", () => {
+      navLinks.classList.toggle("active");
     });
-    exibirBannerUsuario(usuario);
   }
 
-  function exibirBannerUsuario(usuario) {
-    const form = document.getElementById("form-orcamento");
-    if (!form || document.getElementById("banner-usuario")) return;
-    const banner = document.createElement("div");
-    banner.id = "banner-usuario";
-    banner.style.cssText = `
-            background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 10px;
-            padding: 10px 16px; margin-bottom: 20px; font-size: .9rem;
-            display: flex; align-items: center; gap: 10px; color: #2e7d32;`;
-    const primeiroNome = (usuario.nome || "usuário").split(" ")[0];
-    banner.innerHTML = `
-            <i class="bi bi-person-check-fill" style="font-size:1.2rem;"></i>
-            <span>Olá, <strong>${primeiroNome}</strong>! Seus dados foram preenchidos automaticamente.</span>
-            <a href="dashboard.html" style="margin-left:auto;color:#1b5e20;font-weight:600;font-size:.85rem;white-space:nowrap;">
-                <i class="bi bi-speedometer2"></i> Meu Painel
-            </a>`;
-    form.insertBefore(banner, form.firstChild);
+  if (typeof Swiper !== "undefined" && document.querySelector(".hero-swiper")) {
+    new Swiper(".hero-swiper", {
+      loop: true,
+      autoplay: { delay: 5000, disableOnInteraction: false },
+      pagination: { el: ".swiper-pagination", clickable: true },
+    });
   }
 
-  // ============================================================
-  //  SESSÃO
-  // ============================================================
-  function servidorNaoExecutaPHP(texto) {
-    const t = texto.trimStart();
-    return t.startsWith("<?php") || t.startsWith("<?");
-  }
+  // =============================================
+  // MODAIS, LOGIN E CADASTRO
+  // =============================================
+  window.fecharModal = (id) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
+  };
 
-  async function verificarSessao() {
-    if (
-      window.location.protocol !== "http:" &&
-      window.location.protocol !== "https:"
-    ) {
-      usarSessaoLocal();
-      return;
-    }
-    const cached = sessionStorage.getItem("usuario");
-    if (cached) {
-      try {
-        const usuario = JSON.parse(cached);
-        atualizarUILogado(usuario);
-        preencherFormularioComUsuario(usuario);
-      } catch {
-        sessionStorage.removeItem("usuario");
-        atualizarUIDeslogado();
-      }
-      return;
-    }
-    try {
-      const response = await fetch(
-        `${window.API_BASE_URL}/usuarios/verificar.php`,
-      );
-      const texto = await response.text();
-      if (servidorNaoExecutaPHP(texto)) {
-        usarSessaoLocal();
-        return;
-      }
-      if (!response.ok) {
-        usarSessaoLocal();
-        return;
-      }
-      let data;
-      try {
-        data = JSON.parse(texto);
-      } catch {
-        usarSessaoLocal();
-        return;
-      }
-      if (data.logado && data.usuario) {
-        sessionStorage.setItem("usuario", JSON.stringify(data.usuario));
-        atualizarUILogado(data.usuario);
-        preencherFormularioComUsuario(data.usuario);
-      } else {
-        sessionStorage.removeItem("usuario");
-        atualizarUIDeslogado();
-      }
-    } catch {
-      usarSessaoLocal();
-    }
-  }
-
-  function usarSessaoLocal() {
-    const cached = sessionStorage.getItem("usuario");
-    if (cached) {
-      try {
-        const usuario = JSON.parse(cached);
-        atualizarUILogado(usuario);
-        preencherFormularioComUsuario(usuario);
-      } catch {
-        sessionStorage.removeItem("usuario");
-        atualizarUIDeslogado();
-      }
-    } else {
-      atualizarUIDeslogado();
-    }
-  }
-
-  async function parseRespostaAPI(response) {
-    const texto = await response.text();
-    if (servidorNaoExecutaPHP(texto))
-      throw new Error("Servidor não executa PHP.");
-    try {
-      return JSON.parse(texto);
-    } catch {
-      throw new Error(
-        "Resposta inválida do servidor: " + texto.substring(0, 80),
-      );
-    }
-  }
-
-  // ============================================================
-  //  MODAIS
-  // ============================================================
   window.abrirModalLogin = () => {
-    const modal = document.getElementById("login-modal");
-    if (modal) {
-      modal.style.display = "block";
-      document.body.style.overflow = "hidden";
-      inicializarLembrarEmail();
+    window.fecharModal("cadastro-modal");
+    const emailSalvo = localStorage.getItem("ng_lembrar_email");
+    const inputEmail = document.getElementById("login-email");
+    const chkLembrar = document.getElementById("lembrar-email");
+    if (emailSalvo && inputEmail) {
+      inputEmail.value = emailSalvo;
+      if (chkLembrar) chkLembrar.checked = true;
     }
+    const modal = document.getElementById("login-modal");
+    if (modal) modal.style.display = "flex";
   };
 
   window.abrirModalCadastro = () => {
     window.fecharModal("login-modal");
     const modal = document.getElementById("cadastro-modal");
-    if (modal) {
-      modal.style.display = "block";
-      document.body.style.overflow = "hidden";
-    }
+    if (modal) modal.style.display = "flex";
   };
 
-  window.fecharModal = (modalId) => {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-      modal.style.display = "none";
-      document.body.style.overflow = "auto";
-    }
-  };
-
-  // ============================================================
-  //  TOGGLE RECEPTOR
-  // ============================================================
-  window.toggleRecebeEntrega = function (valor) {
-    const dadosReceptor = document.getElementById("dados-receptor");
-    if (!dadosReceptor) return;
-    dadosReceptor.style.display = valor === "outro" ? "block" : "none";
-    const nome = document.getElementById("receptor-nome");
-    const tel = document.getElementById("receptor-telefone");
-    if (nome) nome.required = valor === "outro";
-    if (tel) tel.required = valor === "outro";
-  };
-
-  // ============================================================
-  //  LOGIN / CADASTRO / LOGOUT
-  // ============================================================
-  window.fazerLogin = async (event) => {
+  window.fazerLogin = async function (event) {
     event.preventDefault();
-    const email = document.getElementById("login-email")?.value?.trim();
+    const email = document.getElementById("login-email")?.value.trim();
     const senha = document.getElementById("login-senha")?.value;
     const lembrar = document.getElementById("lembrar-email")?.checked;
+    const btn = event.target.querySelector('button[type="submit"]');
+    const txtOriginal = btn ? btn.innerHTML : "Entrar";
+
     if (!email || !senha) {
-      mostrarToast("Preencha e-mail e senha", "error");
-      return;
+      return mostrarToast("Preencha e-mail e senha.", "error");
     }
 
-    const btn = event.target.querySelector('button[type="submit"]');
-    const textoOriginal = btn?.innerHTML;
     if (btn) {
       btn.disabled = true;
-      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Entrando...';
+      btn.innerHTML = '<span class="spinner spinner-sm"></span> Entrando...';
     }
 
     try {
-      const response = await fetch(
-        `${window.API_BASE_URL}/usuarios/login.php`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, senha }),
-        },
-      );
-      const data = await parseRespostaAPI(response);
-      if (data.success && data.usuario) {
-        if (lembrar) localStorage.setItem("ng_email_salvo", email);
-        else localStorage.removeItem("ng_email_salvo");
-        sessionStorage.setItem("usuario", JSON.stringify(data.usuario));
-        atualizarUILogado(data.usuario);
-        preencherFormularioComUsuario(data.usuario);
-        window.fecharModal("login-modal");
+      const resp = await fetch(`${API_BASE_URL}/usuarios/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, senha }),
+      });
+      const data = await resp.json();
+
+      if (!resp.ok || !data.success) {
+        throw new Error(data.message || "E-mail ou senha inválidos");
+      }
+
+      if (lembrar) localStorage.setItem("ng_lembrar_email", email);
+      else localStorage.removeItem("ng_lembrar_email");
+
+      sessionStorage.setItem("usuario", JSON.stringify(data.usuario));
+      localStorage.setItem("usuario", JSON.stringify(data.usuario));
+      if (data.token) {
+        sessionStorage.setItem("ng_token", data.token);
+        localStorage.setItem("ng_token", data.token);
+      }
+
+      window.fecharModal("login-modal");
+      atualizarMenuUsuario(data.usuario);
+      preencherFormulario();
+
+      if (window.__aguardandoLoginParaPix) {
+        window.__aguardandoLoginParaPix = false;
         mostrarToast(
-          `Bem-vindo, ${data.usuario.nome?.split(" ")[0]}!`,
+          `Bem-vindo(a), ${data.usuario.nome.split(" ")[0]}! Gerando seu PIX...`,
+          "success",
+        );
+        document.getElementById("btn-pagar")?.click();
+      } else if (window.location.pathname.includes("novo-pedido")) {
+        mostrarToast(
+          `Bem-vindo(a), ${data.usuario.nome.split(" ")[0]}!`,
+          "success",
+        );
+      } else {
+        mostrarToast(
+          "Login realizado! Redirecionando para seu painel...",
           "success",
         );
         setTimeout(() => {
           window.location.href = "dashboard.html";
-        }, 800);
-      } else {
-        mostrarToast(data.message || "E-mail ou senha incorretos", "error");
+        }, 600);
       }
-    } catch (error) {
-      mostrarToast("Não foi possível conectar ao servidor", "error");
+    } catch (err) {
+      mostrarToast(err.message || "Erro ao fazer login", "error");
     } finally {
       if (btn) {
         btn.disabled = false;
-        btn.innerHTML = textoOriginal;
+        btn.innerHTML = txtOriginal;
       }
     }
   };
 
-  window.fazerCadastro = async (event) => {
+  window.fazerCadastro = async function (event) {
     event.preventDefault();
-    const nome = document.getElementById("cadastro-nome")?.value?.trim();
-    const email = document.getElementById("cadastro-email")?.value?.trim();
-    const telefone = document
-      .getElementById("cadastro-telefone")
-      ?.value?.trim();
+    const nome = document.getElementById("cadastro-nome")?.value.trim();
+    const email = document.getElementById("cadastro-email")?.value.trim();
+    const telefone = document.getElementById("cadastro-telefone")?.value.trim();
     const senha = document.getElementById("cadastro-senha")?.value;
     const confirmar = document.getElementById(
       "cadastro-confirmar-senha",
     )?.value;
+    const btn = event.target.querySelector('button[type="submit"]');
+    const txtOriginal = btn ? btn.innerHTML : "Cadastrar";
 
-    if (!nome || !email || !telefone || !senha) {
-      mostrarToast("Preencha todos os campos", "error");
-      return;
-    }
-    if (senha.length < 6) {
-      mostrarToast("A senha deve ter no mínimo 6 caracteres", "error");
-      return;
+    if (!nome || nome.split(/\s+/).length < 2) {
+      return mostrarToast("Informe seu nome e sobrenome.", "warning");
     }
     if (senha !== confirmar) {
-      mostrarToast("As senhas não conferem", "error");
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      mostrarToast("E-mail inválido", "error");
-      return;
+      return mostrarToast("As senhas não coincidem.", "error");
     }
 
-    const btn = event.target.querySelector('button[type="submit"]');
-    const textoOriginal = btn?.innerHTML;
     if (btn) {
       btn.disabled = true;
-      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Cadastrando...';
+      btn.innerHTML = '<span class="spinner spinner-sm"></span> Cadastrando...';
     }
 
     try {
-      const response = await fetch(
-        `${window.API_BASE_URL}/usuarios/cadastrar.php`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nome, email, telefone, senha }),
-        },
-      );
-      const data = await parseRespostaAPI(response);
-      if (data.success && data.usuario) {
-        sessionStorage.setItem("usuario", JSON.stringify(data.usuario));
-        atualizarUILogado(data.usuario);
-        preencherFormularioComUsuario(data.usuario);
-        window.fecharModal("cadastro-modal");
-        mostrarToast("Cadastro realizado! Seja bem-vindo!", "success");
+      const resp = await fetch(`${API_BASE_URL}/usuarios/cadastrar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ nome, email, telefone, senha }),
+      });
+      const data = await resp.json();
+
+      if (!resp.ok || !data.success) {
+        throw new Error(data.message || "Erro ao realizar cadastro");
+      }
+
+      sessionStorage.setItem("usuario", JSON.stringify(data.usuario));
+      localStorage.setItem("usuario", JSON.stringify(data.usuario));
+      if (data.token) {
+        sessionStorage.setItem("ng_token", data.token);
+        localStorage.setItem("ng_token", data.token);
+      }
+
+      window.fecharModal("cadastro-modal");
+      atualizarMenuUsuario(data.usuario);
+      preencherFormulario();
+
+      if (window.__aguardandoLoginParaPix) {
+        window.__aguardandoLoginParaPix = false;
+        mostrarToast("Cadastro concluído! Gerando seu PIX...", "success");
+        document.getElementById("btn-pagar")?.click();
+      } else if (window.location.pathname.includes("novo-pedido")) {
+        mostrarToast("Cadastro realizado com sucesso!", "success");
+      } else {
+        mostrarToast("Cadastro realizado! Abrindo seu painel...", "success");
         setTimeout(() => {
           window.location.href = "dashboard.html";
-        }, 800);
-      } else {
-        mostrarToast(data.message || "Erro ao cadastrar", "error");
+        }, 600);
       }
-    } catch (error) {
-      mostrarToast("Não foi possível conectar ao servidor", "error");
+    } catch (err) {
+      mostrarToast(err.message || "Erro ao cadastrar", "error");
     } finally {
       if (btn) {
         btn.disabled = false;
-        btn.innerHTML = textoOriginal;
+        btn.innerHTML = txtOriginal;
       }
     }
   };
 
   window.fazerLogout = async () => {
     try {
-      await fetch(`${window.API_BASE_URL}/usuarios/logout.php`, {
+      await fetch(`${API_BASE_URL}/usuarios/logout`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
+        credentials: "include",
       });
-    } catch (e) {
-      console.warn("⚠️ API de logout indisponível");
-    }
+    } catch (e) {}
     sessionStorage.removeItem("usuario");
+    sessionStorage.removeItem("ng_token");
+    localStorage.removeItem("usuario");
+    localStorage.removeItem("ng_token");
     window.location.href = "index.html";
   };
 
-  // ============================================================
-  //  GOOGLE MAPS — INICIALIZAÇÃO
-  // ============================================================
-  function quandoGoogleMapsCarregar(callback) {
-    if (window.__googleMapsLoaded) {
-      callback();
+  // =============================================
+  // SESSÃO E PREENCHIMENTO AUTOMÁTICO
+  // =============================================
+  function atualizarMenuUsuario(usuario) {
+    if (usuario) {
+      document
+        .querySelectorAll(".login-item")
+        .forEach((el) => (el.style.display = "none"));
+      document
+        .querySelectorAll(".perfil-item")
+        .forEach((el) => (el.style.display = "block"));
+      const pn = document.getElementById("menu-perfil-nome");
+      if (pn && usuario.nome) pn.textContent = usuario.nome.split(" ")[0];
+    } else {
+      document
+        .querySelectorAll(".login-item")
+        .forEach((el) => (el.style.display = "block"));
+      document
+        .querySelectorAll(".perfil-item")
+        .forEach((el) => (el.style.display = "none"));
+    }
+  }
+
+  async function verificarSessao() {
+    const cacheLocal =
+      sessionStorage.getItem("usuario") || localStorage.getItem("usuario");
+    if (cacheLocal) {
+      try {
+        const u = JSON.parse(cacheLocal);
+        atualizarMenuUsuario(u);
+        preencherFormulario();
+      } catch (_) {}
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/usuarios/verificar`, {
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      const data = await response.json();
+
+      if (data.logado && data.usuario) {
+        sessionStorage.setItem("usuario", JSON.stringify(data.usuario));
+        localStorage.setItem("usuario", JSON.stringify(data.usuario));
+        atualizarMenuUsuario(data.usuario);
+        preencherFormulario();
+      } else {
+        sessionStorage.removeItem("usuario");
+        localStorage.removeItem("usuario");
+        atualizarMenuUsuario(null);
+      }
+    } catch (e) {
+      console.warn("Sessão offline ou não verificada.");
+    }
+  }
+
+  function obterUsuarioLogado() {
+    const raw =
+      sessionStorage.getItem("usuario") || localStorage.getItem("usuario");
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function preencherFormulario() {
+    const u = obterUsuarioLogado();
+    const bannerContainer = document.getElementById("banner-usuario-container");
+    if (!u) {
+      if (bannerContainer) {
+        bannerContainer.innerHTML = `
+          <div class="banner-usuario aviso">
+            <i class="bi bi-info-circle-fill"></i>
+            <span>Faça <a href="#" onclick="abrirModalLogin();return false;"><strong>login</strong></a> ou <a href="#" onclick="abrirModalCadastro();return false;"><strong>cadastre-se</strong></a> para preencher seus dados automaticamente e salvar no seu histórico.</span>
+          </div>
+        `;
+      }
       return;
     }
-    window.addEventListener("google-maps-ready", callback, { once: true });
-    let tentativas = 0;
-    const check = setInterval(() => {
-      tentativas++;
-      if (window.__googleMapsLoaded) {
-        clearInterval(check);
-        callback();
-      } else if (tentativas > 33) {
-        clearInterval(check);
-        console.warn("⚠️ Google Maps não carregou após 10s");
+
+    const cn = document.getElementById("cliente-nome");
+    const ce = document.getElementById("cliente-email");
+    const ct = document.getElementById("cliente-telefone");
+
+    if (cn) cn.value = u.nome || "";
+    if (ce) ce.value = u.email || "";
+    if (ct && u.telefone) ct.value = u.telefone;
+
+    if (bannerContainer) {
+      bannerContainer.innerHTML = `
+        <div class="banner-usuario" id="banner-usuario">
+          <i class="bi bi-check-circle-fill"></i>
+          <span>Olá, <strong>${u.nome.split(" ")[0]}</strong>! Seus dados foram preenchidos automaticamente.</span>
+        </div>
+      `;
+    }
+
+    sincronizarReceptor();
+  }
+
+  // =============================================
+  // RÁDIO QUEM VAI RECEBER (SOU EU vs OUTRA PESSOA)
+  // =============================================
+  function sincronizarReceptor() {
+    const radioSelecionado = document.querySelector(
+      'input[name="quem-recebe"]:checked',
+    )?.value;
+    const reqNome = document.getElementById("receptor-nome");
+    const reqTel = document.getElementById("receptor-telefone");
+    const dica = document.getElementById("receptor-dica");
+    if (!reqNome || !reqTel) return;
+
+    const u = obterUsuarioLogado();
+    const nomeCliente =
+      document.getElementById("cliente-nome")?.value.trim() || u?.nome || "";
+    const telCliente =
+      document.getElementById("cliente-telefone")?.value.trim() ||
+      u?.telefone ||
+      "";
+
+    if (radioSelecionado === "eu") {
+      reqNome.value = nomeCliente;
+      reqTel.value = telCliente;
+      reqNome.readOnly = true;
+      reqTel.readOnly = true;
+      reqNome.required = false;
+      reqTel.required = false;
+      reqNome.classList.remove("campo-erro");
+      reqTel.classList.remove("campo-erro");
+      if (dica) {
+        dica.textContent =
+          "Seus dados de cliente foram preenchidos automaticamente como recebedor.";
       }
-    }, 300);
+    } else {
+      if (reqNome.readOnly) {
+        reqNome.value = "";
+        reqTel.value = "";
+      }
+      reqNome.readOnly = false;
+      reqTel.readOnly = false;
+      reqNome.required = true;
+      reqTel.required = true;
+      if (dica) {
+        dica.textContent =
+          "Obrigatório informar o nome completo (nome e sobrenome) e o WhatsApp/Telefone de quem irá receber.";
+      }
+      reqNome.focus();
+    }
+  }
+
+  document.querySelectorAll('input[name="quem-recebe"]').forEach((radio) => {
+    radio.addEventListener("change", sincronizarReceptor);
+  });
+
+  document
+    .getElementById("cliente-nome")
+    ?.addEventListener("input", sincronizarReceptor);
+  document
+    .getElementById("cliente-telefone")
+    ?.addEventListener("input", sincronizarReceptor);
+
+  // =============================================
+  // GOOGLE MAPS E AUTOCOMPLETE (100% GOOGLE PLACES NEW)
+  // =============================================
+  function quandoGoogleMapsCarregar(cb) {
+    if (window.__googleMapsLoaded) return cb();
+    window.addEventListener("google-maps-ready", cb, { once: true });
   }
 
   function inicializarGoogleMaps() {
     const mapEl = document.getElementById("map");
-    if (!mapEl) {
-      console.log("ℹ️ Elemento #map não está nesta página");
-      return;
-    }
-    if (typeof google === "undefined" || !google.maps) {
-      console.warn("⚠️ Google Maps SDK não disponível");
-      return;
-    }
+    if (!mapEl || typeof google === "undefined" || !google.maps) return;
     if (googleMap) return;
 
     const cfg = window.GOOGLE_MAPS_CONFIG || {};
@@ -456,802 +437,755 @@ document.addEventListener("DOMContentLoaded", function () {
       zoom: cfg.defaultZoom || 13,
       mapTypeControl: false,
       streetViewControl: false,
-      fullscreenControl: true,
       styles: cfg.styles || [],
     });
-
-    googleDirectionsService = new google.maps.DirectionsService();
-    googleDirectionsRenderer = new google.maps.DirectionsRenderer({
-      map: googleMap,
-      suppressMarkers: true,
-      polylineOptions: {
-        strokeColor: "#FF6B00",
-        strokeWeight: 5,
-        strokeOpacity: 0.85,
-      },
-    });
-    googleGeocoder = new google.maps.Geocoder();
-
-    googleMapsPronto = true;
-    console.log("✅ Google Maps inicializado em Balneário Camboriú");
-  }
-
-  // ============================================================
-  //  AUTOCOMPLETE GOOGLE PLACES
-  // ============================================================
-  function inicializarAutocomplete() {
-    const campoColeta = document.getElementById("endereco-coleta");
-    const campoEntrega = document.getElementById("endereco-entrega");
-    if (!campoColeta || !campoEntrega) return;
-    if (typeof google === "undefined" || !google.maps?.places) {
-      console.warn("⚠️ Google Places não disponível");
-      return;
-    }
-
-    const opts = {
-      componentRestrictions: { country: "br" },
-      fields: ["address_components", "geometry", "formatted_address", "name"],
-      types: ["address"],
-    };
-
-    const acColeta = new google.maps.places.Autocomplete(campoColeta, opts);
-    const acEntrega = new google.maps.places.Autocomplete(campoEntrega, opts);
-
-    acColeta.addListener("place_changed", () => {
-      const place = acColeta.getPlace();
-      if (!place.geometry) return;
-      window.coordenadasCache.coleta = {
-        lat: place.geometry.location.lat(),
-        lng: place.geometry.location.lng(),
-        endereco: place.formatted_address,
-      };
-      preencherNumeroAutomatico(campoColeta, place);
-      adicionarMarcador("coleta", place.geometry.location);
-      tentarCalcularRotaPreview();
-    });
-
-    acEntrega.addListener("place_changed", () => {
-      const place = acEntrega.getPlace();
-      if (!place.geometry) return;
-      window.coordenadasCache.entrega = {
-        lat: place.geometry.location.lat(),
-        lng: place.geometry.location.lng(),
-        endereco: place.formatted_address,
-      };
-      preencherNumeroAutomatico(campoEntrega, place);
-      adicionarMarcador("entrega", place.geometry.location);
-      tentarCalcularRotaPreview();
-    });
-
-    console.log("✅ Autocomplete Google Places configurado");
-  }
-
-  function preencherNumeroAutomatico(input, place) {
-    const isColeta = input.id === "endereco-coleta";
-    const numEl = document.getElementById(
-      isColeta ? "numero-coleta" : "numero-entrega",
-    );
-    if (!numEl || numEl.value) return;
-    const num = place.address_components?.find((c) =>
-      c.types.includes("street_number"),
-    )?.short_name;
-    if (num) numEl.value = num;
   }
 
   function adicionarMarcador(tipo, position) {
-    if (markers[tipo]) markers[tipo].setMap(null);
     if (!googleMap) return;
-
+    if (markers[tipo]) markers[tipo].setMap(null);
     markers[tipo] = new google.maps.Marker({
       position,
       map: googleMap,
-      title: tipo === "coleta" ? "Coleta" : "Entrega",
+      title:
+        tipo === "coleta"
+          ? "Coleta (C) - Arraste ou clique para ajustar"
+          : "Entrega (E) - Arraste ou clique para ajustar",
+      draggable: true,
+      animation: google.maps.Animation.DROP,
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
-        scale: 12,
+        scale: 10,
         fillColor: tipo === "coleta" ? "#FF6B00" : "#00C48C",
         fillOpacity: 1,
         strokeColor: "#fff",
-        strokeWeight: 3,
+        strokeWeight: 2,
       },
       label: {
         text: tipo === "coleta" ? "C" : "E",
         color: "#fff",
-        fontSize: "11px",
+        fontSize: "10px",
         fontWeight: "bold",
       },
     });
   }
 
-  function tentarCalcularRotaPreview() {
-    const c = window.coordenadasCache.coleta;
-    const e = window.coordenadasCache.entrega;
-    if (c && e && googleDirectionsService) {
-      renderizarRotaNoMapa(c, e).catch((err) =>
-        console.warn("Preview rota:", err.message),
-      );
-    }
-  }
+  function inicializarAutocomplete() {
+    function configurarCampoEndereco(tipo) {
+      const inputEl = document.getElementById(`endereco-${tipo}`);
+      const boxSugestoes = document.getElementById(`sugestoes-${tipo}`);
+      const selInfo = document.getElementById(`sel-${tipo}`);
+      const inputNum = document.getElementById(`numero-${tipo}`);
+      const btnGps = document.getElementById(`btn-gps-${tipo}`);
+      if (!inputEl) return;
 
-  async function renderizarRotaNoMapa(origem, destino) {
-    return new Promise((resolve, reject) => {
-      googleDirectionsService.route(
-        {
-          origin: { lat: origem.lat, lng: origem.lng },
-          destination: { lat: destino.lat, lng: destino.lng },
-          travelMode: google.maps.TravelMode.DRIVING,
-        },
-        (result, status) => {
-          if (status === "OK" && result) {
-            googleDirectionsRenderer.setDirections(result);
-            const bounds = new google.maps.LatLngBounds();
-            result.routes[0].legs[0].steps.forEach((s) => {
-              bounds.extend(s.start_location);
-              bounds.extend(s.end_location);
-            });
-            googleMap.fitBounds(bounds);
-            resolve(result);
-          } else {
-            reject(new Error("Erro ao renderizar rota: " + status));
-          }
-        },
-      );
-    });
-  }
+      let timer = null;
 
-  // ============================================================
-  //  GEOCÓDIGO
-  // ============================================================
-  function geocodificarEndereco(endereco) {
-    return new Promise((resolve, reject) => {
-      if (!googleGeocoder) {
-        reject(new Error("Geocoder não inicializado"));
-        return;
-      }
-      googleGeocoder.geocode(
-        {
-          address: endereco,
-          region: "BR",
-          componentRestrictions: { country: "BR" },
-        },
-        (results, status) => {
-          if (status === "OK" && results[0]) {
-            const loc = results[0].geometry.location;
-            resolve({
-              lat: loc.lat(),
-              lng: loc.lng(),
-              endereco: results[0].formatted_address,
-            });
-          } else {
-            reject(new Error(`Endereço não encontrado: ${endereco}`));
-          }
-        },
-      );
-    });
-  }
+      inputEl.addEventListener("input", () => {
+        const valor = inputEl.value.trim();
+        window.coordenadasCache[tipo] = { endereco: valor };
+        if (selInfo) selInfo.innerHTML = "";
 
-  function obterCidadeDoPonto(lat, lng) {
-    const chave = `${lat.toFixed(4)},${lng.toFixed(4)}`;
-    if (_cidadeCache[chave]) return Promise.resolve(_cidadeCache[chave]);
+        clearTimeout(timer);
+        if (valor.length < 3) {
+          if (boxSugestoes) boxSugestoes.style.display = "none";
+          return;
+        }
 
-    return new Promise((resolve) => {
-      if (!googleGeocoder) {
-        resolve(null);
-        return;
-      }
-
-      googleGeocoder.geocode(
-        { location: { lat, lng }, language: "pt-BR", region: "BR" },
-        (results, status) => {
-          if (status !== "OK" || !results[0]) {
-            resolve(null);
-            return;
-          }
-
-          for (const r of results) {
-            const municipio = r.address_components?.find((c) =>
-              c.types.includes("administrative_area_level_2"),
+        timer = setTimeout(async () => {
+          try {
+            const r = await fetch(
+              `${API_BASE_URL}/enderecos/sugerir?q=${encodeURIComponent(valor)}`,
             );
-            if (municipio) {
-              const cidade = municipio.long_name;
-              _cidadeCache[chave] = cidade;
-              resolve(cidade);
+            const d = await r.json();
+            if (!boxSugestoes) return;
+
+            if (!d.sugestoes || d.sugestoes.length === 0) {
+              boxSugestoes.style.display = "none";
               return;
             }
+
+            boxSugestoes.innerHTML = d.sugestoes
+              .map(
+                (s, idx) => `
+              <div class="sugestao-item" data-idx="${idx}">
+                <i class="bi bi-geo-alt-fill"></i>
+                <span>${s.descricao}</span>
+              </div>`,
+              )
+              .join("");
+            boxSugestoes.style.display = "block";
+
+            boxSugestoes.querySelectorAll(".sugestao-item").forEach((item) => {
+              item.addEventListener("click", async () => {
+                const escolhido = d.sugestoes[Number(item.dataset.idx)];
+                inputEl.value = escolhido.descricao;
+                boxSugestoes.style.display = "none";
+
+                window.coordenadasCache[tipo] = {
+                  placeId: escolhido.placeId,
+                  endereco: escolhido.descricao,
+                };
+
+                if (escolhido.placeId) {
+                  try {
+                    const detResp = await fetch(
+                      `${API_BASE_URL}/enderecos/detalhes?placeId=${encodeURIComponent(escolhido.placeId)}`,
+                    );
+                    const det = await detResp.json();
+                    if (det.success) {
+                      window.coordenadasCache[tipo] = {
+                        lat: det.lat,
+                        lng: det.lng,
+                        placeId: escolhido.placeId,
+                        endereco: det.endereco || escolhido.descricao,
+                        cidade: det.cidade || null,
+                      };
+                      if (det.numero && inputNum && !inputNum.value) {
+                        inputNum.value = det.numero;
+                      }
+                      if (det.lat && det.lng) {
+                        adicionarMarcador(tipo, { lat: det.lat, lng: det.lng });
+                      }
+                    }
+                  } catch (_) {}
+                }
+
+                if (selInfo) {
+                  selInfo.innerHTML = `<i class="bi bi-check-circle-fill"></i> <span>${escolhido.descricao}</span>`;
+                }
+              });
+            });
+          } catch (_) {
+            if (boxSugestoes) boxSugestoes.style.display = "none";
           }
-          resolve(null);
-        },
-      );
-    });
-  }
+        }, 300);
+      });
 
-  // ============================================================
-  //  CÁLCULO DE DISTÂNCIA
-  // ============================================================
-  window.calcularDistanciaCombinado = async function (origem, destino) {
-    let c = window.coordenadasCache.coleta;
-    let e = window.coordenadasCache.entrega;
+      document.addEventListener("click", (e) => {
+        if (
+          boxSugestoes &&
+          !inputEl.contains(e.target) &&
+          !boxSugestoes.contains(e.target)
+        ) {
+          boxSugestoes.style.display = "none";
+        }
+      });
 
-    if (!c && origem) {
-      c = await geocodificarEndereco(origem);
-      window.coordenadasCache.coleta = c;
-    }
-    if (!e && destino) {
-      e = await geocodificarEndereco(destino);
-      window.coordenadasCache.entrega = e;
-    }
-    if (!c || !e) throw new Error("Endereços inválidos");
-
-    return new Promise((resolve, reject) => {
-      googleDirectionsService.route(
-        {
-          origin: { lat: c.lat, lng: c.lng },
-          destination: { lat: e.lat, lng: e.lng },
-          travelMode: google.maps.TravelMode.DRIVING,
-        },
-        (result, status) => {
-          if (status !== "OK" || !result.routes[0]?.legs[0]) {
-            reject(new Error("Não foi possível calcular a rota"));
-            return;
+      if (btnGps) {
+        btnGps.addEventListener("click", () => {
+          if (!navigator.geolocation) {
+            return mostrarToast("Seu navegador não suporta GPS.", "error");
           }
-          const leg = result.routes[0].legs[0];
-          const distanciaKm = leg.distance.value / 1000;
-          const minutos = Math.round(leg.duration.value / 60);
+          const htmlOriginal = btnGps.innerHTML;
+          btnGps.innerHTML = '<span class="spinner spinner-sm"></span>';
+          btnGps.disabled = true;
 
-          googleDirectionsRenderer.setDirections(result);
+          navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+              try {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
 
-          resolve({
-            distanciaKm,
-            distanciaTexto: `${distanciaKm.toFixed(1)} km`,
-            duracaoTexto:
-              minutos < 60
-                ? `${minutos} min`
-                : `${Math.floor(minutos / 60)}h ${minutos % 60}min`,
-          });
-        },
-      );
-    });
-  };
+                const r = await fetch(
+                  `${API_BASE_URL}/enderecos/reverso?lat=${lat}&lng=${lng}`,
+                );
+                const d = await r.json();
+                if (!r.ok || !d.success) {
+                  throw new Error(
+                    d.message || "Erro ao buscar localização no Google Maps",
+                  );
+                }
 
-  // ============================================================
-  //  🗺️ LINK DO GOOGLE MAPS PARA O MOTOBOY
-  //  Abre direto no app nativo (Android/iOS) ou no navegador
-  // ============================================================
-  function gerarLinkMapsMotoboy() {
-    const c = window.coordenadasCache.coleta;
-    const e = window.coordenadasCache.entrega;
+                const endFormatado = d.endereco;
+                inputEl.value = endFormatado;
+                window.coordenadasCache[tipo] = {
+                  lat,
+                  lng,
+                  endereco: endFormatado,
+                  cidade: d.cidade || null,
+                };
 
-    let origem, destino;
+                if (d.numero && inputNum) inputNum.value = d.numero;
+                if (selInfo) {
+                  selInfo.innerHTML = `<i class="bi bi-check-circle-fill"></i> <span>Google Maps GPS: ${endFormatado}</span>`;
+                }
 
-    if (c && c.lat && c.lng) {
-      origem = `${c.lat},${c.lng}`;
-    } else if (window.orcamentoAtual?.enderecoColeta) {
-      origem = window.orcamentoAtual.enderecoColeta;
-    } else {
-      return null;
-    }
-
-    if (e && e.lat && e.lng) {
-      destino = `${e.lat},${e.lng}`;
-    } else if (window.orcamentoAtual?.enderecoEntrega) {
-      destino = window.orcamentoAtual.enderecoEntrega;
-    } else {
-      return null;
-    }
-
-    // Link universal do Google Maps — abre app nativo automaticamente
-    return (
-      `https://www.google.com/maps/dir/?api=1` +
-      `&origin=${encodeURIComponent(origem)}` +
-      `&destination=${encodeURIComponent(destino)}` +
-      `&travelmode=driving`
-    );
-  }
-  window.gerarLinkMapsMotoboy = gerarLinkMapsMotoboy;
-
-  // Link individual para o app nativo (Android/iOS), usado para botão "Abrir no app"
-  function gerarDeepLinkNativo() {
-    const c = window.coordenadasCache.coleta;
-    const e = window.coordenadasCache.entrega;
-    if (!c || !e || !c.lat || !e.lat) return null;
-    return (
-      `https://www.google.com/maps/dir/?api=1` +
-      `&origin=${c.lat},${c.lng}` +
-      `&destination=${e.lat},${e.lng}` +
-      `&travelmode=driving`
-    );
-  }
-  window.gerarDeepLinkNativo = gerarDeepLinkNativo;
-
-  // ============================================================
-  //  VALIDAÇÃO
-  // ============================================================
-  function validarFormulario() {
-    const obrigatorios = [
-      { id: "cliente-nome", label: "Nome completo" },
-      { id: "cliente-telefone", label: "Telefone" },
-      { id: "cliente-email", label: "E-mail" },
-      { id: "endereco-coleta", label: "Endereço de coleta" },
-      { id: "endereco-entrega", label: "Endereço de entrega" },
-    ];
-    for (const { id, label } of obrigatorios) {
-      const campo = document.getElementById(id);
-      if (!campo) continue;
-      if (!campo.value?.trim()) {
-        mostrarToast(`Preencha o campo: ${label}`, "error");
-        campo.focus();
-        campo.style.borderColor = "#dc3545";
-        campo.addEventListener("input", () => (campo.style.borderColor = ""), {
-          once: true,
+                adicionarMarcador(tipo, { lat, lng });
+                mostrarToast("Localização obtida pelo Google Maps!", "success");
+              } catch (err) {
+                mostrarToast(err.message, "error");
+              } finally {
+                btnGps.innerHTML = htmlOriginal;
+                btnGps.disabled = false;
+              }
+            },
+            () => {
+              mostrarToast(
+                "Permissão de localização negada. Ative o GPS no navegador.",
+                "warning",
+              );
+              btnGps.innerHTML = htmlOriginal;
+              btnGps.disabled = false;
+            },
+            { enableHighAccuracy: true, timeout: 12000 },
+          );
         });
-        return false;
       }
-    }
-    const email = document.getElementById("cliente-email")?.value;
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      mostrarToast("E-mail inválido", "error");
-      document.getElementById("cliente-email")?.focus();
-      return false;
-    }
-    const coleta = document.getElementById("endereco-coleta")?.value?.trim();
-    const entrega = document.getElementById("endereco-entrega")?.value?.trim();
-    if (coleta && entrega && coleta.toLowerCase() === entrega.toLowerCase()) {
-      mostrarToast(
-        "Os endereços de coleta e entrega não podem ser iguais",
-        "warning",
-      );
-      return false;
     }
 
-    const quemRecebe = document.querySelector(
-      'input[name="quem-recebe"]:checked',
-    )?.value;
-    if (quemRecebe === "outro") {
-      const nomeReceptor = document
-        .getElementById("receptor-nome")
-        ?.value?.trim();
-      const telReceptor = document
-        .getElementById("receptor-telefone")
-        ?.value?.trim();
-      if (!nomeReceptor) {
-        mostrarToast("Informe o nome de quem vai receber", "error");
-        document.getElementById("receptor-nome")?.focus();
+    configurarCampoEndereco("coleta");
+    configurarCampoEndereco("entrega");
+  }
+
+  // =============================================
+  // WIZARD (ETAPAS DO PEDIDO)
+  // =============================================
+  let currentStep = 0;
+  const totalSteps = 6;
+
+  function validarEtapaAtual() {
+    if (currentStep === 0) {
+      const nome = document.getElementById("cliente-nome")?.value.trim();
+      const tel = document.getElementById("cliente-telefone")?.value.trim();
+      const email = document.getElementById("cliente-email")?.value.trim();
+      if (!nome) {
+        mostrarToast("Informe seu nome completo.", "warning");
+        document.getElementById("cliente-nome")?.focus();
         return false;
       }
-      if (!telReceptor) {
-        mostrarToast("Informe o telefone de quem vai receber", "error");
-        document.getElementById("receptor-telefone")?.focus();
+      if (!tel || tel.replace(/\D/g, "").length < 10) {
+        mostrarToast("Informe um WhatsApp/Telefone válido com DDD.", "warning");
+        document.getElementById("cliente-telefone")?.focus();
+        return false;
+      }
+      if (!email || !email.includes("@")) {
+        mostrarToast("Informe um e-mail válido.", "warning");
+        document.getElementById("cliente-email")?.focus();
         return false;
       }
     }
+
+    if (currentStep === 2) {
+      const endColeta = document
+        .getElementById("endereco-coleta")
+        ?.value.trim();
+      if (!endColeta && !window.coordenadasCache.coleta?.lat) {
+        mostrarToast("Informe o endereço de coleta.", "warning");
+        document.getElementById("endereco-coleta")?.focus();
+        return false;
+      }
+    }
+
+    if (currentStep === 3) {
+      const endEntrega = document
+        .getElementById("endereco-entrega")
+        ?.value.trim();
+      if (!endEntrega && !window.coordenadasCache.entrega?.lat) {
+        mostrarToast("Informe o endereço de entrega.", "warning");
+        document.getElementById("endereco-entrega")?.focus();
+        return false;
+      }
+    }
+
+    if (currentStep === 4) {
+      const quemRecebe = document.querySelector(
+        'input[name="quem-recebe"]:checked',
+      )?.value;
+      const inputNome = document.getElementById("receptor-nome");
+      const inputTel = document.getElementById("receptor-telefone");
+      const nome = inputNome?.value.trim() || "";
+      const tel = inputTel?.value.trim() || "";
+
+      if (quemRecebe === "outro") {
+        if (nome.split(/\s+/).length < 2) {
+          inputNome?.classList.add("campo-erro");
+          inputNome?.focus();
+          mostrarToast(
+            "Informe o nome completo (nome e sobrenome) de quem irá receber.",
+            "warning",
+          );
+          return false;
+        }
+        inputNome?.classList.remove("campo-erro");
+
+        if (tel.replace(/\D/g, "").length < 10) {
+          inputTel?.classList.add("campo-erro");
+          inputTel?.focus();
+          mostrarToast(
+            "Informe o Telefone / WhatsApp com DDD de quem irá receber.",
+            "warning",
+          );
+          return false;
+        }
+        inputTel?.classList.remove("campo-erro");
+      }
+    }
+
     return true;
   }
 
-  function obterDimensoes() {
-    const ids = ["comprimento", "largura", "altura", "peso"];
-    const vals = ids.map((id) => {
-      const el = document.getElementById(id);
-      return el ? parseFloat(el.value) : NaN;
+  function updateSteps() {
+    const btnVoltar = document.getElementById("btn-voltar");
+    const btnAvancar = document.getElementById("btn-avancar");
+    if (!btnVoltar || !btnAvancar) return;
+
+    document.querySelectorAll(".step").forEach((s, i) => {
+      s.classList.toggle("completed", i < currentStep);
+      s.classList.toggle("active", i === currentStep);
     });
-    if (vals.every((v) => !isNaN(v) && v > 0))
-      return {
-        comprimento: vals[0],
-        largura: vals[1],
-        altura: vals[2],
-        peso: vals[3],
+    document.querySelectorAll(".step-content").forEach((c, i) => {
+      if (i < totalSteps) c.classList.toggle("active", i === currentStep);
+    });
+
+    btnVoltar.disabled = currentStep === 0;
+    btnAvancar.innerHTML =
+      currentStep === totalSteps - 1
+        ? 'Ver Resumo e Valor <i class="bi bi-check-lg"></i>'
+        : 'Avançar <i class="bi bi-arrow-right"></i>';
+
+    if (currentStep === 0) preencherFormulario();
+    if (currentStep === 4) sincronizarReceptor();
+  }
+
+  document.getElementById("btn-avancar")?.addEventListener("click", () => {
+    if (!validarEtapaAtual()) return;
+    if (currentStep === totalSteps - 1) finalizarPedido();
+    else {
+      currentStep++;
+      updateSteps();
+    }
+  });
+
+  document.getElementById("btn-voltar")?.addEventListener("click", () => {
+    if (currentStep > 0) {
+      currentStep--;
+      updateSteps();
+    }
+  });
+
+  document.getElementById("btn-cancelar")?.addEventListener("click", () => {
+    document.getElementById("checkout-screen").style.display = "none";
+    document.getElementById("wizard-container").style.display = "block";
+  });
+
+  // =============================================
+  // FINALIZAR E CALCULAR ROTA
+  // =============================================
+  function montarEnderecoCompleto(tipo) {
+    const base =
+      document.getElementById(`endereco-${tipo}`)?.value.trim() ||
+      window.coordenadasCache[tipo]?.endereco ||
+      "";
+    const num = document.getElementById(`numero-${tipo}`)?.value.trim() || "";
+    const comp =
+      document.getElementById(`complemento-${tipo}`)?.value.trim() || "";
+    let final = base;
+    if (num && !base.includes(num)) final += `, ${num}`;
+    if (comp) final += ` (${comp})`;
+    return final;
+  }
+
+  async function finalizarPedido() {
+    const endColetaTexto = montarEnderecoCompleto("coleta");
+    const endEntregaTexto = montarEnderecoCompleto("entrega");
+
+    const payloadColeta = {
+      ...(window.coordenadasCache.coleta || {}),
+      endereco: endColetaTexto,
+    };
+
+    const payloadEntrega = {
+      ...(window.coordenadasCache.entrega || {}),
+      endereco: endEntregaTexto,
+    };
+
+    const veiculo =
+      document.querySelector('input[name="tipo-veiculo"]:checked')?.value ||
+      "moto";
+    const quemRecebe = document.querySelector(
+      'input[name="quem-recebe"]:checked',
+    )?.value;
+
+    const nomeCliente = document.getElementById("cliente-nome").value.trim();
+    const telCliente = document.getElementById("cliente-telefone").value.trim();
+    const emailCliente = document.getElementById("cliente-email").value.trim();
+
+    const receptorNome =
+      quemRecebe === "outro"
+        ? document.getElementById("receptor-nome").value.trim()
+        : nomeCliente;
+    const receptorTelefone =
+      quemRecebe === "outro"
+        ? document.getElementById("receptor-telefone").value.trim()
+        : telCliente;
+
+    const categoriasSelecionadas = Array.from(
+      document.querySelectorAll('input[name="categoria"]:checked'),
+    ).map((el) => el.value);
+    const descricao = document.getElementById("descricao")?.value.trim() || "";
+
+    document.getElementById("wizard-container").style.display = "none";
+    document.getElementById("checkout-screen").style.display = "block";
+
+    document.getElementById("resumo-nome").textContent = nomeCliente;
+    document.getElementById("resumo-telefone").textContent = telCliente;
+    document.getElementById("resumo-veiculo").textContent =
+      veiculo === "carro" ? "🚗 Carro" : "🏍️ Moto";
+    document.getElementById("resumo-coleta").textContent = endColetaTexto;
+    document.getElementById("resumo-entrega").textContent = endEntregaTexto;
+    document.getElementById("resumo-receptor").textContent =
+      `${receptorNome} (${receptorTelefone})`;
+    document.getElementById("resumo-categorias").textContent =
+      categoriasSelecionadas.length > 0
+        ? categoriasSelecionadas.join(", ")
+        : descricao || "Geral";
+
+    const btn = document.getElementById("btn-pagar");
+    btn.disabled = true;
+    btn.innerHTML =
+      '<span class="spinner spinner-sm"></span> Calculando rota no Google Maps...';
+
+    try {
+      const resp = await fetch(`${API_BASE_URL}/rotas/calcular`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          coleta: payloadColeta,
+          entrega: payloadEntrega,
+          veiculo,
+        }),
+      });
+      const data = await resp.json();
+      if (!data.success)
+        throw new Error(data.message || "Falha ao calcular rota");
+
+      const endColetaReal = data.rota.origem?.endereco || endColetaTexto;
+      const endEntregaReal = data.rota.destino?.endereco || endEntregaTexto;
+
+      document.getElementById("resumo-coleta").textContent = endColetaReal;
+      document.getElementById("resumo-entrega").textContent = endEntregaReal;
+      document.getElementById("distancia-final").textContent =
+        data.rota.distanciaTexto;
+      document.getElementById("tempo-final").textContent =
+        data.rota.duracaoTexto;
+      document.getElementById("cidade-destino").textContent =
+        data.cidadeDestino || "Balneário Camboriú";
+      document.getElementById("valor-final").textContent = formatarMoeda(
+        data.valor,
+      );
+      document.getElementById("valor-info").textContent =
+        "Valor calculado pela distância oficial do Google Maps";
+
+      document.getElementById("mapa-wrapper").style.display = "block";
+      inicializarGoogleMaps();
+
+      if (
+        googleMap &&
+        typeof google !== "undefined" &&
+        google.maps?.geometry &&
+        data.rota.polyline
+      ) {
+        if (routePolyline) routePolyline.setMap(null);
+        const path = google.maps.geometry.encoding.decodePath(
+          data.rota.polyline,
+        );
+        routePolyline = new google.maps.Polyline({
+          path,
+          map: googleMap,
+          strokeColor: "#FF6B00",
+          strokeWeight: 5,
+        });
+        adicionarMarcador("coleta", data.rota.origem);
+        adicionarMarcador("entrega", data.rota.destino);
+        const bounds = new google.maps.LatLngBounds();
+        path.forEach((p) => bounds.extend(p));
+        googleMap.fitBounds(bounds);
+      }
+
+      window.orcamentoAtual = {
+        cotacao: data.cotacao,
+        valor: data.valor,
+        preco: data.valor,
+        nome: nomeCliente,
+        telefone: telCliente,
+        email: emailCliente,
+        tipoVeiculo: veiculo,
+        enderecoColeta: endColetaReal,
+        enderecoEntrega: endEntregaReal,
+        cidadeDestino: data.cidadeDestino || "Balneário Camboriú",
+        distancia: data.rota.distanciaTexto,
+        duracao: data.rota.duracaoTexto,
+        distanciaNum: data.rota.distanciaKm,
+        receptorNome,
+        receptorTelefone,
+        categorias: categoriasSelecionadas,
+        descricao,
+        mapsLinkRota: data.rota.mapsLink,
+        mapsLinkColeta: `https://www.google.com/maps/search/?api=1&query=${data.rota.origem.lat},${data.rota.origem.lng}`,
+        mapsLinkEntrega: `https://www.google.com/maps/search/?api=1&query=${data.rota.destino.lat},${data.rota.destino.lng}`, // ✅ Link correto para a Entrega (Ponto E)
+        coordsColeta: data.rota.origem,
+        coordsEntrega: data.rota.destino,
       };
-    return null;
+
+      const linkColeta = document.getElementById("link-maps-coleta");
+      const linkEntrega = document.getElementById("link-maps-entrega");
+      if (linkColeta) linkColeta.href = window.orcamentoAtual.mapsLinkColeta;
+      if (linkEntrega) linkEntrega.href = window.orcamentoAtual.mapsLinkEntrega;
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-qr-code"></i> Pagar via PIX';
+    } catch (e) {
+      mostrarToast("Erro ao calcular a rota: " + e.message, "error");
+      document.getElementById("valor-final").textContent = "Erro no cálculo";
+      document.getElementById("valor-info").textContent = e.message;
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-arrow-left"></i> Revisar Endereços';
+      btn.onclick = () => {
+        document.getElementById("checkout-screen").style.display = "none";
+        document.getElementById("wizard-container").style.display = "block";
+        currentStep = 2;
+        updateSteps();
+        btn.onclick = null;
+      };
+    }
   }
 
-  // ============================================================
-  //  CÁLCULO DE PREÇO — POR MUNICÍPIO
-  // ============================================================
-  function calcularPreco(distanciaKm, cidadeDestino, dimensoes = null) {
-    const cfg = window.PRICING_CONFIG;
-    const opCfg = window.OPERATION_CONFIG;
-    if (!cfg || !opCfg) return 15.0;
+  // =============================================
+  // PAGAMENTO PIX (POP-UP MERCADO PAGO + POLLING)
+  // =============================================
+  let paymentData = { paymentId: null, intervalId: null, confirmado: false };
 
-    distanciaKm = Math.round(distanciaKm * 10) / 10;
-
-    const cidadePrincipal = normalizarTexto(opCfg.cidadePrincipal);
-    const cidadeDest = normalizarTexto(cidadeDestino);
-    const ehCidadePrincipal = cidadeDest === cidadePrincipal;
-
-    let preco;
-    let motivo;
-
-    if (ehCidadePrincipal) {
-      const regra = opCfg.dentroCidadePrincipal;
-      if (distanciaKm <= regra.limiteKmBase) {
-        preco = regra.valorBase;
-        motivo = `Base BC (≤ ${regra.limiteKmBase}km)`;
-      } else {
-        const kmExcedente = distanciaKm - regra.limiteKmBase;
-        preco = regra.valorBase + kmExcedente * regra.valorPorKmExcedente;
-        motivo = `BC: R$${regra.valorBase} + ${kmExcedente.toFixed(1)}km × R$${regra.valorPorKmExcedente}`;
-      }
-    } else {
-      const regra = opCfg.foraCidadePrincipal;
-      preco = Math.max(regra.valorMinimo, distanciaKm * regra.valorPorKm);
-      motivo = `Fora de BC: ${distanciaKm.toFixed(1)}km × R$${regra.valorPorKm}`;
-    }
-
-    if (dimensoes && cfg.multiplicadorVolume) {
-      const volume =
-        dimensoes.comprimento * dimensoes.largura * dimensoes.altura;
-      if (volume > cfg.limiteVolume)
-        preco += (volume - cfg.limiteVolume) * cfg.multiplicadorVolume;
-      if (dimensoes.peso > cfg.limitePeso)
-        preco += (dimensoes.peso - cfg.limitePeso) * cfg.multiplicadorPeso;
-    }
-
-    preco = Math.min(Math.round(preco * 100) / 100, cfg.valorMaximo ?? 500);
-    console.log("💰 Cálculo:", { cidadeDestino, distanciaKm, motivo, preco });
-
-    return preco;
+  function mostrarViewModalPix(view) {
+    ["qr", "ok", "erro"].forEach((v) => {
+      const el = document.getElementById(`pay-view-${v}`);
+      if (el) el.style.display = v === view ? "block" : "none";
+    });
   }
 
-  function montarEndereco(campoId, numeroId) {
-    const endereco = document.getElementById(campoId)?.value?.trim() || "";
-    const numero = document.getElementById(numeroId)?.value?.trim() || "";
-    const compId =
-      campoId === "endereco-coleta"
-        ? "complemento-coleta"
-        : "complemento-entrega";
-    const complemento = document.getElementById(compId)?.value?.trim() || "";
-
-    let resultado = endereco;
-    if (numero) {
-      const primeiraVirgula = endereco.indexOf(",");
-      if (primeiraVirgula > -1) {
-        resultado =
-          endereco.slice(0, primeiraVirgula) +
-          ", " +
-          numero +
-          endereco.slice(primeiraVirgula);
-      } else {
-        resultado = endereco + ", " + numero;
-      }
+  window.fecharModalPagamento = function () {
+    if (paymentData.intervalId) {
+      clearInterval(paymentData.intervalId);
+      paymentData.intervalId = null;
     }
-    if (complemento) resultado += " - " + complemento;
-    return resultado;
-  }
+    const modal = document.getElementById("modal-pagamento");
+    if (modal) modal.style.display = "none";
+  };
 
-  // ============================================================
-  //  CALCULAR ORÇAMENTO
-  // ============================================================
-  window.calcularOrcamento = async function () {
-    if (!validarFormulario()) return;
-    if (!googleMapsPronto) {
-      mostrarToast("Aguarde, o mapa ainda está carregando...", "warning");
+  window.copiarPix = () => {
+    const el = document.getElementById("pix-codigo");
+    const codigo = el?.getAttribute("data-codigo") || el?.textContent || "";
+    if (!codigo || codigo.includes("Gerando")) return;
+    navigator.clipboard
+      .writeText(codigo)
+      .then(() => mostrarToast("Código PIX copiado!", "success"));
+  };
+
+  document.getElementById("btn-pagar")?.addEventListener("click", async () => {
+    if (!window.orcamentoAtual) return;
+
+    const u = obterUsuarioLogado();
+    if (!u) {
+      window.__aguardandoLoginParaPix = true;
+      mostrarToast(
+        "Entre na sua conta ou cadastre-se rapidinho para gerar o PIX e registrar seu pedido!",
+        "warning",
+      );
+      window.abrirModalLogin();
       return;
     }
 
-    const btn = document.getElementById("btn-calcular");
-    if (!btn) return;
-    btn.style.display = "";
-    const originalHTML = btn.innerHTML;
-    btn.innerHTML =
-      '<i class="bi bi-hourglass-split"></i> Calculando distância...';
-    btn.disabled = true;
+    const o = window.orcamentoAtual;
+    paymentData.confirmado = false;
+    mostrarViewModalPix("qr");
 
-    const resultado = document.getElementById("orcamento-resultado");
-    const distanciaInfo = document.getElementById("distancia-info");
-    const btnConfirmar = document.getElementById("btn-confirmar");
-    if (resultado) resultado.style.display = "none";
-    if (distanciaInfo) distanciaInfo.style.display = "none";
-    if (btnConfirmar) btnConfirmar.style.display = "none";
+    document.getElementById("modal-pagamento").style.display = "flex";
+    document.getElementById("modal-valor").textContent = formatarMoeda(o.valor);
+    document.getElementById("qr-container").innerHTML =
+      '<div class="spinner"></div><span>Gerando QR Code no Mercado Pago...</span>';
+    document.getElementById("pix-codigo").textContent = "Gerando código PIX...";
+    document.getElementById("pay-wait").style.display = "none";
 
     try {
-      const origemComNumero = montarEndereco(
-        "endereco-coleta",
-        "numero-coleta",
-      );
-      const destinoComNumero = montarEndereco(
-        "endereco-entrega",
-        "numero-entrega",
-      );
-
-      const veiculoRadio = document.querySelector(
-        'input[name="tipo-veiculo"]:checked',
-      );
-      const veiculo = veiculoRadio ? veiculoRadio.value : "moto";
-
-      window.distanciaAtual = await window.calcularDistanciaCombinado(
-        origemComNumero,
-        destinoComNumero,
-      );
-
-      const destinoCoords = window.coordenadasCache.entrega;
-      let cidadeDestino = null;
-      if (destinoCoords) {
-        cidadeDestino = await obterCidadeDoPonto(
-          destinoCoords.lat,
-          destinoCoords.lng,
-        );
-      }
-      console.log("📍 Cidade destino:", cidadeDestino);
-
-      const dimensoes = obterDimensoes();
-      const preco = calcularPreco(
-        window.distanciaAtual.distanciaKm,
-        cidadeDestino,
-        dimensoes,
-      );
-      const quemRecebe =
-        document.querySelector('input[name="quem-recebe"]:checked')?.value ||
-        "eu";
-
-      const dtexto = document.getElementById("distancia-texto");
-      const dduracao = document.getElementById("duracao-texto");
-      if (dtexto) dtexto.textContent = window.distanciaAtual.distanciaTexto;
-      if (dduracao) dduracao.textContent = window.distanciaAtual.duracaoTexto;
-      if (distanciaInfo) distanciaInfo.style.display = "block";
-
-      const elCidade = document.getElementById("cidade-destino");
-      if (elCidade) elCidade.textContent = cidadeDestino || "—";
-
-      const c = window.coordenadasCache.coleta;
-      const e = window.coordenadasCache.entrega;
-
-      window.orcamentoAtual = {
-        numeroPedido: "NG" + Date.now().toString().slice(-6),
-        data: new Date().toLocaleString("pt-BR"),
-        nome: document.getElementById("cliente-nome")?.value || "",
-        telefone: document.getElementById("cliente-telefone")?.value || "",
-        email: document.getElementById("cliente-email")?.value || "",
-        tipoVeiculo: veiculo,
-        enderecoColeta: origemComNumero,
-        enderecoEntrega: destinoComNumero,
-        cidadeDestino: cidadeDestino || "Não identificada",
-        distancia: window.distanciaAtual.distanciaTexto,
-        distanciaNum: window.distanciaAtual.distanciaKm,
-        duracao: window.distanciaAtual.duracaoTexto,
-        dimensoes: dimensoes
-          ? `${dimensoes.comprimento}x${dimensoes.largura}x${dimensoes.altura}cm, ${dimensoes.peso}kg`
-          : "Não informado",
-        descricao:
-          document.getElementById("descricao")?.value || "Não informada",
-        quemRecebe,
-        receptorNome:
-          document.getElementById("receptor-nome")?.value?.trim() || "",
-        receptorTelefone:
-          document.getElementById("receptor-telefone")?.value?.trim() || "",
-        // Coordenadas para o link do Maps
-        coordsColeta: c ? { lat: c.lat, lng: c.lng } : null,
-        coordsEntrega: e ? { lat: e.lat, lng: e.lng } : null,
-        preco,
-      };
-
-      // Gera o link do Maps e guarda no orçamento
-      window.orcamentoAtual.mapsLink = gerarLinkMapsMotoboy();
-      console.log("🗺️ Link Maps motoboy:", window.orcamentoAtual.mapsLink);
-
-      const totalValor = document.getElementById("total-valor");
-      if (totalValor) totalValor.textContent = formatarMoeda(preco);
-      if (resultado) resultado.style.display = "block";
-      btn.style.display = "none";
-      if (btnConfirmar) btnConfirmar.style.display = "block";
-      mostrarToast("Orçamento calculado com sucesso!", "success");
-    } catch (error) {
-      console.error("Erro no cálculo:", error);
-      mostrarToast(`Erro: ${error.message}`, "error");
-      btn.style.display = "";
-    } finally {
-      btn.innerHTML = originalHTML;
-      btn.disabled = false;
-    }
-  };
-
-  // ============================================================
-  //  ENVIAR PEDIDO VIA WHATSAPP (com link do Maps para o motoboy)
-  // ============================================================
-  window.enviarPedidoWhatsApp = async function () {
-    if (!window.orcamentoAtual) return;
-    const o = window.orcamentoAtual;
-
-    const blocoReceptor =
-      o.quemRecebe === "outro"
-        ? `
-━━━━━━━━━━━━━━━━━━━━━
-👤 *RECEPTOR*
-━━━━━━━━━━━━━━━━━━━━━
-📛 *Nome:* ${o.receptorNome}
-📱 *Telefone:* ${o.receptorTelefone}`
-        : "";
-
-    // 🗺️ Bloco do Google Maps para o motoboy
-    const blocoMaps = o.mapsLink
-      ? `
-
-━━━━━━━━━━━━━━━━━━━━━
-🗺️ *ROTA PARA O MOTOBOY*
-━━━━━━━━━━━━━━━━━━━━━
-👉 *Clique para abrir no Google Maps:*
-${o.mapsLink}
-
-_Toque no link acima — abre direto no app de navegação_`
-      : "";
-
-    const mensagem = `🆕 *NOVO PEDIDO - N&G EXPRESS* 🆕
-
-━━━━━━━━━━━━━━━━━━━━━
-📋 *DADOS DO CLIENTE*
-━━━━━━━━━━━━━━━━━━━━━
-👤 *Nome:* ${o.nome}
-📱 *Telefone:* ${o.telefone}
-📧 *E-mail:* ${o.email}
-
-━━━━━━━━━━━━━━━━━━━━━
-🚚 *DADOS DA ENTREGA*
-━━━━━━━━━━━━━━━━━━━━━
-${o.tipoVeiculo === "carro" ? "🚗" : "🏍️"} *Veículo:* ${o.tipoVeiculo === "carro" ? "Carro" : "Moto"}
-🏙️ *Cidade destino:* ${o.cidadeDestino}
-📏 *Distância:* ${o.distancia}
-⏱️ *Tempo estimado:* ${o.duracao}
-💰 *Valor:* ${formatarMoeda(o.preco)}
-
-━━━━━━━━━━━━━━━━━━━━━
-📍 *COLETA*
-━━━━━━━━━━━━━━━━━━━━━
-${o.enderecoColeta}
-
-━━━━━━━━━━━━━━━━━━━━━
-🎯 *ENTREGA*
-━━━━━━━━━━━━━━━━━━━━━
-${o.enderecoEntrega}${blocoReceptor}${blocoMaps}
-
-━━━━━━━━━━━━━━━━━━━━━
-📦 *ENCOMENDA*
-━━━━━━━━━━━━━━━━━━━━━
-📐 *Dimensões:* ${o.dimensoes}
-📝 *Descrição:* ${o.descricao}
-
-🔖 *Pedido:* #${o.numeroPedido}
-📅 *Data:* ${o.data}
-
-✅ *Por favor, confirme este pedido.*`;
-
-    const numeroWhats = window.WHATSAPP_CONFIG?.numero || "5547999123260";
-    window.open(
-      `https://wa.me/${numeroWhats}?text=${encodeURIComponent(mensagem)}`,
-      "_blank",
-    );
-
-    // Salva no backend (com coordenadas e link do maps)
-    const usuarioRaw = sessionStorage.getItem("usuario");
-    if (usuarioRaw) {
-      try {
-        const usuario = JSON.parse(usuarioRaw);
-        await fetch(`${window.API_BASE_URL}/orcamentos/salvar.php`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            usuario_id: usuario.id,
-            numero_pedido: o.numeroPedido,
-            tipo_veiculo: o.tipoVeiculo,
-            endereco_coleta: o.enderecoColeta,
-            endereco_entrega: o.enderecoEntrega,
-            cidade_destino: o.cidadeDestino,
-            dimensoes: o.dimensoes,
-            peso: parseFloat(o.peso) || 0,
+      const resp = await fetch(`${API_BASE_URL}/pix/criar`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify({
+          cotacao: o.cotacao,
+          pedido: {
+            enderecoColeta: o.enderecoColeta,
+            enderecoEntrega: o.enderecoEntrega,
+            coordsColeta: o.coordsColeta,
+            coordsEntrega: o.coordsEntrega,
+            receptorNome: o.receptorNome,
+            receptorTelefone: o.receptorTelefone,
+            categorias: o.categorias,
             descricao: o.descricao,
-            valor_total: o.preco,
-            distancia_km: o.distanciaNum || 0,
-            coords_coleta: o.coordsColeta,
-            coords_entrega: o.coordsEntrega,
-            maps_link: o.mapsLink,
-          }),
-        });
-      } catch (e) {
-        console.warn("⚠️ Não foi possível salvar no histórico:", e.message);
+          },
+        }),
+      });
+
+      if (resp.status === 401) {
+        window.fecharModalPagamento();
+        window.__aguardandoLoginParaPix = true;
+        mostrarToast("Sua sessão expirou. Faça login novamente.", "warning");
+        window.abrirModalLogin();
+        return;
       }
+
+      const data = await resp.json();
+      if (!data.success) {
+        throw new Error(data.erro || "Não foi possível gerar o PIX.");
+      }
+
+      paymentData.paymentId = data.paymentId;
+      window.orcamentoAtual.numeroPedido = data.numeroPedido;
+      window.orcamentoAtual.paymentId = data.paymentId;
+
+      const qrContainer = document.getElementById("qr-container");
+      qrContainer.innerHTML = "";
+      if (data.qrCodeBase64) {
+        qrContainer.innerHTML = `<img src="data:image/png;base64,${data.qrCodeBase64}" alt="QR Code PIX">`;
+      } else if (typeof QRCode !== "undefined") {
+        new QRCode(qrContainer, {
+          text: data.qrCode,
+          width: 180,
+          height: 180,
+        });
+      }
+
+      const pixCodigoEl = document.getElementById("pix-codigo");
+      pixCodigoEl.textContent = data.qrCode;
+      pixCodigoEl.setAttribute("data-codigo", data.qrCode);
+
+      document.getElementById("pay-wait").style.display = "flex";
+      iniciarVerificacaoPagamento(data.paymentId);
+    } catch (e) {
+      mostrarViewModalPix("erro");
+      document.getElementById("pay-erro-msg").textContent =
+        e.message || "Erro ao comunicar com o Mercado Pago.";
     }
+  });
 
-    setTimeout(() => {
-      window.location.href = "index.html";
-    }, 500);
-  };
-
-  // ============================================================
-  //  SWIPER
-  // ============================================================
-  function inicializarSwiper() {
-    const swiperEl = document.querySelector(".hero-swiper");
-    if (!swiperEl || typeof Swiper === "undefined" || swiperEl.swiper) return;
-    new Swiper(".hero-swiper", {
-      loop: true,
-      autoplay: { delay: 5000, disableOnInteraction: false },
-      pagination: { el: ".swiper-pagination", clickable: true },
-      speed: 1000,
-      effect: "fade",
-      fadeEffect: { crossFade: true },
-    });
-  }
-
-  // ============================================================
-  //  SMOOTH SCROLL
-  // ============================================================
-  function inicializarSmoothScroll() {
-    document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
-      anchor.addEventListener("click", function (e) {
-        const targetId = this.getAttribute("href");
-        if (!targetId || targetId === "#" || targetId === "#home") {
-          e.preventDefault();
-          window.scrollTo({ top: 0, behavior: "smooth" });
+  async function checarStatusPix(paymentId, manual = false) {
+    if (!paymentId || paymentData.confirmado) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/pix/status/${paymentId}`, {
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (
+          data.status === "approved" ||
+          data.pedido?.status_pagamento === "aprovado"
+        ) {
+          paymentData.confirmado = true;
+          if (paymentData.intervalId) clearInterval(paymentData.intervalId);
+          pagamentoConfirmado();
           return;
         }
-        const target = document.querySelector(targetId);
-        if (target) {
-          e.preventDefault();
-          const headerHeight =
-            document.querySelector("header")?.offsetHeight || 0;
-          window.scrollTo({
-            top: target.offsetTop - headerHeight,
-            behavior: "smooth",
-          });
-        }
-      });
-    });
+      }
+      if (manual) {
+        mostrarToast(
+          "Pagamento ainda pendente. Assim que confirmado, liberaremos automaticamente!",
+          "warning",
+        );
+      }
+    } catch (e) {
+      console.warn("Polling PIX:", e.message);
+    }
   }
 
-  // ============================================================
-  //  INICIALIZAÇÃO
-  // ============================================================
+  window.verificarPagamentoAgora = function () {
+    if (paymentData.paymentId) {
+      checarStatusPix(paymentData.paymentId, true);
+    }
+  };
+
+  function iniciarVerificacaoPagamento(paymentId) {
+    if (!paymentId) return;
+    if (paymentData.intervalId) clearInterval(paymentData.intervalId);
+    paymentData.intervalId = setInterval(() => {
+      checarStatusPix(paymentId, false);
+    }, 3000);
+  }
+
+  function pagamentoConfirmado() {
+    const o = window.orcamentoAtual || {};
+    const u = obterUsuarioLogado();
+    const primeiroNome = (u?.nome || o.nome || "Cliente").split(" ")[0];
+
+    mostrarViewModalPix("ok");
+    document.getElementById("ok-msg").innerHTML =
+      `Muito obrigado, <strong>${primeiroNome}</strong>! Seu pagamento foi confirmado com sucesso e nossa equipe já recebeu sua solicitação de entrega.`;
+    document.getElementById("ok-pedido").textContent =
+      `#${o.numeroPedido || "—"}`;
+    document.getElementById("ok-valor").textContent = formatarMoeda(o.valor);
+
+    const urlWhats = gerarLinkComprovanteWhatsApp();
+    const btnWhats = document.getElementById("btn-whats");
+    if (btnWhats) btnWhats.href = urlWhats;
+
+    const statusWhats = document.getElementById("whats-status");
+    if (statusWhats) {
+      statusWhats.textContent =
+        "Encaminhando comprovante automaticamente para o WhatsApp da N&G Express...";
+    }
+
+    mostrarToast("Pagamento confirmado com sucesso!", "success");
+
+    setTimeout(() => {
+      const win = window.open(urlWhats, "_blank");
+      if (statusWhats) {
+        statusWhats.textContent = win
+          ? "✅ Comprovante encaminhado para o WhatsApp!"
+          : "Clique no botão verde acima para abrir o comprovante no WhatsApp.";
+      }
+    }, 1200);
+  }
+
+  function gerarLinkComprovanteWhatsApp() {
+    const o = window.orcamentoAtual || {};
+    const numeroWhats = window.WHATSAPP_CONFIG?.numero || "5547999123260";
+
+    const receptorNome = o.receptorNome || o.nome;
+    const receptorTel = o.receptorTelefone || o.telefone;
+
+    const mensagem = `*COMPROVANTE DE PAGAMENTO - N&G EXPRESS*
+
+*PEDIDO:* #${o.numeroPedido || "NOVO"}
+*DATA:* ${new Date().toLocaleString("pt-BR")}
+
+*CLIENTE*
+- Nome: ${o.nome}
+- WhatsApp: ${o.telefone}
+- E-mail: ${o.email}
+
+*DADOS DA CORRIDA*
+- Veículo: ${o.tipoVeiculo === "carro" ? "Carro" : "Moto"}
+- Coleta: ${o.enderecoColeta}
+- Entrega: ${o.enderecoEntrega}
+- Cidade Destino: ${o.cidadeDestino}
+- Distância: ${o.distancia} (${o.duracao})
+
+*QUEM VAI RECEBER*
+- Nome: ${receptorNome}
+- Telefone: ${receptorTel}
+- Produto: ${(o.categorias || []).join(", ") || "Geral"} ${o.descricao ? `(${o.descricao})` : ""}
+
+*VALOR PAGO:* *${formatarMoeda(o.preco)}* (PIX Confirmado)
+*Rota no Maps:* ${o.mapsLinkRota || ""}`;
+
+    return `https://wa.me/${numeroWhats}?text=${encodeURIComponent(mensagem)}`;
+  }
+
   quandoGoogleMapsCarregar(() => {
     inicializarGoogleMaps();
-    inicializarAutocomplete();
   });
 
+  inicializarAutocomplete();
   verificarSessao();
-  aplicarMascaraTelefone();
-  atualizarAno();
-  inicializarSwiper();
-  inicializarSmoothScroll();
-
-  const header = document.querySelector("header");
-  if (header)
-    window.addEventListener("scroll", () =>
-      header.classList.toggle("scrolled", window.scrollY > 50),
-    );
-
-  const backToTop = document.querySelector(".back-to-top");
-  if (backToTop) {
-    window.addEventListener("scroll", () => {
-      backToTop.style.display = window.pageYOffset > 300 ? "flex" : "none";
-    });
-    backToTop.addEventListener("click", () =>
-      window.scrollTo({ top: 0, behavior: "smooth" }),
-    );
-  }
-
-  const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
-  const navLinks = document.querySelector(".nav-links");
-  if (mobileMenuBtn && navLinks) {
-    mobileMenuBtn.addEventListener("click", () =>
-      navLinks.classList.toggle("active"),
-    );
-    navLinks.querySelectorAll("a").forEach((link) => {
-      link.addEventListener("click", () => navLinks.classList.remove("active"));
-    });
-  }
-
-  document
-    .getElementById("btn-calcular")
-    ?.addEventListener("click", window.calcularOrcamento);
-  document
-    .getElementById("btn-confirmar")
-    ?.addEventListener("click", window.enviarPedidoWhatsApp);
-
-  window.addEventListener("click", (e) => {
-    if (e.target.classList?.contains("modal")) window.fecharModal(e.target.id);
-  });
-
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      document.querySelectorAll(".modal").forEach((m) => {
-        if (m.style.display === "block") window.fecharModal(m.id);
-      });
-    }
-  });
+  updateSteps();
 });

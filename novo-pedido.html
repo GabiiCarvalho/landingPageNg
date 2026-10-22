@@ -2,227 +2,181 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>N&G EXPRESS - Solicitar Entrega</title>
     <link rel="icon" href="img/logoAba.png" type="image/x-icon">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-    <!-- ✅ config.js PRIMEIRO -->
     <script src="js/config.js"></script>
 
     <style>
-        :root {
-            --primary-color: #FF6B00;
-            --primary-dark: #E05D00;
-            --primary-light: #FF8533;
-            --primary-glow: rgba(255, 107, 0, 0.3);
-            --secondary-color: #003366;
-            --success-color: #00C48C;
-            --danger-color: #FF5C5C;
-            --warning-color: #FFB800;
-            --bg-primary: #0A0A0F;
-            --bg-secondary: #12121A;
-            --bg-tertiary: #1A1A24;
-            --bg-elevated: #22222F;
-            --text-primary: #FFFFFF;
-            --text-secondary: #B0B0C0;
-            --text-tertiary: #70707F;
-            --border-light: rgba(255,255,255,0.05);
-            --border-medium: rgba(255,255,255,0.1);
-            --border-heavy: rgba(255,255,255,0.15);
-            --shadow-sm: 0 4px 12px rgba(0,0,0,0.4);
-            --shadow-md: 0 8px 24px rgba(0,0,0,0.5);
-            --shadow-lg: 0 16px 48px rgba(0,0,0,0.6);
-            --shadow-glow: 0 0 30px rgba(255,107,0,0.15);
-            --radius-sm: 8px;
-            --radius-md: 16px;
-            --radius-lg: 24px;
-            --radius-xl: 32px;
-            --radius-full: 9999px;
-            --transition-base: all 0.3s cubic-bezier(0.4,0,0.2,1);
-            --blur-md: blur(12px);
-            --gradient-primary: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            --gradient-glow: linear-gradient(135deg, rgba(255,107,0,0.2), rgba(0,51,102,0.2));
-        }
+    :root {
+        --primary-color:#FF6B00; --primary-light:#FF8533; --primary-glow:rgba(255,107,0,.3);
+        --secondary-color:#003366; --success-color:#00C48C; --danger-color:#FF5C5C; --warning-color:#FFB800;
+        --bg-primary:#0A0A0F; --bg-secondary:#12121A; --bg-tertiary:#1A1A24; --bg-elevated:#22222F;
+        --text-primary:#fff; --text-secondary:#B0B0C0; --text-tertiary:#70707F;
+        --border-light:rgba(255,255,255,.05); --border-medium:rgba(255,255,255,.1); --border-heavy:rgba(255,255,255,.15);
+        --shadow-md:0 8px 24px rgba(0,0,0,.5); --shadow-lg:0 16px 48px rgba(0,0,0,.6); --shadow-glow:0 0 30px rgba(255,107,0,.15);
+        --radius-sm:8px; --radius-md:12px; --radius-lg:18px; --radius-xl:24px; --radius-full:9999px;
+        --transition-base:all .3s cubic-bezier(.4,0,.2,1);
+        --gradient-primary:linear-gradient(135deg,var(--primary-color),var(--secondary-color));
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif; }
+    html { font-size:15px; }
+    body { background:var(--bg-primary); color:var(--text-primary); line-height:1.55; overflow-x:hidden; min-height:100vh; }
+    .container { width:100%; max-width:min(880px,94vw); margin:0 auto; padding:0 18px; }
+    a { color:var(--primary-color); }
 
-        * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif; }
-        body { background:var(--bg-primary); color:var(--text-primary); line-height:1.6; overflow-x:hidden; min-height:100vh; }
-        .container { width:100%; max-width:1200px; margin:0 auto; padding:0 24px; }
+    header { background:rgba(10,10,15,.85); backdrop-filter:blur(12px); border-bottom:1px solid var(--border-light); position:sticky; top:0; z-index:1000; }
+    .navbar { display:flex; justify-content:space-between; align-items:center; padding:10px 0; flex-wrap:wrap; gap:10px; }
+    .logo { display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.03); padding:6px 14px 6px 8px; border-radius:50px; border:1px solid var(--border-light); text-decoration:none; }
+    .logo-icon { width:34px; height:34px; border-radius:50%; overflow:hidden; }
+    .logo-icon img { width:100%; height:100%; object-fit:contain; }
+    .logo-text-main { font-size:1.1rem; font-weight:800; color:var(--text-primary); line-height:1.1; }
+    .logo-text-main span { color:var(--primary-color); }
+    .logo-text-sub { font-size:.58rem; color:var(--text-tertiary); letter-spacing:1px; }
+    .nav-links { display:flex; gap:1.3rem; align-items:center; flex-wrap:wrap; list-style:none; }
+    .nav-links a { color:#fff; text-decoration:none; font-size:.86rem; font-weight:500; transition:color .3s; }
+    .nav-links a:hover { color:var(--primary-color); }
 
-        header { background:rgba(10,10,15,0.8); backdrop-filter:var(--blur-md); border-bottom:1px solid var(--border-light); position:sticky; top:0; z-index:1000; }
-        .navbar { display:flex; justify-content:space-between; align-items:center; padding:15px 0; flex-wrap:wrap; }
-        .logo { display:flex; align-items:center; background:rgba(255,255,255,0.03); backdrop-filter:blur(10px); padding:8px 16px; border-radius:50px; border:1px solid var(--border-light); text-decoration:none; }
-        .logo-icon { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-right:12px; }
-        .logo-icon img { width:100%; height:100%; object-fit:contain; border-radius:50%; }
-        .logo-text-main { font-size:1.4rem; font-weight:bolder; color:var(--text-primary); line-height:1.2; }
-        .logo-text-main span { color:var(--primary-color); }
-        .logo-text-sub { font-size:0.7rem; font-weight:400; color:var(--text-tertiary); letter-spacing:1px; }
-        .nav-links { display:flex; gap:2rem; align-items:center; flex-wrap:wrap; list-style:none; }
-        .nav-links a { color:#fff; text-decoration:none; transition:color 0.3s; font-size:0.95rem; font-weight:500; }
-        .nav-links a:hover { color:var(--primary-color); }
+    .page-header { background:var(--gradient-primary); padding:22px 0; text-align:center; }
+    .section-title { font-size:1.45rem; margin-bottom:2px; color:#fff; }
+    .section-subtitle { font-size:.88rem; color:rgba(255,255,255,.85); }
 
-        .page-header { background:linear-gradient(135deg,var(--primary-color),var(--secondary-color)); padding:60px 0; text-align:center; position:relative; overflow:hidden; }
-        .page-header::before { content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%; background:radial-gradient(circle,var(--primary-glow) 0%,transparent 70%); opacity:0.3; animation:rotate 30s linear infinite; }
-        .section-title { font-size:2.5rem; margin-bottom:16px; background:linear-gradient(135deg,#fff,var(--primary-light)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-        .section-subtitle { font-size:1.1rem; color:rgba(255,255,255,0.8); }
-        @keyframes rotate { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    .wizard-container { background:var(--bg-secondary); border-radius:var(--radius-xl); margin:22px 0 40px; overflow:visible; border:1px solid var(--border-medium); box-shadow:var(--shadow-lg); }
+    .steps-indicator { display:flex; background:var(--bg-tertiary); padding:12px 16px; border-bottom:1px solid var(--border-medium); border-radius:var(--radius-xl) var(--radius-xl) 0 0; }
+    .step { flex:1; text-align:center; min-width:44px; }
+    .step-number { width:28px; height:28px; background:var(--bg-elevated); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-weight:700; color:var(--text-secondary); margin-bottom:4px; border:1px solid var(--border-medium); font-size:.78rem; }
+    .step.active .step-number { background:var(--gradient-primary); color:#fff; border-color:transparent; box-shadow:var(--shadow-glow); }
+    .step.completed .step-number { background:var(--success-color); color:#fff; }
+    .step-label { font-size:.66rem; color:var(--text-tertiary); }
+    .step.active .step-label { color:var(--primary-color); font-weight:600; }
 
-        .wizard-container { background:var(--bg-secondary); border-radius:var(--radius-xl); margin:50px 0; overflow:hidden; border:1px solid var(--border-medium); box-shadow:var(--shadow-lg); }
-        .steps-indicator { display:flex; background:var(--bg-tertiary); padding:20px 30px; border-bottom:1px solid var(--border-medium); flex-wrap:wrap; }
-        .step { flex:1; text-align:center; min-width:60px; }
-        .step-number { width:40px; height:40px; background:var(--bg-elevated); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-weight:bold; color:var(--text-secondary); margin-bottom:8px; border:1px solid var(--border-medium); }
-        .step.active .step-number { background:var(--gradient-primary); color:white; border-color:transparent; box-shadow:var(--shadow-glow); }
-        .step.completed .step-number { background:var(--success-color); color:white; }
-        .step-label { font-size:0.75rem; color:var(--text-tertiary); }
-        .step.active .step-label { color:var(--primary-color); font-weight:600; }
-        .step-content { padding:30px; display:none; animation:fadeIn 0.3s ease; }
-        .step-content.active { display:block; }
-        @keyframes fadeIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+    .step-content { padding:20px 24px; display:none; animation:fadeIn .25s ease; }
+    .step-content.active { display:block; }
+    @keyframes fadeIn { from{opacity:0;transform:translateX(12px)} to{opacity:1;transform:none} }
 
-        .form-section { margin-bottom:30px; }
-        .form-section h3 { color:var(--text-primary); margin-bottom:24px; display:flex; align-items:center; gap:12px; font-size:1.3rem; }
-        .form-section h3 i { color:var(--primary-color); }
-        .form-group { margin-bottom:24px; }
-        .form-group label { display:block; margin-bottom:8px; font-weight:500; color:var(--text-secondary); font-size:0.95rem; }
-        .form-group input, .form-group textarea, .form-group select { width:100%; padding:14px 18px; background:var(--bg-tertiary); border:2px solid var(--border-medium); border-radius:var(--radius-md); font-size:1rem; color:var(--text-primary); }
-        .form-group input:focus { border-color:var(--primary-color); outline:none; box-shadow:0 0 0 4px var(--primary-glow); }
-        .endereco-row { display:grid; grid-template-columns:1fr 100px; gap:12px; }
+    .form-section h3 { margin-bottom:14px; display:flex; align-items:center; gap:8px; font-size:1.02rem; }
+    .form-section h3 i { color:var(--primary-color); }
+    .form-group { margin-bottom:14px; position:relative; }
+    .form-group label { display:block; margin-bottom:5px; font-weight:500; color:var(--text-secondary); font-size:.82rem; }
+    .form-group input, .form-group textarea { width:100%; padding:10px 14px; background:var(--bg-tertiary); border:1.5px solid var(--border-medium); border-radius:var(--radius-md); font-size:.9rem; color:var(--text-primary); outline:none; transition:var(--transition-base); resize:vertical; }
+    .form-group input:focus, .form-group textarea:focus { border-color:var(--primary-color); box-shadow:0 0 0 3px var(--primary-glow); }
+    .form-group input[readonly] { opacity:.65; cursor:not-allowed; }
+    .campo-erro { border-color:var(--danger-color) !important; box-shadow:0 0 0 3px rgba(255,92,92,.25) !important; }
+    .dica { font-size:.75rem; color:var(--text-tertiary); margin-top:6px; }
+    .sel-end { font-size:.78rem; color:var(--success-color); margin-top:6px; display:flex; gap:6px; align-items:flex-start; }
+    .sel-end:empty { display:none; }
 
-        .vehicle-selector, .category-selector { display:flex; gap:20px; flex-wrap:wrap; margin:20px 0; }
-        .vehicle-option, .category-option { flex:1; min-width:140px; }
-        .vehicle-option input, .category-option input { display:none; }
-        .vehicle-option label, .category-option label { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; background:var(--bg-tertiary); border:2px solid var(--border-medium); border-radius:var(--radius-lg); cursor:pointer; gap:12px; }
-        .vehicle-option input:checked + label, .category-option input:checked + label { border-color:var(--primary-color); background:var(--bg-elevated); box-shadow:var(--shadow-glow); }
-        .vehicle-option label i, .category-option label i { font-size:2.5rem; color:var(--text-secondary); }
-        .vehicle-option input:checked + label i, .category-option input:checked + label i { color:var(--primary-color); }
+    .banner-usuario { background:linear-gradient(135deg,rgba(0,196,140,.1),rgba(0,51,102,.1)); border:1px solid var(--success-color); border-radius:var(--radius-md); padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; gap:10px; font-size:.84rem; color:var(--text-secondary); }
+    .banner-usuario i { color:var(--success-color); font-size:1.05rem; }
+    .banner-usuario.aviso { border-color:var(--warning-color); background:rgba(255,184,0,.07); }
+    .banner-usuario.aviso i { color:var(--warning-color); }
 
-        .radio-group { display:flex; gap:24px; margin-top:10px; flex-wrap:wrap; }
-        .radio-group label { display:flex; align-items:center; gap:10px; cursor:pointer; padding:12px 20px; background:var(--bg-tertiary); border-radius:var(--radius-full); border:1px solid var(--border-medium); }
+    .endereco-row { display:flex; gap:8px; align-items:center; position:relative; }
+    .endereco-input-wrap { flex:1; min-width:0; position:relative; }
+    .btn-gps { background:rgba(255,107,0,.12); border:1.5px solid var(--primary-color); color:var(--primary-color); height:42px; padding:0 12px; border-radius:var(--radius-md); display:inline-flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; flex-shrink:0; font-size:.82rem; font-weight:600; transition:var(--transition-base); white-space:nowrap; }
+    .btn-gps i { font-size: 1.05rem; color: var(--primary-color); display: inline-block; }
+    .btn-gps:hover { background:var(--primary-color); color:#fff; box-shadow:var(--shadow-glow); }
+    .btn-gps:hover i { color: #fff; }
+    .btn-gps:disabled { opacity:.55; cursor:not-allowed; }
+    .endereco-row input.num { width:80px; flex:none; }
 
-        .navigation-buttons { display:flex; justify-content:space-between; padding:20px 30px; background:var(--bg-tertiary); border-top:1px solid var(--border-medium); }
-        .btn { display:inline-flex; align-items:center; justify-content:center; gap:12px; padding:12px 28px; background:var(--gradient-primary); color:white; border:none; border-radius:var(--radius-full); cursor:pointer; font-weight:600; font-size:0.95rem; transition:var(--transition-base); text-decoration:none; }
-        .btn-secondary { background:var(--bg-elevated); color:var(--text-primary); border:1px solid var(--border-medium); }
-        .btn-danger { background:var(--danger-color); }
-        .btn-success { background:var(--success-color); }
-        .btn:hover { transform:translateY(-2px); box-shadow:var(--shadow-md); }
-        .btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+    /* Caixa flutuante de sugestões do Autocomplete */
+    .sugestoes-box { position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--bg-elevated); border:1px solid var(--border-heavy); border-radius:var(--radius-md); box-shadow:var(--shadow-lg); z-index:3000; max-height:230px; overflow-y:auto; display:none; }
+    .sugestao-item { padding:10px 14px; border-bottom:1px solid var(--border-light); font-size:.84rem; color:var(--text-primary); cursor:pointer; display:flex; align-items:center; gap:8px; transition:background .15s; }
+    .sugestao-item:last-child { border-bottom:none; }
+    .sugestao-item i { color:var(--primary-color); flex-shrink:0; }
+    .sugestao-item:hover { background:rgba(255,107,0,.15); }
 
-        .resumo-card { background:var(--bg-tertiary); border-radius:var(--radius-lg); padding:24px; margin-bottom:20px; border:1px solid var(--border-medium); }
-        .resumo-item { display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border-light); flex-wrap:wrap; gap:8px; }
-        .resumo-item:last-child { border-bottom:none; }
-        .resumo-item span:first-child { color:var(--text-secondary); }
-        .resumo-item span:last-child { font-weight:500; text-align:right; }
-        .resumo-total { font-size:1.8rem; font-weight:800; color:var(--primary-color); margin-top:16px; text-align:center; }
+    .vehicle-selector, .category-selector { display:flex; gap:12px; flex-wrap:wrap; margin:10px 0; }
+    .vehicle-option, .category-option { flex:1; min-width:120px; }
+    .vehicle-option input, .category-option input { display:none; }
+    .vehicle-option label, .category-option label { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:14px 10px; background:var(--bg-tertiary); border:1.5px solid var(--border-medium); border-radius:var(--radius-lg); cursor:pointer; gap:6px; font-size:.85rem; text-align:center; transition:var(--transition-base); }
+    .vehicle-option input:checked + label, .category-option input:checked + label { border-color:var(--primary-color); background:var(--bg-elevated); box-shadow:var(--shadow-glow); }
+    .vehicle-option label i, .category-option label i { font-size:1.5rem; color:var(--text-secondary); }
+    .vehicle-option input:checked + label i, .category-option input:checked + label i { color:var(--primary-color); }
+    .vehicle-option small { color:var(--text-tertiary); font-size:.72rem; }
 
-        /* 🗺️ MAPA dentro do resumo */
-        #mapa-wrapper {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border-light);
-        }
-        #mapa-wrapper .map-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        #mapa-wrapper .map-header i {
-            color: var(--primary-color);
-            font-size: 1rem;
-        }
-        #mapa-container {
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            border: 1px solid var(--border-medium);
-            background: var(--bg-elevated);
-        }
-        #map {
-            width: 100%;
-            height: 320px;
-        }
-        @media (max-width: 768px) {
-            #map { height: 240px; }
-        }
+    .radio-group { display:flex; gap:10px; margin-top:6px; flex-wrap:wrap; }
+    .radio-group label { display:flex; align-items:center; gap:8px; cursor:pointer; padding:8px 16px; background:var(--bg-tertiary); border-radius:var(--radius-full); border:1.5px solid var(--border-medium); font-size:.86rem; transition:var(--transition-base); }
+    .radio-group label:has(input:checked) { border-color:var(--primary-color); background:rgba(255,107,0,.1); color:#fff; }
+    .radio-group input { accent-color:var(--primary-color); }
 
-        /* Google Places Autocomplete */
-        .pac-container {
-            background: var(--bg-elevated) !important;
-            border: 1px solid var(--border-medium) !important;
-            border-radius: var(--radius-md) !important;
-            box-shadow: var(--shadow-lg) !important;
-            z-index: 9999 !important;
-            font-family: 'Inter', sans-serif !important;
-            margin-top: 4px !important;
-            padding: 4px 0 !important;
-        }
-        .pac-item {
-            padding: 10px 16px !important;
-            border-top: 1px solid var(--border-light) !important;
-            color: var(--text-primary) !important;
-            cursor: pointer !important;
-            font-size: 0.9rem !important;
-            line-height: 1.4 !important;
-        }
-        .pac-item:first-child { border-top: none !important; }
-        .pac-item:hover, .pac-item-selected {
-            background: rgba(255,107,0,0.12) !important;
-        }
-        .pac-item-query {
-            color: var(--primary-color) !important;
-            font-weight: 600 !important;
-        }
-        .pac-matched { color: var(--primary-light) !important; }
-        .pac-icon { display: none !important; }
-        .pac-item-query .pac-matched { color: var(--primary-light) !important; }
-        .pac-logo::after { display: none !important; }
+    .navigation-buttons { display:flex; justify-content:space-between; gap:10px; padding:14px 24px; background:var(--bg-tertiary); border-top:1px solid var(--border-medium); border-radius:0 0 var(--radius-xl) var(--radius-xl); }
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:9px 20px; background:var(--gradient-primary); color:#fff; border:none; border-radius:var(--radius-full); cursor:pointer; font-weight:600; font-size:.86rem; transition:var(--transition-base); text-decoration:none; }
+    .btn-secondary { background:var(--bg-elevated); border:1px solid var(--border-medium); }
+    .btn-danger { background:var(--danger-color); }
+    .btn-success { background:var(--success-color); }
+    .btn-whats { background:#25d366; }
+    .btn:hover { transform:translateY(-2px); box-shadow:var(--shadow-md); }
+    .btn:disabled { opacity:.55; cursor:not-allowed; transform:none; box-shadow:none; }
 
-        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:var(--blur-md); z-index:2000; justify-content:center; align-items:center; }
-        .modal-content { background:var(--bg-secondary); border-radius:var(--radius-xl); max-width:460px; width:90%; padding:30px; border:1px solid var(--border-heavy); animation:modalFadeIn 0.4s ease; max-height:90vh; overflow-y:auto; }
-        @keyframes modalFadeIn { from{opacity:0;transform:translateY(-30px) scale(0.95)} to{opacity:1;transform:translateY(0) scale(1)} }
+    .resumo-card { background:var(--bg-tertiary); border-radius:var(--radius-lg); padding:14px 18px; margin-bottom:14px; border:1px solid var(--border-medium); }
+    .resumo-item { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid var(--border-light); gap:10px; font-size:.85rem; }
+    .resumo-item:last-child { border-bottom:none; }
+    .resumo-item > span:first-child { color:var(--text-secondary); white-space:nowrap; }
+    .resumo-item .valor { text-align:right; font-weight:500; display:flex; align-items:center; gap:8px; justify-content:flex-end; min-width:0; }
+    .resumo-item .valor span { word-break:break-word; }
+    .btn-maps { padding:3px 9px; font-size:.7rem; border-radius:6px; white-space:nowrap; }
+    .resumo-total { font-size:1.65rem; font-weight:800; color:var(--primary-color); margin:8px 0 2px; text-align:center; }
+    #mapa-wrapper { margin-top:12px; padding-top:12px; border-top:1px solid var(--border-light); }
+    .map-header { display:flex; align-items:center; gap:8px; font-size:.72rem; font-weight:600; color:var(--text-secondary); margin-bottom:8px; text-transform:uppercase; letter-spacing:.5px; }
+    .map-header i { color:var(--primary-color); }
+    #mapa-container { border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--border-medium); }
+    #map { width:100%; height:240px; }
 
-        .qr-container { display:flex; justify-content:center; align-items:center; flex-direction:column; margin:20px 0; min-height:220px; background:#fff; border-radius:var(--radius-md); padding:16px; }
-        .qr-container canvas { width:200px !important; height:200px !important; display:block; }
-        .qr-container img { width:200px !important; height:200px !important; display:block; border-radius:8px; }
+    /* Modais */
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.85); backdrop-filter:blur(10px); z-index:2000; justify-content:center; align-items:center; padding:12px; }
+    .modal-content { position:relative; background:var(--bg-secondary); border-radius:var(--radius-xl); max-width:390px; width:100%; padding:20px; border:1px solid var(--border-heavy); max-height:94vh; overflow-y:auto; }
+    .modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+    .modal-head h2, .pay-modal h3 { font-size:1.05rem; display:flex; gap:8px; align-items:center; }
+    .modal-x { background:none; border:none; color:var(--text-tertiary); font-size:24px; cursor:pointer; line-height:1; }
+    .modal-x:hover { color:#fff; }
+    .modal-link { text-align:center; margin-top:12px; font-size:.84rem; color:var(--text-secondary); }
 
-        .pix-code { background:var(--bg-tertiary); border:1px dashed var(--border-heavy); border-radius:var(--radius-md); padding:12px; font-size:0.65rem; word-break:break-all; cursor:pointer; text-align:center; color:var(--text-secondary); margin-top:10px; line-height:1.5; }
-        .pix-code:hover { border-color:var(--primary-color); color:var(--primary-color); }
+    /* PIX */
+    .pay-valor { text-align:center; font-size:1.85rem; font-weight:800; color:var(--primary-color); margin:4px 0 2px; }
+    .pay-sub { text-align:center; font-size:.76rem; color:var(--text-tertiary); margin-bottom:10px; }
+    .qr-container { display:flex; justify-content:center; align-items:center; flex-direction:column; gap:10px; margin:8px 0; min-height:200px; background:#fff; border-radius:var(--radius-md); padding:12px; color:#444; font-size:.8rem; }
+    .qr-container img, .qr-container canvas { width:180px !important; height:180px !important; display:block; }
+    .pix-code { display:block; width:100%; background:var(--bg-tertiary); border:1px dashed var(--border-heavy); border-radius:var(--radius-md); padding:8px 10px; font-size:.62rem; word-break:break-all; cursor:pointer; text-align:center; color:var(--text-secondary); line-height:1.4; max-height:58px; overflow:hidden; }
+    .btn-copiar { width:100%; margin-top:8px; }
+    .pay-wait { display:none; align-items:center; gap:12px; margin-top:12px; padding:11px 14px; background:rgba(255,107,0,.08); border:1px solid rgba(255,107,0,.28); border-radius:var(--radius-md); }
+    .pay-wait strong { display:block; font-size:.84rem; color:#fff; }
+    .pay-wait small { color:var(--text-secondary); font-size:.72rem; line-height:1.35; display:block; }
+    .pay-note { text-align:center; font-size:.68rem; margin-top:8px; color:var(--success-color); }
+    .pay-actions { display:flex; gap:8px; margin-top:12px; }
+    .pay-actions .btn { flex:1; }
 
-        .chave-pix-manual { background:rgba(255,184,0,0.1); border:1px solid var(--warning-color); border-radius:var(--radius-md); padding:16px; margin-top:16px; text-align:center; }
-        .chave-pix-manual strong { color:var(--warning-color); font-size:1rem; }
-        .chave-pix-manual code { display:block; background:var(--bg-tertiary); padding:10px; border-radius:8px; margin-top:8px; word-break:break-all; font-size:0.8rem; color:#fff; }
+    .pay-ok { text-align:center; }
+    .pay-ok-icon { width:64px; height:64px; border-radius:50%; background:var(--success-color); color:#fff; font-size:2rem; display:flex; align-items:center; justify-content:center; margin:2px auto 12px; box-shadow:0 0 0 8px rgba(0,196,140,.15); }
+    .pay-ok h3 { justify-content:center; font-size:1.2rem; margin-bottom:6px; }
+    .pay-ok p { color:var(--text-secondary); font-size:.86rem; margin-bottom:12px; }
+    .pay-ok .btn { width:100%; margin-top:8px; }
+    .whats-status { font-size:.74rem; color:var(--success-color); margin-top:8px; font-weight:500; }
 
-        .loading-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:var(--blur-md); display:none; justify-content:center; align-items:center; z-index:3000; }
-        .loading-spinner { background:var(--bg-secondary); padding:40px; border-radius:var(--radius-xl); text-align:center; border:1px solid var(--border-medium); }
-        .spinner { width:50px; height:50px; border:3px solid var(--border-medium); border-top-color:var(--primary-color); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 16px; }
-        @keyframes spin { to{transform:rotate(360deg)} }
+    .spinner { width:26px; height:26px; border:3px solid var(--border-heavy); border-top-color:var(--primary-color); border-radius:50%; animation:spin .8s linear infinite; flex-shrink:0; }
+    .spinner-sm { display:inline-block; width:14px; height:14px; border-width:2px; vertical-align:middle; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    #toast-container { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none; width:min(92vw,400px); }
+    .toast { background:var(--bg-elevated); padding:10px 18px; border-radius:var(--radius-full); font-size:.84rem; border:1px solid var(--border-medium); text-align:center; }
+    .toast-success { border-color:var(--success-color); color:var(--success-color); }
+    .toast-error { border-color:var(--danger-color); color:var(--danger-color); }
+    .toast-warning { border-color:var(--warning-color); color:var(--warning-color); }
 
-        #toast-container { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none; }
-        .toast { background:var(--bg-elevated); color:var(--text-primary); padding:12px 24px; border-radius:var(--radius-full); font-size:0.9rem; border:1px solid var(--border-medium); pointer-events:none; }
-        .toast-success { border-color:var(--success-color); color:var(--success-color); }
-        .toast-error { border-color:var(--danger-color); color:var(--danger-color); }
-        .toast-warning { border-color:var(--warning-color); color:var(--warning-color); }
-
-        .banner-usuario { background:linear-gradient(135deg, rgba(0,196,140,0.1), rgba(0,51,102,0.1)); border:1px solid var(--success-color); border-radius:var(--radius-md); padding:12px 16px; margin-bottom:20px; display:flex; align-items:center; gap:12px; }
-        .banner-usuario i { color:var(--success-color); font-size:1.2rem; }
-        .banner-usuario span { color:var(--text-secondary); font-size:0.9rem; }
-
-        @media (max-width:768px) {
-            .container { padding:0 16px; }
-            .navbar { flex-direction:column; gap:15px; }
-            .nav-links { justify-content:center; }
-            .step-label { display:none; }
-            .step-content { padding:20px; }
-            .endereco-row { grid-template-columns:1fr; gap:10px; }
-            .vehicle-selector, .category-selector { flex-direction:column; }
-            .navigation-buttons { flex-direction:column-reverse; gap:12px; }
-            .navigation-buttons .btn { width:100%; }
-        }
+    @media (max-width:768px) {
+        .step-label { display:none; }
+        .step-content { padding:16px; }
+        .category-option { min-width:calc(50% - 6px); }
+        .navigation-buttons { padding:12px 16px; }
+        .endereco-row { flex-wrap:wrap; }
+        .endereco-input-wrap { width:100%; flex:none; }
+        .btn-gps { flex:1; }
+        .endereco-row input.num { flex:1; }
+    }
     </style>
 </head>
 <body>
@@ -240,10 +194,9 @@
             <ul class="nav-links">
                 <li><a href="index.html">Início</a></li>
                 <li><a href="index.html#services">Serviços</a></li>
-                <li><a href="index.html#about">Sobre</a></li>
-                <li><a href="index.html#contact">Contato</a></li>
                 <li class="login-item"><a href="#" onclick="abrirModalLogin();return false;"><i class="bi bi-box-arrow-in-right"></i> Entrar</a></li>
-                <li class="perfil-item" style="display:none;"><a href="dashboard.html"><i class="bi bi-person-circle"></i> <span id="menu-perfil-nome">Perfil</span></a></li>
+                <li class="login-item"><a href="#" onclick="abrirModalCadastro();return false;"><i class="bi bi-person-plus"></i> Cadastrar</a></li>
+                <li class="perfil-item" style="display:none;"><a href="dashboard.html"><i class="bi bi-person-circle"></i> <span id="menu-perfil-nome">Meu Painel</span></a></li>
                 <li class="perfil-item" style="display:none;"><a href="#" onclick="fazerLogout();return false;"><i class="bi bi-box-arrow-right"></i> Sair</a></li>
             </ul>
         </nav>
@@ -253,7 +206,7 @@
 <section class="page-header">
     <div class="container">
         <h1 class="section-title">Solicitar Entrega</h1>
-        <p class="section-subtitle">Preencha os dados em etapas</p>
+        <p class="section-subtitle">Preencha os dados em etapas rápidas</p>
     </div>
 </section>
 
@@ -265,31 +218,33 @@
             <div class="step" data-step="2"><div class="step-number">3</div><div class="step-label">Coleta</div></div>
             <div class="step" data-step="3"><div class="step-number">4</div><div class="step-label">Entrega</div></div>
             <div class="step" data-step="4"><div class="step-number">5</div><div class="step-label">Receptor</div></div>
-            <div class="step" data-step="5"><div class="step-number">6</div><div class="step-label">Categoria</div></div>
+            <div class="step" data-step="5"><div class="step-number">6</div><div class="step-label">Produto</div></div>
         </div>
 
+        <!-- 1. DADOS -->
         <div class="step-content active" data-step="0">
             <div class="form-section">
                 <h3><i class="bi bi-person"></i> Seus dados</h3>
                 <div id="banner-usuario-container"></div>
                 <div class="form-group">
-                    <label>Nome Completo *</label>
-                    <input type="text" id="cliente-nome" placeholder="Digite seu nome completo">
+                    <label for="cliente-nome">Nome completo *</label>
+                    <input type="text" id="cliente-nome" placeholder="Digite seu nome completo" autocomplete="name">
                 </div>
                 <div class="form-group">
-                    <label>WhatsApp/Telefone *</label>
-                    <input type="tel" id="cliente-telefone" placeholder="(47) 99999-9999">
+                    <label for="cliente-telefone">WhatsApp / Telefone *</label>
+                    <input type="tel" id="cliente-telefone" placeholder="(47) 99999-9999" autocomplete="tel">
                 </div>
                 <div class="form-group">
-                    <label>E-mail *</label>
-                    <input type="email" id="cliente-email" placeholder="seuemail@exemplo.com">
+                    <label for="cliente-email">E-mail *</label>
+                    <input type="email" id="cliente-email" placeholder="seuemail@exemplo.com" autocomplete="email">
                 </div>
             </div>
         </div>
 
+        <!-- 2. VEÍCULO -->
         <div class="step-content" data-step="1">
             <div class="form-section">
-                <h3><i class="bi bi-truck"></i> Tipo de Veículo</h3>
+                <h3><i class="bi bi-truck"></i> Tipo de veículo</h3>
                 <div class="vehicle-selector">
                     <div class="vehicle-option">
                         <input type="radio" name="tipo-veiculo" id="veiculo-moto" value="moto" checked>
@@ -303,63 +258,78 @@
             </div>
         </div>
 
+        <!-- 3. COLETA -->
         <div class="step-content" data-step="2">
             <div class="form-section">
-                <h3><i class="bi bi-geo-alt"></i> Local de Coleta</h3>
+                <h3><i class="bi bi-geo-alt"></i> Local de coleta</h3>
                 <div class="form-group">
-                    <label>Endereço *</label>
+                    <label>Endereço de Coleta *</label>
                     <div class="endereco-row">
-                        <input type="text" id="endereco-coleta" class="autocomplete-endereco" placeholder="Digite o endereço...">
-                        <input type="text" id="numero-coleta" placeholder="Nº">
+                        <div class="endereco-input-wrap">
+                            <input type="text" id="endereco-coleta" placeholder="Digite a rua, bairro e cidade..." autocomplete="off">
+                            <div id="sugestoes-coleta" class="sugestoes-box"></div>
+                        </div>
+                        <button type="button" id="btn-gps-coleta" class="btn-gps" title="Usar minha localização atual"><i class="bi bi-geo-alt-fill"></i> GPS</button>
+                        <input type="text" id="numero-coleta" class="num" placeholder="Nº">
                     </div>
+                    <div class="sel-end" id="sel-coleta"></div>
                 </div>
                 <div class="form-group">
-                    <label>Complemento</label>
-                    <input type="text" id="complemento-coleta" placeholder="Apto, Bloco, Referência">
+                    <label for="complemento-coleta">Complemento</label>
+                    <input type="text" id="complemento-coleta" placeholder="Apto, bloco, ponto de referência">
                 </div>
             </div>
         </div>
 
+        <!-- 4. ENTREGA -->
         <div class="step-content" data-step="3">
             <div class="form-section">
-                <h3><i class="bi bi-geo-alt-fill"></i> Local de Entrega</h3>
+                <h3><i class="bi bi-geo-alt-fill"></i> Local de entrega</h3>
                 <div class="form-group">
-                    <label>Endereço *</label>
+                    <label>Endereço de Entrega *</label>
                     <div class="endereco-row">
-                        <input type="text" id="endereco-entrega" class="autocomplete-endereco" placeholder="Digite o endereço...">
-                        <input type="text" id="numero-entrega" placeholder="Nº">
+                        <div class="endereco-input-wrap">
+                            <input type="text" id="endereco-entrega" placeholder="Digite a rua, bairro e cidade..." autocomplete="off">
+                            <div id="sugestoes-entrega" class="sugestoes-box"></div>
+                        </div>
+                        <button type="button" id="btn-gps-entrega" class="btn-gps" title="Usar minha localização atual"><i class="bi bi-geo-alt-fill"></i> GPS</button>
+                        <input type="text" id="numero-entrega" class="num" placeholder="Nº">
                     </div>
+                    <div class="sel-end" id="sel-entrega"></div>
                 </div>
                 <div class="form-group">
-                    <label>Complemento</label>
-                    <input type="text" id="complemento-entrega" placeholder="Apto, Bloco, Referência">
+                    <label for="complemento-entrega">Complemento</label>
+                    <input type="text" id="complemento-entrega" placeholder="Apto, bloco, ponto de referência">
                 </div>
             </div>
         </div>
 
+        <!-- 5. RECEPTOR -->
         <div class="step-content" data-step="4">
             <div class="form-section">
-                <h3><i class="bi bi-person-check"></i> Quem receberá?</h3>
+                <h3><i class="bi bi-person-check"></i> Quem irá receber a entrega?</h3>
                 <div class="radio-group">
-                    <label><input type="radio" name="quem-recebe" value="eu" checked> <i class="bi bi-person-fill"></i> Sou eu</label>
+                    <label><input type="radio" name="quem-recebe" value="eu" checked> <i class="bi bi-person-fill"></i> Sou eu mesmo(a)</label>
                     <label><input type="radio" name="quem-recebe" value="outro"> <i class="bi bi-people-fill"></i> Outra pessoa</label>
                 </div>
-                <div id="dados-receptor" style="display:none;margin-top:20px;">
+                <div id="dados-receptor" style="margin-top:16px;">
                     <div class="form-group">
-                        <label>Nome do receptor *</label>
-                        <input type="text" id="receptor-nome" placeholder="Nome completo">
+                        <label for="receptor-nome">Nome completo de quem irá receber *</label>
+                        <input type="text" id="receptor-nome" placeholder="Nome e sobrenome" autocomplete="off" readonly>
                     </div>
                     <div class="form-group">
-                        <label>WhatsApp do receptor *</label>
-                        <input type="tel" id="receptor-telefone" placeholder="(47) 99999-9999">
+                        <label for="receptor-telefone">Telefone / WhatsApp de quem irá receber *</label>
+                        <input type="tel" id="receptor-telefone" placeholder="(47) 99999-9999" autocomplete="off" readonly>
                     </div>
+                    <p class="dica" id="receptor-dica"></p>
                 </div>
             </div>
         </div>
 
+        <!-- 6. PRODUTO -->
         <div class="step-content" data-step="5">
             <div class="form-section">
-                <h3><i class="bi bi-box"></i> Tipo de Produto</h3>
+                <h3><i class="bi bi-box"></i> Tipo de produto</h3>
                 <div class="category-selector">
                     <div class="category-option"><input type="checkbox" name="categoria" id="cat-vestimenta" value="Vestimenta"><label for="cat-vestimenta"><i class="bi bi-handbag"></i> Vestimenta</label></div>
                     <div class="category-option"><input type="checkbox" name="categoria" id="cat-medicamentos" value="Medicamentos"><label for="cat-medicamentos"><i class="bi bi-capsule"></i> Medicamentos</label></div>
@@ -368,8 +338,8 @@
                     <div class="category-option"><input type="checkbox" name="categoria" id="cat-alimentos" value="Alimentos"><label for="cat-alimentos"><i class="bi bi-egg-fried"></i> Alimentos</label></div>
                     <div class="category-option"><input type="checkbox" name="categoria" id="cat-documentos" value="Documentos"><label for="cat-documentos"><i class="bi bi-envelope-paper"></i> Documentos</label></div>
                 </div>
-                <div class="form-group" style="margin-top:20px;">
-                    <label>Descrição adicional</label>
+                <div class="form-group" style="margin-top:14px;">
+                    <label for="descricao">Observações / Descrição adicional</label>
                     <textarea id="descricao" rows="2" placeholder="Informações importantes para o entregador..."></textarea>
                 </div>
             </div>
@@ -381,53 +351,47 @@
         </div>
     </div>
 
+    <!-- CHECKOUT -->
     <div id="checkout-screen" style="display:none;">
         <div class="wizard-container">
             <div class="step-content" style="display:block;">
-                <h3 style="margin-bottom:20px;display:flex;align-items:center;gap:12px;font-size:1.3rem;">
-                    <i class="bi bi-calculator" style="color:var(--primary-color);"></i> Resumo da Entrega
+                <h3 style="margin-bottom:14px;display:flex;align-items:center;gap:8px;font-size:1.1rem;">
+                    <i class="bi bi-receipt" style="color:var(--primary-color);"></i> Resumo da entrega
                 </h3>
 
                 <div class="resumo-card">
-                    <div class="resumo-item"><span><i class="bi bi-person"></i> Cliente</span><span id="resumo-nome">-</span></div>
-                    <div class="resumo-item"><span><i class="bi bi-telephone"></i> Telefone</span><span id="resumo-telefone">-</span></div>
-                    <div class="resumo-item"><span><i class="bi bi-truck"></i> Veículo</span><span id="resumo-veiculo">-</span></div>
-                    <div class="resumo-item"><span><i class="bi bi-geo-alt"></i> Coleta</span><span id="resumo-coleta">-</span></div>
-                    <div class="resumo-item"><span><i class="bi bi-geo-alt-fill"></i> Entrega</span><span id="resumo-entrega">-</span></div>
-                    <div class="resumo-item"><span><i class="bi bi-person-check"></i> Receptor</span><span id="resumo-receptor">-</span></div>
-                    <div class="resumo-item"><span><i class="bi bi-box"></i> Categoria</span><span id="resumo-categorias">-</span></div>
+                    <div class="resumo-item"><span><i class="bi bi-person"></i> Cliente</span><span class="valor"><span id="resumo-nome">-</span></span></div>
+                    <div class="resumo-item"><span><i class="bi bi-telephone"></i> Telefone</span><span class="valor"><span id="resumo-telefone">-</span></span></div>
+                    <div class="resumo-item"><span><i class="bi bi-truck"></i> Veículo</span><span class="valor"><span id="resumo-veiculo">-</span></span></div>
+                    <div class="resumo-item">
+                        <span><i class="bi bi-geo-alt"></i> Coleta</span>
+                        <span class="valor"><span id="resumo-coleta">-</span>
+                            <a id="link-maps-coleta" href="#" target="_blank" rel="noopener" class="btn btn-secondary btn-maps"><i class="bi bi-map"></i> Maps</a></span>
+                    </div>
+                    <div class="resumo-item">
+                        <span><i class="bi bi-geo-alt-fill"></i> Entrega</span>
+                        <span class="valor"><span id="resumo-entrega">-</span>
+                            <a id="link-maps-entrega" href="#" target="_blank" rel="noopener" class="btn btn-secondary btn-maps"><i class="bi bi-map"></i> Maps</a></span>
+                    </div>
+                    <div class="resumo-item"><span><i class="bi bi-person-check"></i> Recebedor</span><span class="valor"><span id="resumo-receptor">-</span></span></div>
+                    <div class="resumo-item"><span><i class="bi bi-box"></i> Produto</span><span class="valor"><span id="resumo-categorias">-</span></span></div>
                 </div>
 
                 <div class="resumo-card" style="text-align:center;">
-                    <div class="resumo-item">
-                        <span><i class="bi bi-map"></i> Distância estimada</span>
-                        <span id="distancia-final"><i class="bi bi-hourglass-split"></i> calculando...</span>
-                    </div>
-                    <div class="resumo-item">
-                        <span><i class="bi bi-clock"></i> Tempo estimado</span>
-                        <span id="tempo-final">—</span>
-                    </div>
-                    <div class="resumo-item">
-                        <span><i class="bi bi-building"></i> Cidade destino</span>
-                        <span id="cidade-destino">—</span>
-                    </div>
+                    <div class="resumo-item"><span><i class="bi bi-signpost-split"></i> Distância</span><span class="valor"><span id="distancia-final">calculando...</span></span></div>
+                    <div class="resumo-item"><span><i class="bi bi-clock"></i> Tempo estimado</span><span class="valor"><span id="tempo-final">—</span></span></div>
+                    <div class="resumo-item"><span><i class="bi bi-building"></i> Cidade destino</span><span class="valor"><span id="cidade-destino">—</span></span></div>
                     <div class="resumo-total" id="valor-final">Calculando...</div>
-                    <div style="font-size:0.75rem;color:var(--text-tertiary);margin-top:8px;" id="valor-info">Calculando distância e valor...</div>
+                    <div class="dica" id="valor-info">Calculando distância e valor...</div>
 
-                    <!-- 🗺️ MAPA AQUI — dentro do card de resumo -->
                     <div id="mapa-wrapper" style="display:none;">
-                        <div class="map-header">
-                            <i class="bi bi-map-fill"></i>
-                            <span>Rota da entrega</span>
-                        </div>
-                        <div id="mapa-container">
-                            <div id="map"></div>
-                        </div>
+                        <div class="map-header"><i class="bi bi-map-fill"></i><span>Rota da entrega</span></div>
+                        <div id="mapa-container"><div id="map"></div></div>
                     </div>
                 </div>
 
-                <div class="navigation-buttons" style="margin-top:0;">
-                    <button class="btn btn-danger" id="btn-cancelar"><i class="bi bi-x-circle"></i> Cancelar</button>
+                <div class="navigation-buttons" style="padding:0;background:none;border:none;">
+                    <button class="btn btn-danger" id="btn-cancelar"><i class="bi bi-x-circle"></i> Voltar / Editar</button>
                     <button class="btn btn-success" id="btn-pagar"><i class="bi bi-qr-code"></i> Pagar via PIX</button>
                 </div>
             </div>
@@ -435,1047 +399,117 @@
     </div>
 </div>
 
-<div id="modal-pagamento" class="modal">
-    <div class="modal-content">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-            <h3 style="margin:0;font-size:1.1rem;"><i class="bi bi-qr-code-scan"></i> Pagamento PIX</h3>
-            <button onclick="fecharModalPagamento()" style="background:none;border:none;color:var(--text-tertiary);font-size:24px;cursor:pointer;line-height:1;">&times;</button>
-        </div>
+<!-- POP-UP DE PAGAMENTO PIX -->
+<div id="modal-pagamento" class="modal" role="dialog" aria-modal="true">
+    <div class="modal-content pay-modal">
+        <div id="pay-view-qr">
+            <div class="modal-head">
+                <h3><i class="bi bi-qr-code-scan" style="color:var(--primary-color)"></i> Pagamento via PIX</h3>
+                <button class="modal-x" onclick="fecharModalPagamento()" aria-label="Fechar">&times;</button>
+            </div>
+            <div class="pay-valor" id="modal-valor">R$ 0,00</div>
+            <p class="pay-sub">Escaneie o QR Code ou copie o código PIX abaixo no app do seu banco</p>
+            <div class="qr-container" id="qr-container"><div class="spinner"></div><span>Gerando QR Code...</span></div>
+            <div class="pix-code" id="pix-codigo" onclick="copiarPix()" data-codigo="">Gerando código PIX...</div>
+            <button type="button" class="btn btn-secondary btn-copiar" onclick="copiarPix()"><i class="bi bi-clipboard"></i> Copiar código PIX</button>
 
-        <div style="text-align:center;font-size:2rem;font-weight:800;color:var(--primary-color);margin-bottom:8px;" id="modal-valor">R$ 0,00</div>
-        <p style="text-align:center;font-size:0.75rem;color:var(--text-tertiary);margin-bottom:16px;" id="modal-instrucao">Escaneie o QR Code ou copie o código PIX</p>
-
-        <div class="qr-container" id="qr-container">
-            <div id="qr-loading" style="text-align:center;color:var(--text-secondary);">
-                <div class="spinner" style="margin:0 auto 12px;"></div>
-                <span style="font-size:0.85rem;">Gerando QR Code...</span>
+            <div class="pay-wait" id="pay-wait">
+                <div class="spinner"></div>
+                <div>
+                    <strong>Aguardando confirmação do pagamento…</strong>
+                    <small>Assim que o pagamento for identificado, confirmaremos automaticamente e encaminharemos seu comprovante.</small>
+                </div>
+            </div>
+            <p class="pay-note"><i class="bi bi-shield-check"></i> Pagamento processado via Mercado Pago</p>
+            <div class="pay-actions">
+                <button class="btn btn-secondary" onclick="fecharModalPagamento()">Fechar</button>
+                <button class="btn" onclick="verificarPagamentoAgora()"><i class="bi bi-arrow-repeat"></i> Já paguei</button>
             </div>
         </div>
 
-        <div class="pix-code" id="pix-codigo" onclick="copiarPix()">Clique para copiar o código PIX</div>
-
-        <div id="chave-manual-container" style="display:none;" class="chave-pix-manual">
-            <strong>⚠️ Pagamento via Chave PIX</strong>
-            <p style="font-size:0.75rem;margin-top:5px;color:var(--text-secondary);">Use a chave abaixo ou escaneie o QR Code acima:</p>
-            <code id="chave-manual">comercial.ngexpress@gmail.com</code>
+        <div id="pay-view-ok" class="pay-ok" style="display:none;">
+            <div class="pay-ok-icon"><i class="bi bi-check-lg"></i></div>
+            <h3>Pagamento confirmado! 🎉</h3>
+            <p id="ok-msg"></p>
+            <div class="resumo-card" style="text-align:left;">
+                <div class="resumo-item"><span>Pedido</span><span class="valor"><span id="ok-pedido">-</span></span></div>
+                <div class="resumo-item"><span>Valor pago</span><span class="valor"><span id="ok-valor">-</span></span></div>
+            </div>
+            <a id="btn-whats" class="btn btn-whats" href="#" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Enviar comprovante no WhatsApp</a>
+            <p class="whats-status" id="whats-status"></p>
+            <a id="btn-painel" class="btn btn-secondary" href="dashboard.html"><i class="bi bi-speedometer2"></i> Ver meu histórico no painel</a>
         </div>
 
-        <p style="font-size:0.72rem;text-align:center;margin-top:12px;color:var(--text-tertiary);">📱 Abra o app do seu banco → PIX → Ler QR Code</p>
-        <p style="font-size:0.68rem;text-align:center;margin-top:4px;color:var(--success-color);" id="modal-badge">✅ Processado pelo Mercado Pago</p>
-
-        <div style="display:flex;gap:12px;margin-top:16px;">
-            <button class="btn btn-secondary" style="flex:1;" onclick="fecharModalPagamento()">Cancelar</button>
-            <button class="btn" style="flex:1;background:#25d366;" id="btn-enviar-comprovante"><i class="bi bi-whatsapp"></i> Enviei o PIX</button>
+        <div id="pay-view-erro" style="display:none;text-align:center;">
+            <div style="font-size:2.2rem;color:var(--warning-color);"><i class="bi bi-exclamation-triangle"></i></div>
+            <h3 style="justify-content:center;margin:8px 0;">Não foi possível gerar o PIX</h3>
+            <p id="pay-erro-msg" style="color:var(--text-secondary);font-size:.86rem;margin-bottom:14px;"></p>
+            <div class="pay-actions">
+                <button class="btn btn-secondary" onclick="fecharModalPagamento()">Fechar</button>
+                <button class="btn" onclick="fecharModalPagamento();document.getElementById('btn-pagar').click();"><i class="bi bi-arrow-repeat"></i> Tentar de novo</button>
+            </div>
         </div>
-        <div id="status-pagamento" style="margin-top:12px;text-align:center;font-size:0.78rem;color:var(--text-tertiary);min-height:20px;"></div>
     </div>
 </div>
 
+<!-- LOGIN -->
 <div class="modal" id="login-modal">
-    <div class="modal-content" style="max-width:400px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <h2 style="margin:0;"><i class="bi bi-box-arrow-in-right"></i> Login</h2>
-            <button onclick="fecharModal('login-modal')" style="background:none;border:none;color:var(--text-tertiary);font-size:24px;cursor:pointer;">&times;</button>
+    <div class="modal-content">
+        <div class="modal-head">
+            <h2><i class="bi bi-box-arrow-in-right"></i> Entrar</h2>
+            <button class="modal-x" onclick="fecharModal('login-modal')" aria-label="Fechar">&times;</button>
         </div>
         <form onsubmit="fazerLogin(event)">
-            <div class="form-group"><label>E-mail</label><input type="email" id="login-email" placeholder="seu@email.com" required></div>
-            <div class="form-group"><label>Senha</label><input type="password" id="login-senha" placeholder="******" required></div>
+            <div class="form-group"><label for="login-email">E-mail</label><input type="email" id="login-email" placeholder="seu@email.com" required autocomplete="email"></div>
+            <div class="form-group"><label for="login-senha">Senha</label><input type="password" id="login-senha" placeholder="••••••" required autocomplete="current-password"></div>
+            <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+                <input type="checkbox" id="lembrar-email" style="width:auto;"> <label for="lembrar-email" style="margin:0;">Lembrar meu e-mail</label>
+            </div>
             <button type="submit" class="btn" style="width:100%;"><i class="bi bi-box-arrow-in-right"></i> Entrar</button>
-            <p style="text-align:center;margin-top:15px;font-size:0.9rem;">Não tem conta? <a href="#" onclick="abrirModalCadastro();return false;" style="color:var(--primary-color);">Cadastre-se</a></p>
+            <p class="modal-link">Não tem conta? <a href="#" onclick="abrirModalCadastro();return false;">Cadastre-se</a></p>
         </form>
     </div>
 </div>
 
+<!-- CADASTRO -->
 <div class="modal" id="cadastro-modal">
-    <div class="modal-content" style="max-width:500px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <h2 style="margin:0;"><i class="bi bi-person-plus"></i> Cadastro</h2>
-            <button onclick="fecharModal('cadastro-modal')" style="background:none;border:none;color:var(--text-tertiary);font-size:24px;cursor:pointer;">&times;</button>
+    <div class="modal-content" style="max-width:440px;">
+        <div class="modal-head">
+            <h2><i class="bi bi-person-plus"></i> Cadastro</h2>
+            <button class="modal-x" onclick="fecharModal('cadastro-modal')" aria-label="Fechar">&times;</button>
         </div>
         <form onsubmit="fazerCadastro(event)">
-            <div class="form-group"><label>Nome Completo</label><input type="text" id="cadastro-nome" placeholder="Seu nome" required></div>
-            <div class="form-group"><label>E-mail</label><input type="email" id="cadastro-email" placeholder="seu@email.com" required></div>
-            <div class="form-group"><label>Telefone/WhatsApp</label><input type="tel" id="cadastro-telefone" placeholder="(47) 99999-9999" required></div>
-            <div class="form-group"><label>Senha (mínimo 6 caracteres)</label><input type="password" id="cadastro-senha" minlength="6" required></div>
-            <div class="form-group"><label>Confirmar Senha</label><input type="password" id="cadastro-confirmar-senha" minlength="6" required></div>
+            <div class="form-group"><label for="cadastro-nome">Nome e Sobrenome</label><input type="text" id="cadastro-nome" placeholder="Seu nome completo" required autocomplete="name"></div>
+            <div class="form-group"><label for="cadastro-email">E-mail</label><input type="email" id="cadastro-email" placeholder="seu@email.com" required autocomplete="email"></div>
+            <div class="form-group"><label for="cadastro-telefone">Telefone / WhatsApp</label><input type="tel" id="cadastro-telefone" placeholder="(47) 99999-9999" required autocomplete="tel"></div>
+            <div class="form-group"><label for="cadastro-senha">Senha (mínimo 6 caracteres)</label><input type="password" id="cadastro-senha" minlength="6" required autocomplete="new-password"></div>
+            <div class="form-group"><label for="cadastro-confirmar-senha">Confirmar senha</label><input type="password" id="cadastro-confirmar-senha" minlength="6" required autocomplete="new-password"></div>
             <button type="submit" class="btn" style="width:100%;"><i class="bi bi-check-circle"></i> Cadastrar</button>
+            <p class="modal-link">Já tem conta? <a href="#" onclick="abrirModalLogin();return false;">Entrar</a></p>
         </form>
     </div>
 </div>
 
-<div id="loading-overlay" class="loading-overlay">
-    <div class="loading-spinner"><div class="spinner"></div><p>Processando...</p></div>
-</div>
 <div id="toast-container"></div>
 
-<!-- =============================================
-     GOOGLE MAPS LOADER
-     ============================================= -->
 <script>
-(function loadGoogleMaps() {
+(function carregarGoogleMaps() {
     const cfg = window.GOOGLE_MAPS_CONFIG;
-    if (!cfg?.apiKey || cfg.apiKey === 'COLE_SUA_CHAVE_AQUI') {
-        console.warn('⚠️ Configure GOOGLE_MAPS_CONFIG.apiKey em js/config.js');
-        return;
-    }
+    if (!cfg || !cfg.apiKey) return;
+    window.__googleMapsReady = function () {
+        window.__googleMapsLoaded = true;
+        window.dispatchEvent(new Event('google-maps-ready'));
+    };
     const s = document.createElement('script');
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${cfg.apiKey}`
-          + `&libraries=${cfg.libraries || 'places'}`
-          + `&language=${cfg.language || 'pt-BR'}`
-          + `&region=${cfg.region || 'BR'}`
-          + `&callback=__googleMapsReady`;
+    s.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(cfg.apiKey)
+        + '&libraries=geometry'
+        + '&v=weekly&language=' + (cfg.language || 'pt-BR')
+        + '&region=' + (cfg.region || 'BR')
+        + '&callback=__googleMapsReady';
     s.async = true;
-    s.defer = true;
     document.head.appendChild(s);
 })();
-
-window.__googleMapsReady = function () {
-    window.__googleMapsLoaded = true;
-    window.dispatchEvent(new Event('google-maps-ready'));
-    console.log('✅ Google Maps SDK carregado');
-};
 </script>
-
-<script>
-// =============================================
-// CONFIGURAÇÕES
-// =============================================
-const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined')
-    ? window.API_BASE_URL
-    : 'https://landingpageng-production.up.railway.app/api';
-
-// Regras de preço (espelham o config.js como fallback)
-const PRICING = window.OPERATION_CONFIG || {
-    cidadePrincipal: 'Balneário Camboriú',
-    dentroCidadePrincipal: { valorBase: 15.00, limiteKmBase: 7, valorPorKmExcedente: 2.30 },
-    foraCidadePrincipal:   { valorPorKm: 2.30, valorMinimo: 15.00 }
-};
-
-const WHATSAPP_NUMERO = (window.WHATSAPP_CONFIG?.numero) || '5547999123260';
-
-// =============================================
-// ESTADO GLOBAL
-// =============================================
-let currentStep = 0;
-const totalSteps = 6;
-
-let orderData = {
-    cliente:    { nome:'', telefone:'', email:'' },
-    veiculo:    'moto',
-    coleta:     { endereco:'', numero:'', complemento:'', coords: null, enderecoCompleto: '' },
-    entrega:    { endereco:'', numero:'', complemento:'', coords: null, enderecoCompleto: '' },
-    receptor:   { nome:'', telefone:'', isOutro:false },
-    categorias: [],
-    descricao:  '',
-    valor:      0,
-    distanciaKm: null,
-    duracaoMin:  null,
-    cidadeDestino: null,
-    mapsLink:   null
-};
-
-let paymentData = { paymentId: null, intervalId: null };
-let pagamentoJaConfirmado = false;
-
-// Google Maps
-let gMap = null;
-let gDirections = null;
-let gRenderer = null;
-let gGeocoder = null;
-let gMarkers = { coleta: null, entrega: null };
-let gMapsPronto = false;
-const _cidadeCache = {};
-
-// =============================================
-// UTILITÁRIOS
-// =============================================
-function showToast(msg, tipo = 'success') {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${tipo}`;
-    toast.textContent = msg;
-    container.appendChild(toast);
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transition = 'opacity 0.4s';
-        setTimeout(() => toast.remove(), 400);
-    }, 3500);
-}
-window.mostrarToast = showToast;
-
-function fecharModal(id) {
-    document.getElementById(id).style.display = 'none';
-}
-
-function abrirModalLogin() {
-    document.getElementById('login-modal').style.display = 'flex';
-}
-
-function abrirModalCadastro() {
-    fecharModal('login-modal');
-    document.getElementById('cadastro-modal').style.display = 'flex';
-}
-
-function normalizarTexto(txt) {
-    return (txt || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-}
-
-// =============================================
-// DADOS DO USUÁRIO
-// =============================================
-function preencherDadosSolicitante(usuario) {
-    if (!usuario) return;
-    const cn = document.getElementById('cliente-nome');
-    const ce = document.getElementById('cliente-email');
-    const ct = document.getElementById('cliente-telefone');
-
-    if (cn && usuario.nome)     cn.value = usuario.nome;
-    if (ce && usuario.email)    ce.value = usuario.email;
-    if (ct && usuario.telefone) ct.value = usuario.telefone;
-
-    orderData.cliente.nome = usuario.nome || '';
-    orderData.cliente.email = usuario.email || '';
-    orderData.cliente.telefone = usuario.telefone || '';
-
-    const bannerContainer = document.getElementById('banner-usuario-container');
-    if (bannerContainer) {
-        bannerContainer.innerHTML = `
-            <div class="banner-usuario">
-                <i class="bi bi-check-circle-fill"></i>
-                <span>✅ Dados preenchidos automaticamente - Bem-vindo(a), ${(usuario.nome || '').split(' ')[0]}!</span>
-            </div>
-        `;
-    }
-}
-
-// =============================================
-// LOGIN / CADASTRO / LOGOUT
-// =============================================
-window.fazerLogin = async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('login-email').value;
-    const senha = document.getElementById('login-senha').value;
-    try {
-        const res = await fetch(`${API_BASE_URL}/usuarios/login.php`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, senha })
-        });
-        const data = await res.json();
-        if (data.success) {
-            sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
-            carregarDadosUsuario();
-            fecharModal('login-modal');
-            showToast(`Bem-vindo, ${data.usuario.nome.split(' ')[0]}!`, 'success');
-            preencherDadosSolicitante(data.usuario);
-        } else {
-            showToast(data.message || 'E-mail ou senha inválidos', 'error');
-        }
-    } catch (error) {
-        console.error('Erro no login:', error);
-        showToast('Não foi possível conectar ao servidor', 'error');
-    }
-};
-
-window.fazerCadastro = async (e) => {
-    e.preventDefault();
-    const nome = document.getElementById('cadastro-nome').value;
-    const email = document.getElementById('cadastro-email').value;
-    const telefone = document.getElementById('cadastro-telefone').value;
-    const senha = document.getElementById('cadastro-senha').value;
-    const conf = document.getElementById('cadastro-confirmar-senha').value;
-    if (senha !== conf) { showToast('As senhas não conferem', 'error'); return; }
-    try {
-        const res = await fetch(`${API_BASE_URL}/usuarios/cadastrar.php`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nome, email, telefone, senha })
-        });
-        const data = await res.json();
-        if (data.success) {
-            sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
-            carregarDadosUsuario();
-            fecharModal('cadastro-modal');
-            showToast('Cadastro realizado!', 'success');
-            preencherDadosSolicitante(data.usuario);
-        } else {
-            showToast(data.message || 'Erro ao cadastrar', 'error');
-        }
-    } catch (error) {
-        console.error('Erro no cadastro:', error);
-        showToast('Não foi possível conectar ao servidor', 'error');
-    }
-};
-
-window.fazerLogout = () => {
-    sessionStorage.removeItem('usuario');
-    window.location.href = 'index.html';
-};
-
-function carregarDadosUsuario() {
-    const raw = sessionStorage.getItem('usuario');
-    if (!raw) return;
-    try {
-        const u = JSON.parse(raw);
-        preencherDadosSolicitante(u);
-        document.querySelectorAll('.login-item').forEach(e => e.style.display = 'none');
-        document.querySelectorAll('.perfil-item').forEach(e => e.style.display = 'block');
-        const pn = document.getElementById('menu-perfil-nome');
-        if (pn) pn.textContent = u.nome.split(' ')[0];
-    } catch (e) {
-        console.error('Erro ao carregar dados do usuário:', e);
-    }
-}
-
-// =============================================
-// WIZARD
-// =============================================
-function updateSteps() {
-    document.querySelectorAll('.step').forEach((step, idx) => {
-        step.classList.toggle('completed', idx < currentStep);
-        step.classList.toggle('active', idx === currentStep);
-    });
-    document.querySelectorAll('.step-content').forEach((c, i) => {
-        if (i < totalSteps) c.classList.toggle('active', i === currentStep);
-    });
-    document.getElementById('btn-voltar').disabled = currentStep === 0;
-    const btnAv = document.getElementById('btn-avancar');
-    btnAv.innerHTML = currentStep === totalSteps - 1
-        ? 'Finalizar <i class="bi bi-check-lg"></i>'
-        : 'Avançar <i class="bi bi-arrow-right"></i>';
-}
-
-function collectStepData() {
-    switch (currentStep) {
-        case 0:
-            orderData.cliente.nome = document.getElementById('cliente-nome').value.trim();
-            orderData.cliente.telefone = document.getElementById('cliente-telefone').value.trim();
-            orderData.cliente.email = document.getElementById('cliente-email').value.trim();
-            if (!orderData.cliente.nome || !orderData.cliente.telefone || !orderData.cliente.email) {
-                showToast('Preencha nome, telefone e e-mail', 'error'); return false;
-            }
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(orderData.cliente.email)) {
-                showToast('E-mail inválido', 'error'); return false;
-            }
-            return true;
-        case 1:
-            orderData.veiculo = document.querySelector('input[name="tipo-veiculo"]:checked').value;
-            return true;
-        case 2:
-            orderData.coleta.endereco = document.getElementById('endereco-coleta').value.trim();
-            orderData.coleta.numero = document.getElementById('numero-coleta').value.trim();
-            orderData.coleta.complemento = document.getElementById('complemento-coleta').value.trim();
-            if (!orderData.coleta.endereco) { showToast('Informe o endereço de coleta', 'error'); return false; }
-            return true;
-        case 3:
-            orderData.entrega.endereco = document.getElementById('endereco-entrega').value.trim();
-            orderData.entrega.numero = document.getElementById('numero-entrega').value.trim();
-            orderData.entrega.complemento = document.getElementById('complemento-entrega').value.trim();
-            if (!orderData.entrega.endereco) { showToast('Informe o endereço de entrega', 'error'); return false; }
-            if (orderData.coleta.endereco.toLowerCase() === orderData.entrega.endereco.toLowerCase()) {
-                showToast('Coleta e entrega não podem ser iguais', 'warning'); return false;
-            }
-            return true;
-        case 4: {
-            const isOutro = document.querySelector('input[name="quem-recebe"]:checked').value === 'outro';
-            orderData.receptor.isOutro = isOutro;
-            if (isOutro) {
-                orderData.receptor.nome = document.getElementById('receptor-nome').value.trim();
-                orderData.receptor.telefone = document.getElementById('receptor-telefone').value.trim();
-                if (!orderData.receptor.nome) { showToast('Informe o nome do receptor', 'error'); return false; }
-                if (!orderData.receptor.telefone) { showToast('Informe o telefone do receptor', 'error'); return false; }
-            } else {
-                orderData.receptor.nome = orderData.cliente.nome;
-                orderData.receptor.telefone = orderData.cliente.telefone;
-            }
-            return true;
-        }
-        case 5:
-            orderData.categorias = [];
-            document.querySelectorAll('input[name="categoria"]:checked').forEach(cb => orderData.categorias.push(cb.value));
-            orderData.descricao = document.getElementById('descricao').value.trim();
-            return true;
-        default: return true;
-    }
-}
-
-async function avancar() {
-    if (!collectStepData()) return;
-    if (currentStep === totalSteps - 1) {
-        finalizarPedido();
-    } else {
-        currentStep++;
-        updateSteps();
-    }
-}
-
-function voltar() {
-    if (currentStep > 0) { currentStep--; updateSteps(); }
-}
-
-// =============================================
-// GOOGLE MAPS — INICIALIZAÇÃO
-// =============================================
-function quandoGoogleMapsCarregar(cb) {
-    if (window.__googleMapsLoaded) { cb(); return; }
-    window.addEventListener('google-maps-ready', cb, { once: true });
-    let t = 0;
-    const check = setInterval(() => {
-        t++;
-        if (window.__googleMapsLoaded) { clearInterval(check); cb(); }
-        else if (t > 33) { clearInterval(check); console.warn('⚠️ Google Maps não carregou após 10s'); }
-    }, 300);
-}
-
-function inicializarServicosMaps() {
-    if (typeof google === 'undefined' || !google.maps) return false;
-    if (!gDirections) gDirections = new google.maps.DirectionsService();
-    if (!gGeocoder)   gGeocoder   = new google.maps.Geocoder();
-    gMapsPronto = true;
-    console.log('✅ Serviços Google Maps prontos');
-    return true;
-}
-
-function criarMapaSeNecessario() {
-    if (gMap) return true;
-    const mapEl = document.getElementById('map');
-    if (!mapEl) { console.warn('⚠️ #map não encontrado'); return false; }
-    if (typeof google === 'undefined' || !google.maps) { console.warn('⚠️ SDK não disponível'); return false; }
-
-    const cfg = window.GOOGLE_MAPS_CONFIG || {};
-    gMap = new google.maps.Map(mapEl, {
-        center: cfg.center || { lat: -26.9906, lng: -48.6347 },
-        zoom: cfg.defaultZoom || 13,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: true,
-        styles: cfg.styles || []
-    });
-
-    gRenderer = new google.maps.DirectionsRenderer({
-        map: gMap,
-        suppressMarkers: true,
-        polylineOptions: { strokeColor: '#FF6B00', strokeWeight: 5, strokeOpacity: 0.85 }
-    });
-
-    console.log('✅ Mapa criado');
-    return true;
-}
-
-function adicionarMarcador(tipo, position) {
-    if (!gMap) return;
-    if (gMarkers[tipo]) gMarkers[tipo].setMap(null);
-    gMarkers[tipo] = new google.maps.Marker({
-        position, map: gMap,
-        title: tipo === 'coleta' ? 'Coleta' : 'Entrega',
-        icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 12,
-            fillColor: tipo === 'coleta' ? '#FF6B00' : '#00C48C',
-            fillOpacity: 1,
-            strokeColor: '#fff',
-            strokeWeight: 3
-        },
-        label: { text: tipo === 'coleta' ? 'C' : 'E', color: '#fff', fontSize: '11px', fontWeight: 'bold' }
-    });
-}
-
-// =============================================
-// AUTOCOMPLETE GOOGLE PLACES
-// =============================================
-function inicializarAutocomplete() {
-    if (typeof google === 'undefined' || !google.maps?.places) return;
-
-    const opts = {
-        componentRestrictions: { country: 'br' },
-        fields: ['address_components', 'geometry', 'formatted_address', 'name'],
-        types: ['address']
-    };
-
-    const acColeta  = new google.maps.places.Autocomplete(document.getElementById('endereco-coleta'),  opts);
-    const acEntrega = new google.maps.places.Autocomplete(document.getElementById('endereco-entrega'), opts);
-
-    acColeta.addListener('place_changed', () => {
-        const place = acColeta.getPlace();
-        if (!place.geometry) return;
-        orderData.coleta.coords = { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() };
-        orderData.coleta.enderecoCompleto = place.formatted_address;
-        preencherNumeroAutomatico('numero-coleta', place);
-        adicionarMarcador('coleta', place.geometry.location);
-    });
-
-    acEntrega.addListener('place_changed', () => {
-        const place = acEntrega.getPlace();
-        if (!place.geometry) return;
-        orderData.entrega.coords = { lat: place.geometry.location.lat(), lng: place.geometry.location.lng() };
-        orderData.entrega.enderecoCompleto = place.formatted_address;
-        preencherNumeroAutomatico('numero-entrega', place);
-        adicionarMarcador('entrega', place.geometry.location);
-    });
-
-    console.log('✅ Autocomplete configurado');
-}
-
-function preencherNumeroAutomatico(numeroId, place) {
-    const numEl = document.getElementById(numeroId);
-    if (!numEl || numEl.value) return;
-    const num = place.address_components?.find(c => c.types.includes('street_number'))?.short_name;
-    if (num) numEl.value = num;
-}
-
-// =============================================
-// GEOCÓDIGO
-// =============================================
-function geocodificarEndereco(endereco) {
-    return new Promise((resolve, reject) => {
-        if (!gGeocoder) { reject(new Error('Geocoder não inicializado')); return; }
-        gGeocoder.geocode(
-            { address: endereco, region: 'BR', componentRestrictions: { country: 'BR' } },
-            (results, status) => {
-                if (status === 'OK' && results[0]) {
-                    const loc = results[0].geometry.location;
-                    resolve({ lat: loc.lat(), lng: loc.lng(), endereco: results[0].formatted_address });
-                } else {
-                    reject(new Error(`Endereço não encontrado: ${endereco}`));
-                }
-            }
-        );
-    });
-}
-
-function obterCidadeDoPonto(lat, lng) {
-    const chave = `${lat.toFixed(4)},${lng.toFixed(4)}`;
-    if (_cidadeCache[chave]) return Promise.resolve(_cidadeCache[chave]);
-    return new Promise((resolve) => {
-        if (!gGeocoder) { resolve(null); return; }
-        gGeocoder.geocode({ location: { lat, lng }, language: 'pt-BR', region: 'BR' }, (results, status) => {
-            if (status !== 'OK' || !results[0]) { resolve(null); return; }
-            for (const r of results) {
-                const m = r.address_components?.find(c => c.types.includes('administrative_area_level_2'));
-                if (m) { _cidadeCache[chave] = m.long_name; resolve(m.long_name); return; }
-            }
-            resolve(null);
-        });
-    });
-}
-
-// =============================================
-// CÁLCULO DE DISTÂNCIA
-// =============================================
-async function calcularDistancia() {
-    let c = orderData.coleta.coords;
-    let e = orderData.entrega.coords;
-
-    const endC = montarEnderecoCompleto('coleta');
-    const endE = montarEnderecoCompleto('entrega');
-
-    if (!c && endC) c = await geocodificarEndereco(endC);
-    if (!e && endE) e = await geocodificarEndereco(endE);
-    if (!c || !e) throw new Error('Endereços inválidos');
-
-    orderData.coleta.coords = c;
-    orderData.entrega.coords = e;
-
-    return new Promise((resolve, reject) => {
-        gDirections.route({
-            origin: { lat: c.lat, lng: c.lng },
-            destination: { lat: e.lat, lng: e.lng },
-            travelMode: google.maps.TravelMode.DRIVING
-        }, (result, status) => {
-            if (status !== 'OK' || !result.routes[0]?.legs[0]) {
-                reject(new Error('Não foi possível calcular a rota: ' + status));
-                return;
-            }
-            const leg = result.routes[0].legs[0];
-            const distanciaKm = leg.distance.value / 1000;
-            const minutos = Math.round(leg.duration.value / 60);
-            if (gRenderer) gRenderer.setDirections(result);
-            resolve({
-                distanciaKm,
-                distanciaTexto: `${distanciaKm.toFixed(1)} km`,
-                duracaoTexto: minutos < 60 ? `${minutos} min` : `${Math.floor(minutos/60)}h ${minutos%60}min`,
-                duracaoMin: minutos
-            });
-        });
-    });
-}
-
-function montarEnderecoCompleto(tipo) {
-    const d = orderData[tipo];
-    const base = d.enderecoCompleto || d.endereco;
-    return [base, d.numero].filter(Boolean).join(', ');
-}
-
-// =============================================
-// CÁLCULO DE PREÇO POR MUNICÍPIO
-// =============================================
-function calcularPreco(distanciaKm, cidadeDestino) {
-    distanciaKm = Math.round(distanciaKm * 10) / 10;
-
-    const cidadePrincipal = normalizarTexto(PRICING.cidadePrincipal);
-    const cidadeDest = normalizarTexto(cidadeDestino);
-    const ehPrincipal = cidadeDest === cidadePrincipal;
-
-    if (ehPrincipal) {
-        const r = PRICING.dentroCidadePrincipal;
-        if (distanciaKm <= r.limiteKmBase) return r.valorBase;
-        const excedente = distanciaKm - r.limiteKmBase;
-        return Math.min(Math.round((r.valorBase + excedente * r.valorPorKmExcedente) * 100) / 100, 500);
-    } else {
-        const r = PRICING.foraCidadePrincipal;
-        return Math.min(Math.round(Math.max(r.valorMinimo, distanciaKm * r.valorPorKm) * 100) / 100, 500);
-    }
-}
-
-// =============================================
-// FINALIZAR PEDIDO — Mostra checkout + mapa
-// =============================================
-async function finalizarPedido() {
-    const endColeta = montarEnderecoCompleto('coleta');
-    const endEntrega = montarEnderecoCompleto('entrega');
-
-    // Preenche resumo
-    document.getElementById('wizard-container').style.display = 'none';
-    document.getElementById('checkout-screen').style.display = 'block';
-    document.getElementById('resumo-nome').textContent = orderData.cliente.nome;
-    document.getElementById('resumo-telefone').textContent = orderData.cliente.telefone;
-    document.getElementById('resumo-veiculo').textContent = orderData.veiculo === 'moto' ? 'Moto 🏍️' : 'Carro 🚗';
-    document.getElementById('resumo-coleta').textContent = endColeta;
-    document.getElementById('resumo-entrega').textContent = endEntrega;
-    document.getElementById('resumo-receptor').textContent = orderData.receptor.nome;
-    document.getElementById('resumo-categorias').textContent = orderData.categorias.length ? orderData.categorias.join(', ') : 'Não especificado';
-
-    const elDist = document.getElementById('distancia-final');
-    const elTempo = document.getElementById('tempo-final');
-    const elValor = document.getElementById('valor-final');
-    const elInfo = document.getElementById('valor-info');
-    const elCidade = document.getElementById('cidade-destino');
-
-    elDist.innerHTML = '<i class="bi bi-hourglass-split"></i> calculando...';
-    elTempo.textContent = '—';
-    elValor.textContent = 'Calculando...';
-    elInfo.textContent = 'Calculando distância e valor...';
-    elCidade.textContent = '—';
-
-    // Aguarda Google Maps estar pronto
-    await new Promise(resolve => quandoGoogleMapsCarregar(resolve));
-    if (!gMapsPronto) inicializarServicosMaps();
-
-    try {
-        // 1) Calcula rota
-        const rota = await calcularDistancia();
-        orderData.distanciaKm = rota.distanciaKm;
-        orderData.duracaoMin = rota.duracaoMin;
-
-        // 2) Descobre cidade destino
-        const e = orderData.entrega.coords;
-        let cidadeDestino = null;
-        if (e) cidadeDestino = await obterCidadeDoPonto(e.lat, e.lng);
-        orderData.cidadeDestino = cidadeDestino;
-
-        // 3) Calcula preço
-        const valor = calcularPreco(rota.distanciaKm, cidadeDestino);
-        orderData.valor = valor;
-
-        // 4) Atualiza UI
-        elDist.textContent = rota.distanciaTexto;
-        elTempo.textContent = rota.duracaoTexto;
-        elValor.textContent = `R$ ${valor.toFixed(2).replace('.', ',')}`;
-        elCidade.textContent = cidadeDestino || 'Não identificada';
-
-        const ehPrincipal = normalizarTexto(cidadeDestino) === normalizarTexto(PRICING.cidadePrincipal);
-        if (ehPrincipal) {
-            const r = PRICING.dentroCidadePrincipal;
-            const excedente = Math.max(0, rota.distanciaKm - r.limiteKmBase);
-            elInfo.textContent = excedente > 0
-                ? `Base R$${r.valorBase.toFixed(2)} + ${excedente.toFixed(1)}km × R$${r.valorPorKmExcedente.toFixed(2)}`
-                : `✅ Rota dentro de ${cidadeDestino} (≤ ${r.limiteKmBase}km)`;
-        } else {
-            elInfo.textContent = `Fora de ${PRICING.cidadePrincipal}: ${rota.distanciaKm.toFixed(1)}km × R$${PRICING.foraCidadePrincipal.valorPorKm.toFixed(2)}`;
-        }
-
-        // 5) 🗺️ Mostra o mapa dentro do resumo
-        document.getElementById('mapa-wrapper').style.display = 'block';
-        if (criarMapaSeNecessario()) {
-            setTimeout(() => {
-                google.maps.event.trigger(gMap, 'resize');
-                const c = orderData.coleta.coords;
-                if (c) adicionarMarcador('coleta',  { lat: c.lat, lng: c.lng });
-                if (e) adicionarMarcador('entrega', { lat: e.lat, lng: e.lng });
-                // Recalcula a rota pro renderer ajustar após resize
-                gDirections.route({
-                    origin: { lat: c.lat, lng: c.lng },
-                    destination: { lat: e.lat, lng: e.lng },
-                    travelMode: google.maps.TravelMode.DRIVING
-                }, (result, status) => {
-                    if (status === 'OK') {
-                        gRenderer.setDirections(result);
-                        const bounds = new google.maps.LatLngBounds();
-                        result.routes[0].legs[0].steps.forEach(s => {
-                            bounds.extend(s.start_location);
-                            bounds.extend(s.end_location);
-                        });
-                        gMap.fitBounds(bounds);
-                    }
-                });
-            }, 150);
-        }
-
-        // 6) Gera link do Maps para o motoboy
-        const c = orderData.coleta.coords;
-        if (c && e) {
-            orderData.mapsLink = `https://www.google.com/maps/dir/?api=1`
-                + `&origin=${c.lat},${c.lng}`
-                + `&destination=${e.lat},${e.lng}`
-                + `&travelmode=driving`;
-            console.log('🗺️ Link Maps:', orderData.mapsLink);
-        }
-
-        // 7) Limpa valor inicial do PIX (força regerar no botão)
-        orderData.valor = valor;
-
-    } catch (err) {
-        console.error('Erro no cálculo:', err);
-        elDist.innerHTML = '<i class="bi bi-question-circle"></i> Não disponível';
-        elTempo.textContent = 'Não disponível';
-        elValor.textContent = 'R$ 15,00';
-        elInfo.textContent = '⚠️ Valor mínimo aplicado (rota não disponível)';
-        orderData.valor = 15.00;
-        showToast('Não foi possível calcular a rota automaticamente', 'warning');
-    }
-}
-
-function cancelarPedido() {
-    document.getElementById('checkout-screen').style.display = 'none';
-    document.getElementById('wizard-container').style.display = 'block';
-    currentStep = 0;
-    updateSteps();
-}
-
-// =============================================
-// PAGAMENTO PIX
-// =============================================
-function gerarPayloadPIX(valor, descricao) {
-    const chavePix = 'comercial.ngexpress@gmail.com';
-    const nomeRecebedor = 'N&G Express';
-    const cidade = 'SAO PAULO';
-    const valorFmt = valor.toFixed(2);
-    const desc = (descricao || '')
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-zA-Z0-9 ]/g, '').slice(0, 25);
-
-    const payload = '000201' +
-        '26' + '0014br.gov.bcb.pix' +
-        '01' + String(chavePix.length).padStart(2, '0') + chavePix +
-        '52040000' + '5303986' +
-        '54' + String(valorFmt.length).padStart(2, '0') + valorFmt +
-        '5802BR' +
-        '59' + String(nomeRecebedor.length).padStart(2, '0') + nomeRecebedor +
-        '60' + String(cidade.length).padStart(2, '0') + cidade +
-        '6205' + String(desc.length).padStart(2, '0') + desc +
-        '6304';
-
-    function crc16(str) {
-        let crc = 0xFFFF;
-        for (let i = 0; i < str.length; i++) {
-            crc ^= str.charCodeAt(i) << 8;
-            for (let j = 0; j < 8; j++) crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
-        }
-        return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
-    }
-    return payload + crc16(payload);
-}
-
-function renderizarQRCode(container, texto) {
-    container.innerHTML = '';
-    if (typeof QRCode === 'undefined') {
-        container.innerHTML = '<p style="color:red;font-size:0.8rem;">QRCode.js não carregou. Copie o código abaixo.</p>';
-        return;
-    }
-    new QRCode(container, {
-        text: texto, width: 200, height: 200,
-        colorDark: '#1b5e20', colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
-    });
-}
-
-async function gerarPagamento() {
-    if (!orderData.valor || orderData.valor <= 0) {
-        showToast('Valor do pedido não calculado', 'error'); return;
-    }
-    document.getElementById('modal-pagamento').style.display = 'flex';
-    document.getElementById('modal-valor').textContent = `R$ ${orderData.valor.toFixed(2).replace('.', ',')}`;
-    document.getElementById('status-pagamento').textContent = '';
-    document.getElementById('chave-manual-container').style.display = 'none';
-    document.getElementById('modal-badge').textContent = '✅ Processado pelo Mercado Pago';
-
-    const qrContainer = document.getElementById('qr-container');
-    qrContainer.innerHTML = `<div style="text-align:center;"><div class="spinner" style="margin:0 auto 12px;"></div><span style="font-size:0.85rem;">Gerando QR Code...</span></div>`;
-
-    const convId = `pedido_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/pix/criar`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                convId, valor: orderData.valor,
-                nomeCliente: orderData.cliente.nome,
-                descricao: `Entrega N&G Express - ${orderData.coleta.endereco} → ${orderData.entrega.endereco}`
-            })
-        });
-        if (response.ok) {
-            const dados = await response.json();
-            if (dados.success !== false && (dados.qrCode || dados.qrCodeBase64)) {
-                paymentData.paymentId = dados.paymentId;
-                if (dados.qrCodeBase64) {
-                    qrContainer.innerHTML = '';
-                    const img = document.createElement('img');
-                    img.src = `data:image/png;base64,${dados.qrCodeBase64}`;
-                    img.alt = 'QR Code PIX';
-                    qrContainer.appendChild(img);
-                } else {
-                    renderizarQRCode(qrContainer, dados.qrCode);
-                }
-                const pixEl = document.getElementById('pix-codigo');
-                pixEl.textContent = dados.qrCode;
-                pixEl.setAttribute('data-full-pix', dados.qrCode);
-                document.getElementById('status-pagamento').innerHTML =
-                    '<span style="color:var(--success-color)">✅ Escaneie o QR Code no app do seu banco</span>';
-                showToast('QR Code gerado!', 'success');
-                iniciarVerificacaoPagamento(dados.paymentId, convId);
-                return;
-            }
-        }
-        console.warn('API falhou. Usando fallback local.');
-        usarFallbackPIX(convId);
-    } catch (err) {
-        console.error('Erro PIX:', err.message);
-        usarFallbackPIX(convId);
-    }
-}
-
-function usarFallbackPIX(convId) {
-    const descricao = `NG${(convId || Date.now().toString()).slice(-6).toUpperCase()}`;
-    const payload = gerarPayloadPIX(orderData.valor, descricao);
-    const qrContainer = document.getElementById('qr-container');
-    renderizarQRCode(qrContainer, payload);
-    document.getElementById('chave-manual-container').style.display = 'block';
-    document.getElementById('chave-manual').textContent = 'comercial.ngexpress@gmail.com';
-    const pixEl = document.getElementById('pix-codigo');
-    pixEl.textContent = payload.length > 100 ? payload.substring(0, 100) + '...' : payload;
-    pixEl.setAttribute('data-full-pix', payload);
-    document.getElementById('modal-badge').textContent = '⚠️ Pagamento manual — confirme pelo comprovante';
-    document.getElementById('modal-instrucao').textContent = 'Escaneie o QR Code ou use a chave PIX abaixo';
-    document.getElementById('status-pagamento').innerHTML =
-        '<span style="color:var(--warning-color)">⚠️ Após pagar, clique em "Enviei o PIX" para confirmar</span>';
-    paymentData.paymentId = 'manual_' + Date.now();
-    showToast('QR Code gerado! Use a chave PIX para pagar.', 'warning');
-}
-
-function iniciarVerificacaoPagamento(paymentId, convId) {
-    if (!paymentId || String(paymentId).startsWith('manual_')) return;
-    let tentativas = 0;
-    const maxTent = 60;
-    if (paymentData.intervalId) clearInterval(paymentData.intervalId);
-    paymentData.intervalId = setInterval(async () => {
-        tentativas++;
-        try {
-            const res = await fetch(`${API_BASE_URL}/pix/status/${convId}`);
-            if (res.ok) {
-                const data = await res.json();
-                if (data.status === 'approved' && !pagamentoJaConfirmado) {
-                    clearInterval(paymentData.intervalId);
-                    pagamentoConfirmado();
-                }
-            }
-        } catch (e) { console.warn('Polling:', e.message); }
-        if (tentativas >= maxTent) {
-            clearInterval(paymentData.intervalId);
-            document.getElementById('status-pagamento').innerHTML =
-                '<span style="color:var(--text-tertiary)">⌛ Tempo esgotado. Envie o comprovante manualmente.</span>';
-        }
-    }, 3000);
-}
-
-function pagamentoConfirmado() {
-    if (pagamentoJaConfirmado) return;
-    pagamentoJaConfirmado = true;
-    document.getElementById('status-pagamento').innerHTML =
-        '<span style="color:var(--success-color);font-weight:600;"><i class="bi bi-check-circle-fill"></i> ✅ Pagamento confirmado! Clique em "Confirmar Pedido" abaixo para enviar para a empresa.</span>';
-    showToast('Pagamento confirmado! Agora confirme o pedido.', 'success');
-    const btnEnviar = document.getElementById('btn-enviar-comprovante');
-    if (btnEnviar) {
-        btnEnviar.innerHTML = '<i class="bi bi-check-lg"></i> Confirmar Pedido para Empresa';
-        btnEnviar.style.background = '#075e54';
-        btnEnviar.style.fontWeight = 'bold';
-    }
-    const btnPagar = document.getElementById('btn-pagar');
-    if (btnPagar) {
-        btnPagar.disabled = true;
-        btnPagar.style.opacity = '0.5';
-        btnPagar.style.cursor = 'not-allowed';
-    }
-}
-
-function copiarPix() {
-    const el = document.getElementById('pix-codigo');
-    const codigo = el.getAttribute('data-full-pix') || el.textContent;
-    if (!codigo || codigo === 'Clique para copiar o código PIX') return;
-    navigator.clipboard.writeText(codigo).then(() => {
-        showToast('Código PIX copiado!', 'success');
-        el.textContent = '✅ Copiado!';
-        setTimeout(() => {
-            const full = el.getAttribute('data-full-pix') || '';
-            el.textContent = full.length > 100 ? full.substring(0, 100) + '...' : full;
-        }, 2500);
-    }).catch(() => showToast('Não foi possível copiar', 'error'));
-}
-
-function fecharModalPagamento() {
-    document.getElementById('modal-pagamento').style.display = 'none';
-    if (paymentData.intervalId) clearInterval(paymentData.intervalId);
-}
-
-// =============================================
-// ENVIAR PEDIDO VIA WHATSAPP (com link do Maps)
-// =============================================
-async function enviarComprovante() {
-    const veiculoIcone = orderData.veiculo === 'moto' ? '🏍️' : '🚗';
-    const veiculoTexto = orderData.veiculo === 'moto' ? 'Moto' : 'Carro';
-    const quemRecebeTexto = orderData.receptor.isOutro
-        ? `━━━━━━━━━━━━━━━━━━━━━\n👤 *RECEPTOR*\n━━━━━━━━━━━━━━━━━━━━━\n📛 *Nome:* ${orderData.receptor.nome.toUpperCase()}\n📱 *Telefone:* ${orderData.receptor.telefone.replace(/\D/g, '')}\n`
-        : `━━━━━━━━━━━━━━━━━━━━━\n👤 *RECEPTOR*\n━━━━━━━━━━━━━━━━━━━━━\n📛 *Nome:* ${orderData.cliente.nome.toUpperCase()}\n📱 *Telefone:* ${orderData.cliente.telefone.replace(/\D/g, '')}\n`;
-
-    const endColeta = montarEnderecoCompleto('coleta');
-    const endEntrega = montarEnderecoCompleto('entrega');
-    const numPedido = 'NG' + Date.now().toString().slice(-6);
-
-    // 🗺️ Bloco do link Maps para o motoboy
-    const blocoMaps = orderData.mapsLink ? `
-
-━━━━━━━━━━━━━━━━━━━━━
-🗺️ *ROTA PARA O MOTOBOY*
-━━━━━━━━━━━━━━━━━━━━━
-👉 *Toque no link abaixo para abrir no Google Maps:*
-${orderData.mapsLink}
-
-_Toque e abrirá direto no app de navegação_` : '';
-
-    const msg = `🆕 *NOVO PEDIDO - N&G EXPRESS* 🆕\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━━\n📋 *DADOS DO CLIENTE*\n━━━━━━━━━━━━━━━━━━━━━\n` +
-        `👤 *Nome:* ${orderData.cliente.nome}\n` +
-        `📱 *Telefone:* ${orderData.cliente.telefone.replace(/\D/g, '')}\n` +
-        `📧 *E-mail:* ${orderData.cliente.email}\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━━\n🚚 *DADOS DA ENTREGA*\n━━━━━━━━━━━━━━━━━━━━━\n` +
-        `${veiculoIcone} *Veículo:* ${veiculoTexto}\n` +
-        `🏙️ *Cidade destino:* ${orderData.cidadeDestino || '—'}\n` +
-        `📏 *Distância:* ${orderData.distanciaKm ? orderData.distanciaKm.toFixed(1) : '0'} km\n` +
-        `⏱️ *Tempo estimado:* ${orderData.duracaoMin ? (orderData.duracaoMin < 60 ? orderData.duracaoMin + ' min' : Math.floor(orderData.duracaoMin/60) + 'h ' + (orderData.duracaoMin%60) + 'min') : '—'}\n` +
-        `💰 *Valor Pago:* R$ ${orderData.valor.toFixed(2).replace('.', ',')}\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━━\n📍 *COLETA*\n━━━━━━━━━━━━━━━━━━━━━\n${endColeta}\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━━\n🎯 *ENTREGA*\n━━━━━━━━━━━━━━━━━━━━━\n${endEntrega}\n` +
-        `${quemRecebeTexto}${blocoMaps}\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━━\n📦 *ENCOMENDA*\n━━━━━━━━━━━━━━━━━━━━━\n` +
-        `🏷️ *Tipo:* ${orderData.categorias.length ? orderData.categorias.join(', ') : 'Não especificado'}\n` +
-        `📝 *Descrição:* ${orderData.descricao || 'Não informada'}\n\n` +
-        `🔖 *Pedido:* #${numPedido}\n` +
-        `📅 *Data:* ${new Date().toLocaleString('pt-BR')}\n\n` +
-        `✅ *Por favor, confirme este pedido.*`;
-
-    window.open(`https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msg)}`, '_blank');
-
-    // Salva no backend se estiver logado
-    const raw = sessionStorage.getItem('usuario');
-    if (raw) {
-        try {
-            const usuario = JSON.parse(raw);
-            const payload = {
-                usuario_id: usuario.id,
-                numero_pedido: numPedido,
-                tipo_veiculo: orderData.veiculo,
-                endereco_coleta: endColeta,
-                endereco_entrega: endEntrega,
-                cidade_destino: orderData.cidadeDestino || '',
-                descricao: orderData.descricao || '',
-                valor_total: orderData.valor,
-                distancia_km: orderData.distanciaKm || 0,
-                coords_coleta: orderData.coleta.coords
-                    ? `${orderData.coleta.coords.lat},${orderData.coleta.coords.lng}` : '',
-                coords_entrega: orderData.entrega.coords
-                    ? `${orderData.entrega.coords.lat},${orderData.entrega.coords.lng}` : '',
-                maps_link: orderData.mapsLink || ''
-            };
-            fetch(`${API_BASE_URL}/orcamentos/salvar.php`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).catch(e => console.warn('Salvar pedido:', e.message));
-        } catch (e) {
-            console.warn('Session parse:', e.message);
-        }
-    }
-
-    showToast('Pedido enviado para a empresa!', 'success');
-    setTimeout(() => {
-        fecharModalPagamento();
-        showToast('Pedido registrado com sucesso! Obrigado!', 'success');
-        setTimeout(() => { window.location.href = 'index.html'; }, 2000);
-    }, 2000);
-}
-
-// =============================================
-// MÁSCARA TELEFONE
-// =============================================
-function mascaraTelefone(input) {
-    if (!input) return;
-    input.addEventListener('input', function () {
-        let v = this.value.replace(/\D/g, '').slice(0, 11);
-        if (v.length > 6) v = `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
-        else if (v.length > 2) v = `(${v.slice(0,2)}) ${v.slice(2)}`;
-        else if (v.length > 0) v = `(${v}`;
-        this.value = v;
-    });
-}
-
-// =============================================
-// INIT
-// =============================================
-document.getElementById('btn-avancar').addEventListener('click', avancar);
-document.getElementById('btn-voltar').addEventListener('click', voltar);
-document.getElementById('btn-cancelar').addEventListener('click', cancelarPedido);
-document.getElementById('btn-pagar').addEventListener('click', gerarPagamento);
-document.getElementById('btn-enviar-comprovante').addEventListener('click', enviarComprovante);
-
-document.querySelectorAll('input[name="quem-recebe"]').forEach(r => {
-    r.addEventListener('change', function () {
-        document.getElementById('dados-receptor').style.display = this.value === 'outro' ? 'block' : 'none';
-    });
-});
-
-window.addEventListener('click', e => {
-    if (e.target.classList.contains('modal')) fecharModal(e.target.id);
-});
-window.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-        document.querySelectorAll('.modal').forEach(m => {
-            if (m.style.display !== 'none' && m.style.display !== '') fecharModal(m.id);
-        });
-    }
-});
-
-// Aguarda Google Maps carregar e inicializa
-quandoGoogleMapsCarregar(() => {
-    inicializarServicosMaps();
-    inicializarAutocomplete();
-});
-
-mascaraTelefone(document.getElementById('cliente-telefone'));
-mascaraTelefone(document.getElementById('receptor-telefone'));
-mascaraTelefone(document.getElementById('cadastro-telefone'));
-carregarDadosUsuario();
-updateSteps();
-
-window.abrirModalLogin = abrirModalLogin;
-window.abrirModalCadastro = abrirModalCadastro;
-window.fecharModal = fecharModal;
-</script>
+<script src="js/script.js"></script>
 </body>
 </html>
