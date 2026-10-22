@@ -624,12 +624,10 @@ app.post(
     try {
       const { nome, email, telefone, senha } = req.body || {};
       if (!nome || !email || !telefone || !senha)
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Todos os campos são obrigatórios",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "Todos os campos são obrigatórios",
+        });
       if (String(senha).length < 6)
         return res
           .status(400)
@@ -1015,6 +1013,23 @@ app.get("/api/pix/status/:paymentId", exigirUsuario, async (req, res) => {
     res.json({ success: true, status: status || "pending", pedido });
   } catch (e) {
     res.status(500).json({ success: false, erro: e.message });
+  }
+});
+
+// =============================================================
+// HISTÓRICO DE ORÇAMENTOS / CORRIDAS DO USUÁRIO
+// =============================================================
+app.get("/api/orcamentos/historico", exigirUsuario, async (req, res) => {
+  try {
+    const orcamentos = await todos(
+      `SELECT * FROM historico_orcamentos 
+       WHERE usuario_id = $1 
+       ORDER BY criado DESC`,
+      [req.uid],
+    );
+    res.json({ success: true, orcamentos });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 });
 
