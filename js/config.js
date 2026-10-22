@@ -6,7 +6,7 @@ window.API_BASE_URL =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1"
     ? "http://localhost:3000/api"
-    : `${window.location.origin}/api;`;
+    : `${window.location.origin}/api`;
 
 // URL do backend (Railway)
 //window.API_BASE_URL = "https://landingpageng-production.up.railway.app/api";
