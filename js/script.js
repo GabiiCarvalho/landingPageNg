@@ -747,7 +747,25 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   document.getElementById("btn-pagar")?.addEventListener("click", async () => {
-    if (!window.orcamentoAtual) return;
+    // Garante a recuperação imediata do orçamento no celular ou desktop se a referência estiver limpa
+    if (!window.orcamentoAtual) {
+      const cacheRecuperado = sessionStorage.getItem("ng_orcamento_atual");
+      if (cacheRecuperado) {
+        try {
+          window.orcamentoAtual = JSON.parse(cacheRecuperado);
+        } catch (e) {}
+      }
+    }
+
+    const o = window.orcamentoAtual;
+    if (!o || (!o.valor && !o.preco)) {
+      mostrarToast(
+        "Erro: Os dados do orçamento expiraram. Por favor, calcule a rota novamente.",
+        "error",
+      );
+      return;
+    }
+
     const u = obterUsuarioLogado();
     if (!u) {
       window.__aguardandoLoginParaPix = true;
@@ -755,30 +773,83 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
+    const valorAtualCalculado = o.valor || o.preco || 0;
+    const valorFormatado = formatarMoeda(valorAtualCalculado);
+
+    // Abre o modal e injeta o valor em todos os seletores comuns de preço para evitar o R$ 0,00 no celular
+    const modalPagamento = document.getElementById("modal-pagamento");
+    if (modalPagamento) modalPagamento.style.display = "flex";
+
+    const elementosPreco = [
+      document.getElementById("modal-valor"),
+      document.getElementById("checkout-valor"),
+      document.querySelector("#modal-pagamento .valor"),
+      document.querySelector("#modal-pagamento h3"),
+      document.querySelector("#modal-pagamento span[class*='valor']"),
+    ];
+
+    elementosPreco.forEach((el) => {
+      if (el) el.textContent = valorFormatado;
+    });
+
+    const qrContainer = document.getElementById("qr-container");
+    if (qrContainer) {
+      qrContainer.innerHTML =
+        '<div class="spinner"></div><span>Gerando QR Code no Mercado Pago...</span>';
+    }
+
+    const pixCodigoEl = document.getElementById("pix-codigo");
+    if (pixCodigoEl) pixCodigoEl.textContent = "Gerando código PIX...";
+
+    const payWait = document.getElementById("pay-wait");
+    if (payWait) payWait.style.display = "none";
+
     try {
       const resp = await fetch(`${API_BASE_URL}/pix/criar`, {
         method: "POST",
         headers: getAuthHeaders(),
         credentials: "include",
         body: JSON.stringify({
-          cotacao: window.orcamentoAtual.cotacao,
-          pedido: window.orcamentoAtual,
+          cotacao: o.cotacao,
+          pedido: o,
         }),
       });
       const data = await resp.json();
-      if (!data.success) throw new Error(data.erro);
+      if (!data.success)
+        throw new Error(data.erro || "Não foi possível gerar o PIX.");
 
-      document.getElementById("modal-pagamento").style.display = "flex";
-      document.getElementById("pix-codigo").textContent = data.qrCode;
-      document
-        .getElementById("pix-codigo")
-        .setAttribute("data-codigo", data.qrCode);
-      if (data.qrCodeBase64) {
-        document.getElementById("qr-container").innerHTML =
-          `<img src="data:image/png;base64,${data.qrCodeBase64}" alt="PIX">`;
+      // Se o servidor retornar o valor exato atualizado, reaplica nos elementos
+      if (data.valor) {
+        o.valor = data.valor;
+        o.preco = data.valor;
+        const valStr = formatarMoeda(data.valor);
+        elementosPreco.forEach((el) => {
+          if (el) el.textContent = valStr;
+        });
       }
+
+      paymentData.paymentId = data.paymentId;
+      window.orcamentoAtual.numeroPedido = data.numeroPedido;
+      window.orcamentoAtual.paymentId = data.paymentId;
+
+      if (qrContainer) {
+        qrContainer.innerHTML = "";
+        if (data.qrCodeBase64) {
+          qrContainer.innerHTML = `<img src="data:image/png;base64,${data.qrCodeBase64}" alt="PIX">`;
+        }
+      }
+
+      if (pixCodigoEl) {
+        pixCodigoEl.textContent = data.qrCode;
+        pixCodigoEl.setAttribute("data-codigo", data.qrCode);
+      }
+
+      if (payWait) payWait.style.display = "flex";
+      iniciarVerificacaoPagamento(data.paymentId);
     } catch (e) {
-      mostrarToast(e.message, "error");
+      mostrarViewModalPix("erro");
+      const errEl = document.getElementById("pay-erro-msg");
+      if (errEl) errEl.textContent = e.message;
     }
   });
 
