@@ -346,6 +346,7 @@ async function carregarDashboard() {
   if (raw) { try { usuario = JSON.parse(raw); } catch (_) {} }
 
   try {
+    // ➔ CORREÇÃO MOBILE: Uso explícito da variável API padronizada
     const r = await fetch(`${API}/usuarios/verificar`, {
       headers: headersAuth(),
       credentials: 'include'
@@ -369,6 +370,7 @@ async function carregarDashboard() {
   preencherPerfil(usuario);
 
   try {
+    // ➔ CORREÇÃO MOBILE: Rota do histórico unificada com a API base
     const r = await fetch(`${API}/orcamentos/historico`, {
       headers: headersAuth(),
       credentials: 'include'

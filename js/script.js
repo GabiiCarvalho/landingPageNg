@@ -818,7 +818,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (payWait) payWait.style.display = "none";
 
     try {
-      // Monta objeto limpo para envio sem referências circulares
       const payloadLimpo = {
         cotacao: o.cotacao,
         pedido: {
@@ -869,6 +868,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   async function checarStatusPix(paymentId, manual = false) {
+    // ➔ CORREÇÃO DO LOOP: Se já foi confirmado, impede qualquer requisição adicional imediatamente
     if (!paymentId || paymentData.confirmado) return;
     try {
       const res = await fetch(`${API_BASE_URL}/pix/status/${paymentId}`, {
@@ -881,8 +881,12 @@ document.addEventListener("DOMContentLoaded", function () {
           data.status === "approved" ||
           data.pedido?.status_pagamento === "aprovado"
         ) {
+          // ➔ TRAVA DE SEGURANÇA: Marca como confirmado e limpa o timer na hora
           paymentData.confirmado = true;
-          if (paymentData.intervalId) clearInterval(paymentData.intervalId);
+          if (paymentData.intervalId) {
+            clearInterval(paymentData.intervalId);
+            paymentData.intervalId = null;
+          }
           pagamentoConfirmado();
           return;
         }
@@ -894,13 +898,13 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   window.verificarPagamentoAgora = function () {
-    if (paymentData.paymentId) {
+    if (paymentData.paymentId && !paymentData.confirmado) {
       checarStatusPix(paymentData.paymentId, true);
     }
   };
 
   function iniciarVerificacaoPagamento(paymentId) {
-    if (!paymentId) return;
+    if (!paymentId || paymentData.confirmado) return;
     if (paymentData.intervalId) clearInterval(paymentData.intervalId);
     paymentData.intervalId = setInterval(() => {
       checarStatusPix(paymentId, false);
@@ -908,6 +912,10 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function pagamentoConfirmado() {
+    // ➔ DUPLA VERIFICAÇÃO PARA EVITAR ABERTURAS DUPLICADAS
+    if (window._pagamentoJaProcessado) return;
+    window._pagamentoJaProcessado = true;
+
     const o = window.orcamentoAtual || {};
     const u = obterUsuarioLogado();
     const primeiroNome = (u?.nome || o.nome || "Cliente").split(" ")[0];
