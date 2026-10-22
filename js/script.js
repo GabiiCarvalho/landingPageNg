@@ -8,7 +8,20 @@ document.addEventListener("DOMContentLoaded", function () {
   let googleMap = null;
   let routePolyline = null;
   let markers = { coleta: null, entrega: null };
+
   window.orcamentoAtual = null;
+  const salvoCache = sessionStorage.getItem("ng_orcamento_atual");
+  if (salvoCache) {
+    try {
+      window.orcamentoAtual = JSON.parse(salvoCache);
+      if (window.orcamentoAtual && window.orcamentoAtual.valor) {
+        const valEl = document.getElementById("valor-final");
+        if (valEl)
+          valEl.textContent = formatarMoeda(window.orcamentoAtual.valor);
+      }
+    } catch (e) {}
+  }
+
   window.coordenadasCache = { coleta: null, entrega: null };
 
   // =============================================
@@ -676,6 +689,12 @@ document.addEventListener("DOMContentLoaded", function () {
         coordsEntrega: data.rota.destino,
       };
 
+      // Salva no sessionStorage para nunca zerar o valor após o login no celular
+      sessionStorage.setItem(
+        "ng_orcamento_atual",
+        JSON.stringify(window.orcamentoAtual),
+      );
+
       btn.disabled = false;
       btn.innerHTML = '<i class="bi bi-qr-code"></i> Pagar via PIX';
     } catch (e) {
@@ -685,8 +704,48 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // =============================================
-  // PIX E WHATSAPP (SEM EMOJIS)
+  // PIX, CÓPIA COMPATÍVEL COM CELULAR E WHATSAPP
   // =============================================
+  window.copiarPix = () => {
+    const el = document.getElementById("pix-codigo");
+    const codigo = el?.getAttribute("data-codigo") || el?.textContent || "";
+    if (!codigo || codigo.includes("Gerando")) return;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard
+        .writeText(codigo)
+        .then(() => {
+          mostrarToast("Código PIX copiado com sucesso!", "success");
+        })
+        .catch(() => {
+          executarFallbackCopia(codigo);
+        });
+    } else {
+      executarFallbackCopia(codigo);
+    }
+  };
+
+  function executarFallbackCopia(texto) {
+    const textarea = document.createElement("textarea");
+    textarea.value = texto;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    try {
+      const sucesso = document.execCommand("copy");
+      if (sucesso) {
+        mostrarToast("Código PIX copiado com sucesso!", "success");
+      } else {
+        mostrarToast("Selecione e copie o código manualmente.", "warning");
+      }
+    } catch (err) {
+      mostrarToast("Erro ao copiar o código PIX.", "error");
+    }
+    document.body.removeChild(textarea);
+  }
+
   document.getElementById("btn-pagar")?.addEventListener("click", async () => {
     if (!window.orcamentoAtual) return;
     const u = obterUsuarioLogado();
@@ -732,14 +791,20 @@ PEDIDO: #${o.numeroPedido || "NOVO"}
 DATA: ${new Date().toLocaleString("pt-BR")}
 
 CLIENTE
-- Nome: ${o.nome}
-- WhatsApp: ${o.telefone}
+- Nome: 
+${o.nome}
+- WhatsApp: 
+${o.telefone}
 
 DADOS DA CORRIDA
-- Veículo: ${o.tipoVeiculo === "carro" ? "Carro" : "Moto"}
-- Coleta: ${o.enderecoColeta}
-- Entrega: ${o.enderecoEntrega}
-- Distância: ${o.distancia} (${o.duracao})
+- Veículo: 
+${o.tipoVeiculo === "carro" ? "Carro" : "Moto"}
+- Coleta: 
+${o.enderecoColeta}
+- Entrega: 
+${o.enderecoEntrega}
+- Distância: 
+${o.distancia} (${o.duracao})
 
 VALOR PAGO: ${formatarMoeda(o.preco)} (PIX Confirmado)
 Rota no Maps: ${o.mapsLinkRota || ""}`;
